@@ -1,0 +1,14 @@
+# Автоматическая нормализация переносов строк
+* text=auto eol=lf
+
+*.py text eol=lf
+*.md text eol=lf
+*.css text eol=lf
+*.toml text eol=lf
+*.json text eol=lf
+
+*.dem binary
+*.png binary
+*.jpg binary
+*.db binary
+*.sqlite binary

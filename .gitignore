@@ -1,0 +1,30 @@
+# Virtual Environment
+.venv/
+venv/
+ENV/
+
+# Python Cache
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Streamlit
+.streamlit/cache/
+
+# SQLite / Database
+*.sqlite
+*.sqlite3
+*.db
+
+# CS2 Demos / Data
+*.dem
+data/*.dem
+!data/.gitkeep
+
+# IDE Settings
+.vscode/
+.idea/
+
+# OS Specific
+.DS_Store
+Thumbs.db
