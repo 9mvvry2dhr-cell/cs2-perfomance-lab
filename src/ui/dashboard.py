@@ -8,28 +8,51 @@ def render_dashboard() -> None:
     """Отображает главный экран аналитики."""
     st.header("🎯 Общая аналитика формы")
 
-    # 1. Получаем все матчи из базы данных
+    # 1. Получаем все матчи из БД
     matches = get_all_matches()
 
     if not matches:
         st.info("В базе данных пока нет сохранённых матчей. Загрузите `.dem` файл через боковое меню!")
         return
 
-    # 2. Извлекаем статистику игроков (сейчас у нас 1 фейковый игрок на матч в парсере)
-    all_player_stats = []
+    # 2. Собираем уникальных игроков
+    player_names = {}
     for m in matches:
-        all_player_stats.extend(m.players)
+        for p in m.players:
+            player_names[p.steam_id] = p.name
 
-    # 3. Считаем математику
-    aggregated_stats = calculate_player_aggregates(all_player_stats)
+    if not player_names:
+        # Если игроков нет в структуре, считаем общее число матчей
+        aggregated_stats = calculate_player_aggregates([], total_matches=len(matches))
+        render_metric_cards(aggregated_stats)
+    else:
+        # 3. Выпадающий список выбора игрока
+        selected_steam_id = st.selectbox(
+            "Выберите игрока для анализа:",
+            options=list(player_names.keys()),
+            format_func=lambda x: player_names[x]
+        )
 
-    # 4. Рендерим карточки
-    render_metric_cards(aggregated_stats)
+        # 4. Фильтруем статистику под выбранного игрока
+        selected_player_stats = []
+        player_matches_count = 0
+
+        for m in matches:
+            player_in_match = [p for p in m.players if p.steam_id == selected_steam_id]
+            if player_in_match:
+                selected_player_stats.extend(player_in_match)
+                player_matches_count += 1
+
+        # 5. Расчет метрик
+        aggregated_stats = calculate_player_aggregates(
+            selected_player_stats, 
+            total_matches=player_matches_count
+        )
+        render_metric_cards(aggregated_stats)
 
     st.markdown("---")
     st.subheader("История матчей")
     
-    # Таблица со списком матчей
     match_data = []
     for m in matches:
         match_data.append({
