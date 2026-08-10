@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import List
 from datetime import datetime
 from src.database.connection import get_connection
 from src.domain.models import Match, PlayerStats
@@ -41,7 +41,7 @@ def save_match(match: Match) -> None:
 
 
 def get_all_matches() -> List[Match]:
-    """Загружает список всех сохранённых матчей из БД."""
+    """Загружает список всех сохранённых матчей из БД вместе с игроками."""
     matches = []
     with get_connection() as conn:
         cursor = conn.cursor()
@@ -49,6 +49,27 @@ def get_all_matches() -> List[Match]:
         rows = cursor.fetchall()
 
         for row in rows:
+            # Загружаем игроков для данного матча
+            cursor.execute("SELECT * FROM player_stats WHERE match_id = ?", (row["match_id"],))
+            p_rows = cursor.fetchall()
+            
+            players = []
+            for p in p_rows:
+                players.append(PlayerStats(
+                    steam_id=p["steam_id"],
+                    name=p["name"],
+                    kills=p["kills"],
+                    deaths=p["deaths"],
+                    assists=p["assists"],
+                    damage=p["damage"],
+                    headshots=p["headshots"],
+                    rounds_played=p["rounds_played"],
+                    first_kills=p["first_kills"],
+                    first_deaths=p["first_deaths"],
+                    flash_assists=p["flash_assists"],
+                    utility_damage=p["utility_damage"]
+                ))
+
             match = Match(
                 match_id=row["match_id"],
                 map_name=row["map_name"],
@@ -56,7 +77,8 @@ def get_all_matches() -> List[Match]:
                 duration_seconds=row["duration_seconds"],
                 score_ct=row["score_ct"],
                 score_t=row["score_t"],
-                winner_side=row["winner_side"]
+                winner_side=row["winner_side"],
+                players=players
             )
             matches.append(match)
 
