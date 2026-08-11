@@ -1,42 +1,45 @@
 from dataclasses import dataclass, field
-from datetime import datetime
 from typing import List, Optional
 
 
 @dataclass
-class ParsedRound:
-    round_num: int
-    winner_side: str  # "CT" или "T"
-    win_reason: str   # Причина окончания раунда
-    end_tick: int = 0
+class ParsedPlayer:
+  steam_id: str
+  name: str
+  kills: int
+  deaths: int
+  assists: int
+  damage: float
+  headshots: int
+  rounds_played: int
+
+  # Новые метрики Utility & Entry
+  he_damage: float = 0.0
+  inferno_damage: float = 0.0
+  enemies_flashed: int = 0
+  flash_duration: float = 0.0
+  entry_kills: int = 0
+  entry_deaths: int = 0
 
 
 @dataclass
-class ParsedPlayer:
-    steam_id: str
-    name: str
-    kills: int = 0
-    deaths: int = 0
-    assists: int = 0
-    damage: float = 0.0
-    headshots: int = 0
-    rounds_played: int = 0
-    first_kills: int = 0
-    first_deaths: int = 0
-    team: Optional[str] = None
+class ParsedRound:
+  round_num: int
+  winner_side: str
+  win_reason: str
+  end_tick: int
 
 
 @dataclass
 class ParsedMatch:
-    match_id: str
-    map_name: str
-    duration_seconds: int = 0
-    rounds_played: int = 0
-    score_ct: int = 0
-    score_t: int = 0
-    winner_side: str = "UNKNOWN"
-    played_at: datetime = field(default_factory=datetime.now)
-    players: List[ParsedPlayer] = field(default_factory=list)
-    rounds: List[ParsedRound] = field(default_factory=list)
-    is_valid: bool = True
-    validation_error: Optional[str] = None
+  match_id: str
+  map_name: str
+  duration_seconds: int
+  rounds_played: int
+  score_ct: int
+  score_t: int
+  winner_side: str
+  players: List[ParsedPlayer]
+  rounds: List[ParsedRound]
+  is_valid: bool = True
+  validation_error: Optional[str] = None
