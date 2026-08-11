@@ -5,9 +5,10 @@ import streamlit as st
 
 from src.database.connection import init_db
 from src.services.demo_service import DemoService
+from src.services.coach_service import CoachService
 from src.database.matches import get_all_matches, get_player_history
 
-# Гарантированно создаем таблицы при каждом запуске
+# Инициализируем БД
 init_db()
 
 st.set_page_config(
@@ -104,6 +105,30 @@ else:
             m2.metric("Средний K/D", avg_kd)
             m3.metric("Средний ADR", avg_adr)
             m4.metric("Попаданий в голову (% HS)", f"{avg_hs_pct}%")
+
+            st.divider()
+
+            # --- Модуль AI Coach / Персональный тренер ---
+            st.subheader("🤖 AI Coach: Вердикт и Рекомендации")
+            
+            coach_analysis = CoachService.analyze_player_performance(history_data)
+            
+            c1, c2, c3 = st.columns(3)
+
+            with c1:
+                st.markdown("##### 🟢 Сильные стороны")
+                for item in coach_analysis.get("strengths", []):
+                    st.success(item)
+
+            with c2:
+                st.markdown("##### 🔴 Слабые места")
+                for item in coach_analysis.get("weaknesses", []):
+                    st.error(item)
+
+            with c3:
+                st.markdown("##### 💡 План улучшения")
+                for item in coach_analysis.get("recommendations", []):
+                    st.info(item)
 
             st.divider()
 
