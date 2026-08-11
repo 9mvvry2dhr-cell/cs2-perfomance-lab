@@ -1,57 +1,54 @@
 from datetime import datetime
-from typing import List, Optional
-from sqlalchemy import String, Integer, Float, DateTime, ForeignKey
-from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
+from sqlalchemy import Column, String, Integer, Float, DateTime, ForeignKey
+from sqlalchemy.orm import declarative_base, relationship
 
-
-class Base(DeclarativeBase):
-    """Базовый класс для всех ORM-моделей."""
-    pass
+Base = declarative_base()
 
 
 class Match(Base):
-    """Модель матча CS2."""
     __tablename__ = "matches"
 
-    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
-    match_id: Mapped[str] = mapped_column(String(64), unique=True, index=True, nullable=False)
-    map_name: Mapped[str] = mapped_column(String(64), nullable=False)
-    played_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
-    score_ct: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
-    score_t: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
-    rounds_played: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
-    winner_side: Mapped[str] = mapped_column(String(10), nullable=False)
+    match_id = Column(String, primary_key=True)
+    map_name = Column(String(50), nullable=False)
+    duration_seconds = Column(Integer, default=0)
+    rounds_played = Column(Integer, default=0)
+    score_ct = Column(Integer, default=0)
+    score_t = Column(Integer, default=0)
+    winner_side = Column(String(10), default="UNKNOWN")
+    played_at = Column(DateTime, default=datetime.now)
 
-    # Связь один-ко-многим с игроками
-    players: Mapped[List["PlayerStat"]] = relationship(
-        "PlayerStat", 
-        back_populates="match", 
-        cascade="all, delete-orphan"
-    )
+    # Связи
+    players = relationship("PlayerStat", back_populates="match", cascade="all, delete-orphan")
+    rounds = relationship("RoundStat", back_populates="match", cascade="all, delete-orphan")
 
 
 class PlayerStat(Base):
-    """Модель индивидуальной статистики игрока за матч."""
     __tablename__ = "player_stats"
 
-    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
-    match_id: Mapped[str] = mapped_column(
-        String(64), 
-        ForeignKey("matches.match_id", ondelete="CASCADE"), 
-        nullable=False,
-        index=True
-    )
-    
-    name: Mapped[str] = mapped_column(String(128), index=True, nullable=False)
-    team: Mapped[Optional[str]] = mapped_column(String(10), nullable=True)
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    match_id = Column(String, ForeignKey("matches.match_id", ondelete="CASCADE"), nullable=False)
+    name = Column(String(100), nullable=False)
+    team = Column(String(10), nullable=True)
+    kills = Column(Integer, default=0)
+    deaths = Column(Integer, default=0)
+    assists = Column(Integer, default=0)
+    kd = Column(Float, default=0.0)
+    adr = Column(Float, default=0.0)
+    hs_percent = Column(Float, default=0.0)
+    first_kills = Column(Integer, default=0)
+    first_deaths = Column(Integer, default=0)
 
-    kills: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
-    deaths: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
-    assists: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
-    kd: Mapped[float] = mapped_column(Float, default=0.0, nullable=False)
-    adr: Mapped[float] = mapped_column(Float, default=0.0, nullable=False)
-    hs_percent: Mapped[float] = mapped_column(Float, default=0.0, nullable=False)
-    first_kills: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
-    first_deaths: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    match = relationship("Match", back_populates="players")
 
-    match: Mapped["Match"] = relationship("Match", back_populates="players")
+
+class RoundStat(Base):
+    __tablename__ = "rounds"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    match_id = Column(String, ForeignKey("matches.match_id", ondelete="CASCADE"), nullable=False)
+    round_num = Column(Integer, nullable=False)
+    winner_side = Column(String(10), nullable=False)
+    win_reason = Column(String(50), nullable=True)
+    end_tick = Column(Integer, default=0)
+
+    match = relationship("Match", back_populates="rounds")

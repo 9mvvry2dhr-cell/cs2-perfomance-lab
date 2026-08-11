@@ -1,7 +1,7 @@
 from pathlib import Path
 import pandas as pd
+from src.parsing.dto import ParsedMatch, ParsedPlayer, ParsedRound
 from demoparser2 import DemoParser as RawDemoParser
-from src.domain.dto import ParsedMatch, ParsedPlayer
 
 
 class DemoParser:
@@ -22,14 +22,14 @@ class DemoParser:
         except Exception as e:
             print(f"⚠️ Ошибка при чтении total_rounds_played: {e}")
 
-        # 2. Извлекаем события завершения раундов для расчета счета CT:T
+        # 2. Извлекаем события завершения раундов для счета и модели раундов
         score_ct = 0
         score_t = 0
+        parsed_rounds = []
 
         try:
             round_events = self.raw_parser.parse_events(["round_end"])
 
-            # Извлекаем DataFrame из ответа demoparser2
             df_events = None
             if isinstance(round_events, pd.DataFrame):
                 df_events = round_events
@@ -47,19 +47,34 @@ class DemoParser:
                     rounds_played = len(df_events)
 
                 if "winner" in df_events.columns:
-                    # Подсчитываем победителей по строковым значениям 'CT' и 'T' / 3 и 2
                     score_ct = int((df_events["winner"].astype(str).str.upper() == "CT").sum())
                     score_t = int((df_events["winner"].astype(str).str.upper() == "T").sum())
 
-                    # Резервный подсчет, если используются числовые кодировки
                     if score_ct == 0 and score_t == 0:
                         score_t = int((df_events["winner"] == 2).sum())
                         score_ct = int((df_events["winner"] == 3).sum())
 
+                # Заполняем список раундов
+                for idx, row in df_events.iterrows():
+                    w_side = str(row.get("winner", "UNKNOWN"))
+                    if w_side == "3":
+                        w_side = "CT"
+                    elif w_side == "2":
+                        w_side = "T"
+                        
+                    parsed_rounds.append(
+                        ParsedRound(
+                            round_num=int(row.get("round", idx + 1)),
+                            winner_side=w_side.upper(),
+                            win_reason=str(row.get("reason", "unknown")),
+                            end_tick=int(row.get("tick", 0))
+                        )
+                    )
+
         except Exception as e:
             print(f"⚠️ Ошибка при парсинге round_end: {e}")
 
-        # Определяем победителя
+        # Определяем победителя матча
         if score_ct > score_t:
             winner_side = "CT"
         elif score_t > score_ct:
@@ -105,5 +120,6 @@ class DemoParser:
             score_ct=score_ct,
             score_t=score_t,
             winner_side=winner_side,
-            players=parsed_players
+            players=parsed_players,
+            rounds=parsed_rounds
         )
