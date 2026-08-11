@@ -1,124 +1,106 @@
-from typing import List
-from datetime import datetime
-from src.database.connection import get_connection
-from src.domain.models import Match, PlayerStats
+from typing import List, Dict, Any, Optional
+from src.database.connection import get_db
+from src.domain.models import Match, MatchPlayer
 
 
-def save_match(match: Match) -> None:
-    """Сохраняет матч и статистику всех его игроков в БД."""
-    with get_connection() as conn:
-        cursor = conn.cursor()
+def save_match(match_data: Dict[str, Any], players_data: List[Dict[str, Any]]) -> Optional[Match]:
+    """Сохраняет данные матча и его игроков в базу данных."""
+    with get_db() as db:
+        # Проверяем, не существует ли уже такой матч
+        existing_match = db.query(Match).filter(Match.match_id == match_data.get("match_id")).first()
+        if existing_match:
+            return existing_match
 
-        # Сохраняем матч
-        cursor.execute("""
-            INSERT OR REPLACE INTO matches 
-            (match_id, map_name, played_at, duration_seconds, score_ct, score_t, winner_side)
-            VALUES (?, ?, ?, ?, ?, ?, ?)
-        """, (
-            match.match_id,
-            match.map_name,
-            match.played_at.isoformat(),
-            match.duration_seconds,
-            match.score_ct,
-            match.score_t,
-            match.winner_side
-        ))
+        new_match = Match(
+            match_id=match_data.get("match_id"),
+            map_name=match_data.get("map_name"),
+            played_at=match_data.get("played_at"),
+            score_ct=match_data.get("score_ct", 0),
+            score_t=match_data.get("score_t", 0),
+            winner_side=match_data.get("winner_side", "UNKNOWN")
+        )
+        db.add(new_match)
 
-        # Сохраняем игроков
-        for p in match.players:
-            cursor.execute("""
-                INSERT INTO player_stats 
-                (match_id, steam_id, name, kills, deaths, assists, damage, headshots, 
-                 rounds_played, first_kills, first_deaths, flash_assists, utility_damage)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            """, (
-                match.match_id, p.steam_id, p.name, p.kills, p.deaths, p.assists,
-                p.damage, p.headshots, p.rounds_played, p.first_kills, p.first_deaths,
-                p.flash_assists, p.utility_damage
-            ))
+        for p in players_data:
+            player_record = MatchPlayer(
+                match_id=match_data.get("match_id"),
+                steam_id=p.get("steam_id"),
+                name=p.get("name"),
+                team_side=p.get("team_side", "ALL"),
+                kills=p.get("kills", 0),
+                deaths=p.get("deaths", 0),
+                assists=p.get("assists", 0),
+                adr=p.get("adr", 0.0),
+                hs_percent=p.get("hs_percent", 0.0),
+                first_kills=p.get("first_kills", 0),
+                first_deaths=p.get("first_deaths", 0)
+            )
+            db.add(player_record)
 
-        conn.commit()
+        db.commit()
+        db.refresh(new_match)
+        return new_match
 
 
 def get_all_matches() -> List[Match]:
-    """Загружает список всех сохранённых матчей из БД вместе с игроками."""
-    matches = []
-    with get_connection() as conn:
-        cursor = conn.cursor()
-        cursor.execute("SELECT * FROM matches ORDER BY played_at DESC")
-        rows = cursor.fetchall()
+    """Возвращает список всех сохраненных матчей."""
+    with get_db() as db:
+        return db.query(Match).order_by(Match.played_at.desc()).all()
 
-        for row in rows:
-            # Загружаем игроков для данного матча
-            cursor.execute("SELECT * FROM player_stats WHERE match_id = ?", (row["match_id"],))
-            p_rows = cursor.fetchall()
-            
-            players = []
-            for p in p_rows:
-                players.append(PlayerStats(
-                    steam_id=p["steam_id"],
-                    name=p["name"],
-                    kills=p["kills"],
-                    deaths=p["deaths"],
-                    assists=p["assists"],
-                    damage=p["damage"],
-                    headshots=p["headshots"],
-                    rounds_played=p["rounds_played"],
-                    first_kills=p["first_kills"],
-                    first_deaths=p["first_deaths"],
-                    flash_assists=p["flash_assists"],
-                    utility_damage=p["utility_damage"]
-                ))
 
-            match = Match(
-                match_id=row["match_id"],
-                map_name=row["map_name"],
-                played_at=datetime.fromisoformat(row["played_at"]),
-                duration_seconds=row["duration_seconds"],
-                score_ct=row["score_ct"],
-                score_t=row["score_t"],
-                winner_side=row["winner_side"],
-                players=players
-            )
-            matches.append(match)
+def get_match_by_id(match_id: str) -> Optional[Match]:
+    """Возвращает объект конкретного матча по его match_id."""
+    with get_db() as db:
+        return db.query(Match).filter(Match.match_id == match_id).first()
 
-    return matches
-def get_player_history(name_or_steam_id: str) -> List[dict]:
-    """Возвращает хронологическую историю всех матчей игрока для построения графиков."""
-    history = []
-    with get_connection() as conn:
-        cursor = conn.cursor()
-        cursor.execute("""
-            SELECT 
-                m.match_id,
-                m.map_name,
-                m.played_at,
-                p.kills,
-                p.deaths,
-                p.damage,
-                p.headshots,
-                p.rounds_played
-            FROM player_stats p
-            JOIN matches m ON p.match_id = m.match_id
-            WHERE p.name = ? OR p.steam_id = ?
-            ORDER BY m.played_at ASC
-        """, (name_or_steam_id, name_or_steam_id))
-        
-        rows = cursor.fetchall()
-        for r in rows:
-            rounds = max(1, r["rounds_played"])
-            deaths = max(1, r["deaths"])
-            
+
+def get_player_history(player_name: str) -> List[Dict[str, Any]]:
+    """Возвращает историю показателей конкретного игрока."""
+    with get_db() as db:
+        records = (
+            db.query(MatchPlayer, Match)
+            .join(Match, MatchPlayer.match_id == Match.match_id)
+            .filter(MatchPlayer.name == player_name)
+            .order_by(Match.played_at.asc())
+            .all()
+        )
+
+        history = []
+        for player, match in records:
             history.append({
-                "match_id": r["match_id"],
-                "map_name": r["map_name"],
-                "played_at": r["played_at"],
-                "kd": round(r["kills"] / deaths, 2),
-                "adr": round(r["damage"] / rounds, 1),
-                "hs_percent": round((r["headshots"] / max(1, r["kills"])) * 100, 1),
-                "kills": r["kills"],
-                "deaths": r["deaths"],
-                "rounds": rounds
+                "match_id": match.match_id,
+                "map_name": match.map_name,
+                "played_at": match.played_at,
+                "kills": player.kills,
+                "deaths": player.deaths,
+                "assists": player.assists,
+                "kd": round(player.kills / max(1, player.deaths), 2),
+                "adr": round(player.adr, 1),
+                "hs_percent": round(player.hs_percent, 1),
+                "first_kills": getattr(player, "first_kills", 0),
+                "first_deaths": getattr(player, "first_deaths", 0),
             })
-            
-    return history
+
+        return history
+
+
+def get_match_players_stats(match_id: str) -> List[Dict[str, Any]]:
+    """Возвращает подробную статистику всех игроков выбранного матча."""
+    with get_db() as db:
+        players = db.query(MatchPlayer).filter(MatchPlayer.match_id == match_id).all()
+        result = []
+        for p in players:
+            result.append({
+                "steam_id": p.steam_id,
+                "name": p.name,
+                "team": getattr(p, "team_side", "ALL"),
+                "kills": p.kills,
+                "deaths": p.deaths,
+                "assists": p.assists,
+                "kd": round(p.kills / max(1, p.deaths), 2),
+                "adr": round(p.adr, 1),
+                "hs_percent": round(p.hs_percent, 1),
+                "first_kills": getattr(p, "first_kills", 0),
+                "first_deaths": getattr(p, "first_deaths", 0),
+            })
+        return result

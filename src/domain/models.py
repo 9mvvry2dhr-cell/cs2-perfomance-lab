@@ -1,67 +1,41 @@
-from dataclasses import dataclass, field
-from typing import Optional, List
 from datetime import datetime
+from sqlalchemy import Column, Integer, String, Float, DateTime, ForeignKey
+from sqlalchemy.orm import relationship
+from src.database.connection import Base
 
 
-@dataclass
-class PlayerStats:
-    """Статистика конкретного игрока за один матч."""
-    steam_id: str
-    name: str
-    kills: int = 0
-    deaths: int = 0
-    assists: int = 0
-    damage: int = 0
-    headshots: int = 0
-    rounds_played: int = 0
-    first_kills: int = 0
-    first_deaths: int = 0
-    flash_assists: int = 0
-    utility_damage: int = 0
+class Match(Base):
+    __tablename__ = "matches"
 
-    @property
-    def kd_ratio(self) -> float:
-        """Расчёт соотношения убийств к смертям (K/D)."""
-        if self.deaths == 0:
-            return float(self.kills)
-        return round(self.kills / self.deaths, 2)
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    match_id = Column(String, unique=True, index=True, nullable=False)
+    map_name = Column(String, nullable=False)
+    played_at = Column(DateTime, default=datetime.utcnow)
+    score_ct = Column(Integer, default=0)
+    score_t = Column(Integer, default=0)
+    winner_side = Column(String, default="UNKNOWN")
 
-    @property
-    def adr(self) -> float:
-        """Расчёт среднего урона за раунд (ADR)."""
-        if self.rounds_played == 0:
-            return 0.0
-        return round(self.damage / self.rounds_played, 1)
-
-    @property
-    def hs_percentage(self) -> float:
-        """Процент попаданий в голову (% HS)."""
-        if self.kills == 0:
-            return 0.0
-        return round((self.headshots / self.kills) * 100, 1)
+    players = relationship("MatchPlayer", back_populates="match", cascade="all, delete-orphan")
 
 
-@dataclass
-class Match:
-    """Модель сыгранного матча CS2."""
-    match_id: str
-    map_name: str
-    played_at: datetime
-    duration_seconds: int = 0
-    score_ct: int = 0
-    score_t: int = 0
-    winner_side: str = ""  # "CT" или "T"
-    players: List[PlayerStats] = field(default_factory=list)
+class MatchPlayer(Base):
+    __tablename__ = "match_players"
 
-    @property
-    def total_rounds(self) -> int:
-        return self.score_ct + self.score_t
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    match_id = Column(String, ForeignKey("matches.match_id"), nullable=False)
+    steam_id = Column(String, index=True, nullable=False)
+    name = Column(String, nullable=False)
+    team_side = Column(String, default="ALL")
+    kills = Column(Integer, default=0)
+    deaths = Column(Integer, default=0)
+    assists = Column(Integer, default=0)
+    adr = Column(Float, default=0.0)
+    hs_percent = Column(Float, default=0.0)
+    first_kills = Column(Integer, default=0)
+    first_deaths = Column(Integer, default=0)
+
+    match = relationship("Match", back_populates="players")
 
 
-@dataclass
-class PerformanceInsight:
-    """Единица рекомендаций / анализа формы от AI Coach."""
-    category: str  # Aim, Utility, Positioning, Entry и т.д.
-    title: str
-    description: str
-    insight_type: str = "info"  # "positive", "warning", "info"
+# Алиас для обеспечения обратной совместимости с demo_parser.py
+PlayerStats = MatchPlayer

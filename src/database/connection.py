@@ -1,54 +1,34 @@
-import sqlite3
-from src.config.settings import DATABASE_PATH
+import os
+from contextlib import contextmanager
+from sqlalchemy import create_engine
+from sqlalchemy.orm import declarative_base, sessionmaker
+
+# Путь к базе данных SQLite
+DB_PATH = os.path.join("data", "cs2_performance_lab.db")
+os.makedirs("data", exist_ok=True)
+
+DATABASE_URL = f"sqlite:///{DB_PATH}"
+
+engine = create_engine(
+    DATABASE_URL, 
+    connect_args={"check_same_thread": False}
+)
+
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+Base = declarative_base()
 
 
-def init_db() -> None:
-    """Гарантированно инициализирует таблицы в базе данных."""
-    DATABASE_PATH.parent.mkdir(parents=True, exist_ok=True)
-    conn = sqlite3.connect(DATABASE_PATH)
-    cursor = conn.cursor()
-
-    # Таблица матчей
-    cursor.execute("""
-        CREATE TABLE IF NOT EXISTS matches (
-            match_id TEXT PRIMARY KEY,
-            map_name TEXT NOT NULL,
-            played_at TEXT NOT NULL,
-            duration_seconds INTEGER DEFAULT 0,
-            score_ct INTEGER DEFAULT 0,
-            score_t INTEGER DEFAULT 0,
-            winner_side TEXT DEFAULT ''
-        )
-    """)
-
-    # Таблица статистики игроков в матче
-    cursor.execute("""
-        CREATE TABLE IF NOT EXISTS player_stats (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            match_id TEXT NOT NULL,
-            steam_id TEXT NOT NULL,
-            name TEXT NOT NULL,
-            kills INTEGER DEFAULT 0,
-            deaths INTEGER DEFAULT 0,
-            assists INTEGER DEFAULT 0,
-            damage INTEGER DEFAULT 0,
-            headshots INTEGER DEFAULT 0,
-            rounds_played INTEGER DEFAULT 0,
-            first_kills INTEGER DEFAULT 0,
-            first_deaths INTEGER DEFAULT 0,
-            flash_assists INTEGER DEFAULT 0,
-            utility_damage INTEGER DEFAULT 0,
-            FOREIGN KEY (match_id) REFERENCES matches (match_id) ON DELETE CASCADE
-        )
-    """)
-
-    conn.commit()
-    conn.close()
+def init_db():
+    """Инициализация таблиц базы данных."""
+    from src.domain.models import Base as ModelsBase
+    ModelsBase.metadata.create_all(bind=engine)
 
 
-def get_connection() -> sqlite3.Connection:
-    """Возвращает объект подключения к базе данных SQLite."""
-    init_db()
-    conn = sqlite3.connect(DATABASE_PATH)
-    conn.row_factory = sqlite3.Row
-    return conn
+@contextmanager
+def get_db():
+    """Контекстный менеджер для безопасного управления сессиями БД."""
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
