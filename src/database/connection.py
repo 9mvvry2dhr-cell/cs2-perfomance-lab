@@ -1,32 +1,16 @@
-from contextlib import contextmanager
+from pathlib import Path
 from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker, Session
+from sqlalchemy.orm import sessionmaker
+from src.database.models import Base
 
-# Укажи правильный путь к базе данных
-DATABASE_URL = "sqlite:///data/cs2_performance_lab.db"
+DB_PATH = Path(__file__).resolve().parent.parent.parent / "data" / "cs2_analytics.db"
+DB_PATH.parent.mkdir(parents=True, exist_ok=True)
 
-engine = create_engine(
-    DATABASE_URL, 
-    connect_args={"check_same_thread": False} if "sqlite" in DATABASE_URL else {}
-)
+DATABASE_URL = f"sqlite:///{DB_PATH}"
 
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+engine = create_engine(DATABASE_URL, echo=False)
+SessionLocal = sessionmaker(bind=engine, autoflush=False, autocommit=False)
 
-
-def init_db() -> None:
-    """Инициализирует таблицы в базе данных."""
-    from src.domain.models import Base
+def init_db():
+    """Создает таблицы в базе данных, если они еще не существуют."""
     Base.metadata.create_all(bind=engine)
-
-
-@contextmanager
-def get_session():
-    """Контекстный менеджер для безопасного управления сессией SQLAlchemy."""
-    session: Session = SessionLocal()
-    try:
-        yield session
-    except Exception:
-        session.rollback()
-        raise
-    finally:
-        session.close()
