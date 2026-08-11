@@ -17,15 +17,8 @@ class DemoParser:
         is_valid = True
         validation_error = None
 
-        try:
-            game_rules = self.raw_parser.parse_ticks(["total_rounds_played"])
-            if isinstance(game_rules, pd.DataFrame) and not game_rules.empty:
-                rounds_played = int(game_rules["total_rounds_played"].max())
-        except Exception as e:
-            print(f"⚠️ Ошибка при чтении total_rounds_played: {e}")
-
-        score_ct = 0
-        score_t = 0
+        team_a_score = 0  # Команда, стартовавшая за CT (1-12 раунды)
+        team_b_score = 0  # Команда, стартовавшая за T (1-12 раунды)
         parsed_rounds = []
 
         try:
@@ -44,28 +37,35 @@ class DemoParser:
                         break
 
             if df_events is not None and not df_events.empty:
-                if rounds_played == 0:
-                    rounds_played = len(df_events)
+                df_valid_rounds = df_events[df_events["winner"].isin([2, 3, "2", "3", "CT", "T"])].copy()
+                
+                if len(df_valid_rounds) > 24:
+                    df_valid_rounds = df_valid_rounds.iloc[-24:]
 
-                if "winner" in df_events.columns:
-                    score_ct = int((df_events["winner"].astype(str).str.upper() == "CT").sum())
-                    score_t = int((df_events["winner"].astype(str).str.upper() == "T").sum())
+                rounds_played = len(df_valid_rounds)
 
-                    if score_ct == 0 and score_t == 0:
-                        score_t = int((df_events["winner"] == 2).sum())
-                        score_ct = int((df_events["winner"] == 3).sum())
+                for idx, (_, row) in enumerate(df_valid_rounds.iterrows()):
+                    actual_round_num = idx + 1
+                    w_side = str(row.get("winner", "")).upper()
 
-                for idx, row in df_events.iterrows():
-                    w_side = str(row.get("winner", "UNKNOWN"))
-                    if w_side == "3":
-                        w_side = "CT"
-                    elif w_side == "2":
-                        w_side = "T"
-                        
+                    is_ct_win = w_side in ["3", "CT"]
+                    is_t_win = w_side in ["2", "T"]
+
+                    if actual_round_num <= 12:
+                        if is_ct_win:
+                            team_a_score += 1
+                        elif is_t_win:
+                            team_b_score += 1
+                    else:
+                        if is_ct_win:
+                            team_b_score += 1
+                        elif is_t_win:
+                            team_a_score += 1
+
                     parsed_rounds.append(
                         ParsedRound(
-                            round_num=int(row.get("round", idx + 1)),
-                            winner_side=w_side.upper(),
+                            round_num=actual_round_num,
+                            winner_side="CT" if is_ct_win else ("T" if is_t_win else "UNKNOWN"),
                             win_reason=str(row.get("reason", "unknown")),
                             end_tick=int(row.get("tick", 0))
                         )
@@ -74,17 +74,18 @@ class DemoParser:
         except Exception as e:
             print(f"⚠️ Ошибка при парсинге round_end: {e}")
 
-        # Проверка Data Trust: Раунды не определены
         if rounds_played <= 0:
             is_valid = False
             validation_error = "Unable to determine rounds_played. Derived metrics skipped."
 
-        if score_ct > score_t:
-            winner_side = "CT"
-        elif score_t > score_ct:
-            winner_side = "T"
+        if team_a_score >= team_b_score:
+            score_ct = team_a_score
+            score_t = team_b_score
+            winner_side = "Team A"
         else:
-            winner_side = "Draw"
+            score_ct = team_b_score
+            score_t = team_a_score
+            winner_side = "Team B"
 
         player_ticks = self.raw_parser.parse_ticks([
             "kills_total",
@@ -96,9 +97,8 @@ class DemoParser:
 
         parsed_players = []
         if isinstance(player_ticks, pd.DataFrame) and not player_ticks.empty:
-            # P0 Fix: Финальное состояние определяется индивидуально по каждому игроку (группировка)
             id_col = "steamid" if "steamid" in player_ticks.columns else "name"
-            
+
             for player_id, group in player_ticks.groupby(id_col):
                 if str(player_id) in ["0", "None", ""]:
                     continue
