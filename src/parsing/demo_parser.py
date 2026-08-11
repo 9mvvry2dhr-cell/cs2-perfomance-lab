@@ -31,12 +31,43 @@ class DemoParser:
 
         parser = ValveDemoParser(str(self.file_path))
 
-        # 1. Извлекаем карту
+        # 1. Извлекаем карту и реальное время сыгранного матча
+        played_at = None
         try:
             header = parser.parse_header()
             map_name = header.get("map_name", "de_ancient") if header else "de_ancient"
+            
+            raw_date = header.get("date") if header else None
+            if raw_date:
+                try:
+                    played_at = datetime.fromisoformat(str(raw_date))
+                except ValueError:
+                    pass
         except Exception:
             map_name = "de_ancient"
+
+        # Если даты в хедере нет — берем время изменения файла на диске
+        if not played_at:
+            file_mtime = self.file_path.stat().st_mtime
+            played_at = datetime.fromtimestamp(file_mtime)# 1. Извлекаем карту и реальное время сыгранного матча
+        played_at = None
+        try:
+            header = parser.parse_header()
+            map_name = header.get("map_name", "de_ancient") if header else "de_ancient"
+            
+            raw_date = header.get("date") if header else None
+            if raw_date:
+                try:
+                    played_at = datetime.fromisoformat(str(raw_date))
+                except ValueError:
+                    pass
+        except Exception:
+            map_name = "de_ancient"
+
+        # Если даты в хедере нет — берем время изменения файла на диске
+        if not played_at:
+            file_mtime = self.file_path.stat().st_mtime
+            played_at = datetime.fromtimestamp(file_mtime)
 
         # 2. Получаем тики игроков и состояние матча
         total_rounds = 1
@@ -110,7 +141,7 @@ class DemoParser:
         return Match(
             match_id=f"match_{uuid.uuid4().hex[:8]}",
             map_name=map_name,
-            played_at=datetime.now(),
+            played_at=played_at,
             duration_seconds=total_rounds * 115,
             score_ct=score_ct,
             score_t=score_t,

@@ -83,3 +83,42 @@ def get_all_matches() -> List[Match]:
             matches.append(match)
 
     return matches
+def get_player_history(name_or_steam_id: str) -> List[dict]:
+    """Возвращает хронологическую историю всех матчей игрока для построения графиков."""
+    history = []
+    with get_connection() as conn:
+        cursor = conn.cursor()
+        cursor.execute("""
+            SELECT 
+                m.match_id,
+                m.map_name,
+                m.played_at,
+                p.kills,
+                p.deaths,
+                p.damage,
+                p.headshots,
+                p.rounds_played
+            FROM player_stats p
+            JOIN matches m ON p.match_id = m.match_id
+            WHERE p.name = ? OR p.steam_id = ?
+            ORDER BY m.played_at ASC
+        """, (name_or_steam_id, name_or_steam_id))
+        
+        rows = cursor.fetchall()
+        for r in rows:
+            rounds = max(1, r["rounds_played"])
+            deaths = max(1, r["deaths"])
+            
+            history.append({
+                "match_id": r["match_id"],
+                "map_name": r["map_name"],
+                "played_at": r["played_at"],
+                "kd": round(r["kills"] / deaths, 2),
+                "adr": round(r["damage"] / rounds, 1),
+                "hs_percent": round((r["headshots"] / max(1, r["kills"])) * 100, 1),
+                "kills": r["kills"],
+                "deaths": r["deaths"],
+                "rounds": rounds
+            })
+            
+    return history
