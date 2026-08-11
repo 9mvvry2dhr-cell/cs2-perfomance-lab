@@ -1,136 +1,118 @@
-from sqlalchemy.orm import Session, joinedload
-from src.database.connection import SessionLocal
-from src.domain.models import Match, MatchPlayer
-from src.domain.dto import ParsedMatch
+from typing import List, Dict, Any, Optional
+from sqlalchemy import select
+from sqlalchemy.orm import joinedload
+
+from src.database.connection import get_session
+from src.domain.models import Match, PlayerStat
+from src.domain.metrics import calculate_kd, calculate_adr, calculate_hs_percent
+from src.parsing.dto import ParsedMatch
 
 
-def save_match(parsed_match: ParsedMatch) -> Match:
-    """Принимает ParsedMatch (DTO), преобразует в ORM-модели и сохраняет в БД."""
-    session: Session = SessionLocal()
-    try:
-        # 1. Создаем ORM объект Match из DTO
-        match_orm = Match(
-            id=parsed_match.match_id,
+def save_match(parsed_match: ParsedMatch) -> Optional[Match]:
+    """Принимает ParsedMatch DTO и сохраняет в БД."""
+    with get_session() as session:
+        # Проверка на дубликат
+        existing = session.scalar(
+            select(Match).where(Match.match_id == parsed_match.match_id)
+        )
+        if existing:
+            return existing
+
+        rounds_cnt = parsed_match.rounds_played
+        if rounds_cnt <= 0:
+            rounds_cnt = max(1, parsed_match.score_ct + parsed_match.score_t)
+
+        match = Match(
+            match_id=parsed_match.match_id,
             map_name=parsed_match.map_name,
-            duration_seconds=parsed_match.duration_seconds,
-            rounds_played=parsed_match.rounds_played,
+            played_at=parsed_match.played_at,
+            score_ct=parsed_match.score_ct,
+            score_t=parsed_match.score_t,
+            rounds_played=rounds_cnt,
+            winner_side=parsed_match.winner_side,
         )
 
-        # 2. Создаем ORM объекты MatchPlayer из DTO
         for p in parsed_match.players:
-            player_orm = MatchPlayer(
-                match_id=parsed_match.match_id,
-                steam_id=p.steam_id,
+            player_stat = PlayerStat(
                 name=p.name,
+                team=p.team,
                 kills=p.kills,
                 deaths=p.deaths,
                 assists=p.assists,
-                damage=p.damage,
-                headshots=p.headshots,
-                rounds_played=p.rounds_played,
-                adr=p.adr,
-                hs_percent=p.hs_percent,
+                kd=calculate_kd(p.kills, p.deaths),
+                adr=calculate_adr(p.damage, rounds_cnt),
+                hs_percent=calculate_hs_percent(p.headshots, p.kills),
+                first_kills=p.first_kills,
+                first_deaths=p.first_deaths,
             )
-            match_orm.players.append(player_orm)
+            match.players.append(player_stat)
 
-        # 3. Сохраняем в БД
-        session.merge(match_orm)
+        session.add(match)
         session.commit()
-        session.refresh(match_orm)
-        return match_orm
-
-    except Exception as e:
-        session.rollback()
-        raise e
-    finally:
-        session.close()
-
-
-def get_all_matches():
-    """Получает все матчи с предзагруженными игроками."""
-    session: Session = SessionLocal()
-    try:
-        matches = (
-            session.query(Match)
-            .options(joinedload(Match.players))
-            .order_by(Match.id.desc())
-            .all()
-        )
-        return matches
-    finally:
-        session.close()
-
-
-def get_match_by_id(match_id: str):
-    """Получает конкретный матч по id."""
-    session: Session = SessionLocal()
-    try:
-        match = (
-            session.query(Match)
-            .options(joinedload(Match.players))
-            .filter(Match.id == match_id)
-            .first()
-        )
         return match
-    finally:
-        session.close()
 
 
-def get_match_players_stats(match_id: str):
-    """Получает статистику всех игроков конкретного матча."""
-    session: Session = SessionLocal()
-    try:
-        players = (
-            session.query(MatchPlayer)
-            .filter(MatchPlayer.match_id == match_id)
-            .all()
+def get_all_matches() -> List[Match]:
+    """Возвращает список всех матчей."""
+    with get_session() as session:
+        stmt = select(Match).options(joinedload(Match.players)).order_by(Match.played_at.desc())
+        return list(session.scalars(stmt).unique().all())
+
+
+def get_player_history(player_name: str) -> List[Dict[str, Any]]:
+    """Возвращает историю матчей игрока."""
+    with get_session() as session:
+        stmt = (
+            select(PlayerStat, Match)
+            .join(Match, PlayerStat.match_id == Match.match_id)
+            .where(PlayerStat.name == player_name)
+            .order_by(Match.played_at.asc())
         )
-        return players
-    finally:
-        session.close()
+        results = session.execute(stmt).all()
+
+        return [
+            {
+                "match_id": match.match_id,
+                "map_name": match.map_name,
+                "played_at": match.played_at,
+                "kills": stat.kills or 0,
+                "deaths": stat.deaths or 0,
+                "assists": stat.assists or 0,
+                "kd": stat.kd or 0.0,
+                "adr": stat.adr or 0.0,
+                "hs_percent": stat.hs_percent or 0.0,
+                "first_kills": stat.first_kills or 0,
+                "first_deaths": stat.first_deaths or 0,
+            }
+            for stat, match in results
+        ]
 
 
-def get_player_history(steam_id: str):
-    """Получает историю всех матчей конкретного игрока."""
-    session: Session = SessionLocal()
-    try:
-        players_stats = (
-            session.query(MatchPlayer)
-            .filter(MatchPlayer.steam_id == steam_id)
-            .all()
-        )
-        return players_stats
-    finally:
-        session.close()
+def get_match_by_id(match_id: str) -> Optional[Match]:
+    """Возвращает матч по ID."""
+    with get_session() as session:
+        stmt = select(Match).options(joinedload(Match.players)).where(Match.match_id == match_id)
+        return session.scalar(stmt)
 
 
-def get_recent_matches(limit: int = 10):
-    """Получает список последних N матчей."""
-    session: Session = SessionLocal()
-    try:
-        matches = (
-            session.query(Match)
-            .order_by(Match.id.desc())
-            .limit(limit)
-            .all()
-        )
-        return matches
-    finally:
-        session.close()
+def get_match_players_stats(match_id: str) -> List[Dict[str, Any]]:
+    """Возвращает статистику игроков матча."""
+    with get_session() as session:
+        stmt = select(PlayerStat).where(PlayerStat.match_id == match_id)
+        players = session.scalars(stmt).all()
 
-
-def delete_match(match_id: str):
-    """Удаляет матч из БД по его ID."""
-    session: Session = SessionLocal()
-    try:
-        match = session.query(Match).filter(Match.id == match_id).first()
-        if match:
-            session.delete(match)
-            session.commit()
-            return True
-        return False
-    except Exception as e:
-        session.rollback()
-        raise e
-    finally:
-        session.close()
+        return [
+            {
+                "name": p.name,
+                "team": p.team,
+                "kills": p.kills,
+                "deaths": p.deaths,
+                "assists": p.assists,
+                "kd": p.kd,
+                "adr": p.adr,
+                "hs_percent": p.hs_percent,
+                "first_kills": p.first_kills,
+                "first_deaths": p.first_deaths,
+            }
+            for p in players
+        ]

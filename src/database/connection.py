@@ -1,36 +1,32 @@
-import os
 from contextlib import contextmanager
 from sqlalchemy import create_engine
-from sqlalchemy.orm import declarative_base, sessionmaker
+from sqlalchemy.orm import sessionmaker, Session
 
-DB_PATH = os.path.join("data", "cs2_performance_lab.db")
-os.makedirs("data", exist_ok=True)
-
-DATABASE_URL = f"sqlite:///{DB_PATH}"
+# Укажи правильный путь к базе данных
+DATABASE_URL = "sqlite:///data/cs2_performance_lab.db"
 
 engine = create_engine(
     DATABASE_URL, 
-    connect_args={"check_same_thread": False}
+    connect_args={"check_same_thread": False} if "sqlite" in DATABASE_URL else {}
 )
 
-# КЛЮЧЕВОЕ ИЗМЕНЕНИЕ: expire_on_commit=False предотвращает ошибку DetachedInstanceError
-SessionLocal = sessionmaker(
-    autocommit=False, 
-    autoflush=False, 
-    bind=engine, 
-    expire_on_commit=False
-)
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
-Base = declarative_base()
 
-def init_db():
-    from src.domain.models import Base as ModelsBase
-    ModelsBase.metadata.create_all(bind=engine)
+def init_db() -> None:
+    """Инициализирует таблицы в базе данных."""
+    from src.domain.models import Base
+    Base.metadata.create_all(bind=engine)
+
 
 @contextmanager
-def get_db():
-    db = SessionLocal()
+def get_session():
+    """Контекстный менеджер для безопасного управления сессией SQLAlchemy."""
+    session: Session = SessionLocal()
     try:
-        yield db
+        yield session
+    except Exception:
+        session.rollback()
+        raise
     finally:
-        db.close()
+        session.close()
