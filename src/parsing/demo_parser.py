@@ -2,6 +2,7 @@ from pathlib import Path
 import pandas as pd
 from demoparser2 import DemoParser as RawDemoParser
 
+from src.metrics.clutch import calculate_clutch_metrics
 from src.metrics.entry import calculate_entry_metrics
 from src.metrics.utility import calculate_utility_metrics
 from src.parsing.dto import ParsedMatch, ParsedPlayer, ParsedRound
@@ -34,7 +35,11 @@ class DemoParser:
         df_events = round_events
       elif isinstance(round_events, list) and len(round_events) > 0:
         for item in round_events:
-          if isinstance(item, tuple) and len(item) > 1 and isinstance(item[1], pd.DataFrame):
+          if (
+              isinstance(item, tuple)
+              and len(item) > 1
+              and isinstance(item[1], pd.DataFrame)
+          ):
             df_events = item[1]
             break
           elif isinstance(item, pd.DataFrame):
@@ -98,9 +103,10 @@ class DemoParser:
       score_t = team_a_score
       winner_side = "Team B"
 
-    # 2. Вычисление доп. метрик из модуля src/metrics
+    # 2. Вычисление продвинутых метрик из пакета src/metrics
     utility_stats = calculate_utility_metrics(self.raw_parser)
     entry_stats = calculate_entry_metrics(self.raw_parser)
+    clutch_stats = calculate_clutch_metrics(self.raw_parser)
 
     # 3. Парсинг основной статистики игроков из тиков
     player_ticks = self.raw_parser.parse_ticks([
@@ -125,9 +131,10 @@ class DemoParser:
         if not raw_steam_id or raw_steam_id == "0":
           raw_steam_id = f"UNKNOWN_{last_row.get('name', 'player')}"
 
-        # Извлекаем Utility и Entry метрики для текущего steam_id
+        # Извлекаем метрики для текущего steam_id
         p_util = utility_stats.get(raw_steam_id, {})
         p_entry = entry_stats.get(raw_steam_id, {})
+        p_clutch = clutch_stats.get(raw_steam_id, {})
 
         player = ParsedPlayer(
             steam_id=raw_steam_id,
@@ -138,13 +145,15 @@ class DemoParser:
             damage=float(last_row.get("damage_total", 0.0)),
             headshots=int(last_row.get("headshot_kills_total", 0)),
             rounds_played=rounds_played,
-            # Новые поля
+            # Utility & Entry
             he_damage=float(p_util.get("he_damage", 0.0)),
             inferno_damage=float(p_util.get("inferno_damage", 0.0)),
             enemies_flashed=int(p_util.get("enemies_flashed", 0)),
             flash_duration=float(p_util.get("flash_duration", 0.0)),
             entry_kills=int(p_entry.get("entry_kills", 0)),
             entry_deaths=int(p_entry.get("entry_deaths", 0)),
+            # Clutches
+            clutches_won=int(p_clutch.get("clutches_won", 0)),
         )
         parsed_players.append(player)
 
