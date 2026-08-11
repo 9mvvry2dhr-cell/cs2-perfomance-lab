@@ -11,6 +11,7 @@ class Match(Base):
     match_id = Column(String, unique=True, index=True, nullable=False)
     map_name = Column(String, nullable=False)
     played_at = Column(DateTime, default=datetime.utcnow)
+    duration_seconds = Column(Float, default=0.0)
     score_ct = Column(Integer, default=0)
     score_t = Column(Integer, default=0)
     winner_side = Column(String, default="UNKNOWN")
@@ -29,6 +30,9 @@ class MatchPlayer(Base):
     kills = Column(Integer, default=0)
     deaths = Column(Integer, default=0)
     assists = Column(Integer, default=0)
+    damage = Column(Integer, default=0)
+    headshots = Column(Integer, default=0)
+    rounds_played = Column(Integer, default=0)
     adr = Column(Float, default=0.0)
     hs_percent = Column(Float, default=0.0)
     first_kills = Column(Integer, default=0)
@@ -37,5 +41,5 @@ class MatchPlayer(Base):
     match = relationship("Match", back_populates="players")
 
 
-# Алиас для обеспечения обратной совместимости с demo_parser.py
+# Прямой алиас, чтобы DemoParser создавал объекты этого класса без ошибок
 PlayerStats = MatchPlayer
