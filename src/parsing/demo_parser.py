@@ -1,150 +1,60 @@
 from pathlib import Path
-from datetime import datetime
-import uuid
-from demoparser2 import DemoParser as ValveDemoParser
-from src.domain.models import Match, PlayerStats
-
-
-# Список ключевых накопительных свойств из сетевых тиков движка
-PLAYER_GAME_PROPS = [
-    "is_warmup_period",
-    "total_rounds_played",
-    "team_rounds_total",
-    "team_name",
-    "kills_total",
-    "deaths_total",
-    "assists_total",
-    "headshot_kills_total",
-    "damage_total",
-]
+from demoparser2 import DemoParser as RawDemoParser
+from src.domain.dto import ParsedMatch, ParsedPlayer
 
 
 class DemoParser:
-    """Отвечает за парсинг CS2 .dem файлов через накопительные Game-State тики."""
-
-    def __init__(self, file_path: Path):
+    def __init__(self, file_path: str):
         self.file_path = Path(file_path)
+        self.raw_parser = RawDemoParser(str(self.file_path))
 
-    def parse(self) -> Match:
-        if not self.file_path.exists():
-            raise FileNotFoundError(f"Файл не найден: {self.file_path}")
+    def parse(self) -> ParsedMatch:
+        header = self.raw_parser.parse_header()
+        map_name = header.get("map_name", "unknown")
 
-        parser = ValveDemoParser(str(self.file_path))
+        # 1. Считаем раунды
+        game_rules = self.raw_parser.parse_ticks(["total_rounds_played"])
+        max_rounds = 0
+        if not game_rules.empty:
+            max_rounds = int(game_rules["total_rounds_played"].max())
 
-        # 1. Извлекаем карту и реальное время сыгранного матча
-        played_at = None
-        try:
-            header = parser.parse_header()
-            map_name = header.get("map_name", "de_ancient") if header else "de_ancient"
-            
-            raw_date = header.get("date") if header else None
-            if raw_date:
-                try:
-                    played_at = datetime.fromisoformat(str(raw_date))
-                except ValueError:
-                    pass
-        except Exception:
-            map_name = "de_ancient"
+        # 2. Собираем финальные тики игроков
+        player_ticks = self.raw_parser.parse_ticks([
+            "kills_total",
+            "deaths_total",
+            "assists_total",
+            "damage_total",
+            "headshot_kills_total"
+        ])
 
-        # Если даты в хедере нет — берем время изменения файла на диске
-        if not played_at:
-            file_mtime = self.file_path.stat().st_mtime
-            played_at = datetime.fromtimestamp(file_mtime)# 1. Извлекаем карту и реальное время сыгранного матча
-        played_at = None
-        try:
-            header = parser.parse_header()
-            map_name = header.get("map_name", "de_ancient") if header else "de_ancient"
-            
-            raw_date = header.get("date") if header else None
-            if raw_date:
-                try:
-                    played_at = datetime.fromisoformat(str(raw_date))
-                except ValueError:
-                    pass
-        except Exception:
-            map_name = "de_ancient"
+        parsed_players = []
+        if not player_ticks.empty:
+            last_tick = player_ticks["tick"].max()
+            final_stats = player_ticks[player_ticks["tick"] == last_tick]
 
-        # Если даты в хедере нет — берем время изменения файла на диске
-        if not played_at:
-            file_mtime = self.file_path.stat().st_mtime
-            played_at = datetime.fromtimestamp(file_mtime)
-
-        # 2. Получаем тики игроков и состояние матча
-        total_rounds = 1
-        players = []
-        score_ct, score_t = 0, 0
-
-        try:
-            df_ticks = parser.parse_ticks(PLAYER_GAME_PROPS)
-            
-            if df_ticks is not None and not df_ticks.empty:
-                # Фильтруем разминку и берем финальный тик матча
-                last_tick = df_ticks["tick"].max()
-                final_df = df_ticks[(df_ticks["tick"] == last_tick) & (df_ticks["is_warmup_period"] == False)].copy()
-
-                if not final_df.empty:
-                    # Извлекаем общее количество сыгранных раундов из первого валидного игрока
-                    total_rounds = int(final_df["total_rounds_played"].iloc[0])
-                    total_rounds = max(1, total_rounds)
-
-                    # Извлекаем счет сторон из сетевых структур команд
-                    for _, row in final_df.iterrows():
-                        team_name = str(row.get("team_name", ""))
-                        rounds_total = int(row.get("team_rounds_total", 0))
-                        if "CT" in team_name:
-                            score_ct = rounds_total
-                        elif "TERRORIST" in team_name:
-                            score_t = rounds_total
-
-                    # Собираем статистику каждого игрока
-                    for _, row in final_df.iterrows():
-                        steam_id = str(row.get("steamid", "0"))
-                        if steam_id in ["0", "None", ""]:
-                            continue
-
-                        name = str(row.get("name", "Player"))
-                        kills = int(row.get("kills_total", 0))
-                        deaths = int(row.get("deaths_total", 0))
-                        assists = int(row.get("assists_total", 0))
-                        headshots = int(row.get("headshot_kills_total", 0))
-                        damage = int(row.get("damage_total", 0))
-
-                        players.append(
-                            PlayerStats(
-                                steam_id=steam_id,
-                                name=name,
-                                kills=kills,
-                                deaths=deaths,
-                                assists=assists,
-                                damage=damage,
-                                headshots=headshots,
-                                rounds_played=total_rounds,
-                            )
-                        )
-        except Exception:
-            pass
-
-        # Если данные по тикам не сработали, создаем заглушку
-        if not players:
-            players.append(
-                PlayerStats(
-                    steam_id="0",
-                    name="Unknown Player",
-                    kills=0,
-                    deaths=0,
-                    rounds_played=total_rounds,
+            for _, row in final_stats.iterrows():
+                steam_id = str(row.get("steamid", row.get("name", "0")))
+                player = ParsedPlayer(
+                    steam_id=steam_id,
+                    name=str(row.get("name", "Unknown")),
+                    kills=int(row.get("kills_total", 0)),
+                    deaths=int(row.get("deaths_total", 0)),
+                    assists=int(row.get("assists_total", 0)),
+                    damage=float(row.get("damage_total", 0.0)),
+                    headshots=int(row.get("headshot_kills_total", 0)),
+                    rounds_played=max_rounds
                 )
-            )
+                parsed_players.append(player)
 
-        winner_side = "CT" if score_ct > score_t else ("T" if score_t > score_ct else "Draw")
+        match_id = self.file_path.stem
 
-        return Match(
-            match_id=f"match_{uuid.uuid4().hex[:8]}",
+        return ParsedMatch(
+            match_id=match_id,
             map_name=map_name,
-            played_at=played_at,
-            duration_seconds=total_rounds * 115,
-            score_ct=score_ct,
-            score_t=score_t,
-            winner_side=winner_side,
-            players=players
+            duration_seconds=0,
+            rounds_played=max_rounds,
+            score_ct=0,
+            score_t=0,
+            winner_side="Unknown",
+            players=parsed_players
         )

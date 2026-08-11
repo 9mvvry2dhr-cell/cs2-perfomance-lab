@@ -2,50 +2,66 @@ import sys
 from pathlib import Path
 from demoparser2 import DemoParser
 
-DEMO_PATH = r"D:\Steam\steamapps\common\Counter-Strike Global Offensive\game\csgo\replays\match730_003829751258281935387_0710047347_187.dem"
 
-def main():
-    demo_file = Path(DEMO_PATH)
-    if not demo_file.exists():
-        print(f"❌ Файл не найден: {demo_file}")
-        sys.exit(1)
+def analyze_demo(demo_path: str):
+    path = Path(demo_path)
+    if not path.exists():
+        print(f"❌ Файл не найден: {path}")
+        return
 
-    parser = DemoParser(str(demo_file))
+    print(f"🔍 Анализ демки: {path.name}\n" + "=" * 50)
+    parser = DemoParser(str(path))
 
-    # Запрашиваем поля итоговой статистики игроков
-    player_props = [
-        "is_warmup_period",
-        "total_rounds_played",
-        "kills_total",
-        "deaths_total",
-        "assists_total",
-        "headshot_kills_total",
-        "damage_total",
-    ]
+    # 1. Заголовки / Базовая информация
+    header = parser.parse_header()
+    print("📋 HEADER INFO:")
+    for k, v in header.items():
+        print(f"  • {k}: {v}")
 
-    print("\n--- Финальная статистика игроков (последний тик матча) ---")
-    df = parser.parse_ticks(player_props)
-    
-    if df is not None and not df.empty:
-        # Берем только последний тик (финал матча) и фильтруем разминку
-        last_tick = df["tick"].max()
-        final_df = df[(df["tick"] == last_tick) & (df["is_warmup_period"] == False)]
+    # 2. Проверка зафиксированных раундов и фаз игры
+    print("\n🎮 GAME PHASES & ROUNDS:")
+    try:
+        game_rules = parser.parse_ticks(
+            ["is_warmup_period", "is_match_started", "total_rounds_played"]
+        )
+        print(f"  • Всего тиков с правилами: {len(game_rules)}")
+        if not game_rules.empty:
+            max_rounds = game_rules["total_rounds_played"].max()
+            print(f"  • Макс. total_rounds_played: {max_rounds}")
+    except Exception as e:
+        print(f"  ⚠️ Ошибка при чтении game_rules: {e}")
 
-        print(final_df[["name", "steamid", "kills_total", "deaths_total", "damage_total", "total_rounds_played"]].to_string())
+    # 3. Финальная статистика игроков из тиков
+    print("\n📊 PLAYER STATS (Raw end-game props):")
+    try:
+        player_stats = parser.parse_ticks(
+            [
+                "kills_total",
+                "deaths_total",
+                "assists_total",
+                "damage_total",
+                "headshot_kills_total",
+            ]
+        )
 
-        # Ищем статистику твоей учетки (kbn_san)
-        my_stats = final_df[final_df["name"].str.contains("kbn_san", case=False, na=False)]
-        if not my_stats.empty:
-            row = my_stats.iloc[0]
-            rounds = row["total_rounds_played"]
-            damage = row["damage_total"]
-            adr = round(damage / max(1, rounds), 1)
-            print("\n" + "="*40)
-            print(f"🎯 ТОЧНЫЙ ADR ИГРОКА kbn_san:")
-            print(f" • Урон: {damage}")
-            print(f" • Раундов: {rounds}")
-            print(f" • Рассчитанный ADR: {adr}")
-            print("="*40)
+        if not player_stats.empty:
+            last_tick = player_stats["tick"].max()
+            final_stats = player_stats[player_stats["tick"] == last_tick]
+
+            for _, row in final_stats.iterrows():
+                name = row.get("name", row.get("steamid", "Unknown"))
+                kills = row.get("kills_total", 0)
+                deaths = row.get("deaths_total", 0)
+                damage = row.get("damage_total", 0)
+                print(
+                    f"  • {name:<20} | K: {kills:<2} | D: {deaths:<2} | DMG: {damage}"
+                )
+    except Exception as e:
+        print(f"  ⚠️ Ошибка при чтении player_stats: {e}")
+
 
 if __name__ == "__main__":
-    main()
+    if len(sys.argv) < 2:
+        print("Использование: python scripts/debug_demo.py <путь_к_файлу.dem>")
+    else:
+        analyze_demo(sys.argv[1])
