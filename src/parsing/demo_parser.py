@@ -13,8 +13,10 @@ class DemoParser:
         header = self.raw_parser.parse_header()
         map_name = header.get("map_name", "unknown")
 
-        # 1. Получаем общее количество раундов через тики правил
         rounds_played = 0
+        is_valid = True
+        validation_error = None
+
         try:
             game_rules = self.raw_parser.parse_ticks(["total_rounds_played"])
             if isinstance(game_rules, pd.DataFrame) and not game_rules.empty:
@@ -22,7 +24,6 @@ class DemoParser:
         except Exception as e:
             print(f"⚠️ Ошибка при чтении total_rounds_played: {e}")
 
-        # 2. Извлекаем события завершения раундов для счета и модели раундов
         score_ct = 0
         score_t = 0
         parsed_rounds = []
@@ -54,7 +55,6 @@ class DemoParser:
                         score_t = int((df_events["winner"] == 2).sum())
                         score_ct = int((df_events["winner"] == 3).sum())
 
-                # Заполняем список раундов
                 for idx, row in df_events.iterrows():
                     w_side = str(row.get("winner", "UNKNOWN"))
                     if w_side == "3":
@@ -74,7 +74,11 @@ class DemoParser:
         except Exception as e:
             print(f"⚠️ Ошибка при парсинге round_end: {e}")
 
-        # Определяем победителя матча
+        # Проверка Data Trust: Раунды не определены
+        if rounds_played <= 0:
+            is_valid = False
+            validation_error = "Unable to determine rounds_played. Derived metrics skipped."
+
         if score_ct > score_t:
             winner_side = "CT"
         elif score_t > score_ct:
@@ -82,7 +86,6 @@ class DemoParser:
         else:
             winner_side = "Draw"
 
-        # 3. Считываем итоговую статистику игроков
         player_ticks = self.raw_parser.parse_ticks([
             "kills_total",
             "deaths_total",
@@ -93,20 +96,28 @@ class DemoParser:
 
         parsed_players = []
         if isinstance(player_ticks, pd.DataFrame) and not player_ticks.empty:
-            last_tick = player_ticks["tick"].max()
-            final_stats = player_ticks[player_ticks["tick"] == last_tick]
+            # P0 Fix: Финальное состояние определяется индивидуально по каждому игроку (группировка)
+            id_col = "steamid" if "steamid" in player_ticks.columns else "name"
+            
+            for player_id, group in player_ticks.groupby(id_col):
+                if str(player_id) in ["0", "None", ""]:
+                    continue
 
-            for _, row in final_stats.iterrows():
-                steam_id = str(row.get("steamid", row.get("name", "0")))
+                last_row = group.sort_values("tick").iloc[-1]
+
+                raw_steam_id = str(last_row.get("steamid", ""))
+                if not raw_steam_id or raw_steam_id == "0":
+                    raw_steam_id = f"UNKNOWN_{last_row.get('name', 'player')}"
+
                 player = ParsedPlayer(
-                    steam_id=steam_id,
-                    name=str(row.get("name", "Unknown")),
-                    kills=int(row.get("kills_total", 0)),
-                    deaths=int(row.get("deaths_total", 0)),
-                    assists=int(row.get("assists_total", 0)),
-                    damage=float(row.get("damage_total", 0.0)),
-                    headshots=int(row.get("headshot_kills_total", 0)),
-                    rounds_played=rounds_played if rounds_played > 0 else 1
+                    steam_id=raw_steam_id,
+                    name=str(last_row.get("name", "Unknown")),
+                    kills=int(last_row.get("kills_total", 0)),
+                    deaths=int(last_row.get("deaths_total", 0)),
+                    assists=int(last_row.get("assists_total", 0)),
+                    damage=float(last_row.get("damage_total", 0.0)),
+                    headshots=int(last_row.get("headshot_kills_total", 0)),
+                    rounds_played=rounds_played
                 )
                 parsed_players.append(player)
 
@@ -121,5 +132,7 @@ class DemoParser:
             score_t=score_t,
             winner_side=winner_side,
             players=parsed_players,
-            rounds=parsed_rounds
+            rounds=parsed_rounds,
+            is_valid=is_valid,
+            validation_error=validation_error
         )

@@ -7,7 +7,7 @@ from typing import List, Optional
 class ParsedRound:
     round_num: int
     winner_side: str  # "CT" или "T"
-    win_reason: str   # Причина окончания (например, elimination, bomb_defused)
+    win_reason: str   # Причина окончания раунда
     end_tick: int = 0
 
 
@@ -20,7 +20,7 @@ class ParsedPlayer:
     assists: int = 0
     damage: float = 0.0
     headshots: int = 0
-    rounds_played: int = 1
+    rounds_played: int = 0
     first_kills: int = 0
     first_deaths: int = 0
     team: Optional[str] = None
@@ -38,3 +38,5 @@ class ParsedMatch:
     played_at: datetime = field(default_factory=datetime.now)
     players: List[ParsedPlayer] = field(default_factory=list)
     rounds: List[ParsedRound] = field(default_factory=list)
+    is_valid: bool = True
+    validation_error: Optional[str] = None

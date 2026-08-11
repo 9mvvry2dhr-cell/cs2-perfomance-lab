@@ -9,7 +9,7 @@ from src.parsing.dto import ParsedMatch
 
 
 def save_match(parsed_match: ParsedMatch) -> Optional[Match]:
-    """Принимает ParsedMatch DTO и сохраняет матч, игроков и раунды в БД."""
+    """Сохраняет матч, игроков и раунды в БД без применения fake-fallback раундов."""
     with get_session() as session:
         existing = session.scalar(
             select(Match).where(Match.match_id == parsed_match.match_id)
@@ -17,30 +17,40 @@ def save_match(parsed_match: ParsedMatch) -> Optional[Match]:
         if existing:
             return existing
 
-        rounds_cnt = parsed_match.rounds_played
-        if rounds_cnt <= 0:
-            rounds_cnt = max(1, parsed_match.score_ct + parsed_match.score_t)
-
         match = Match(
             match_id=parsed_match.match_id,
             map_name=parsed_match.map_name,
             played_at=parsed_match.played_at,
             score_ct=parsed_match.score_ct,
             score_t=parsed_match.score_t,
-            rounds_played=rounds_cnt,
+            rounds_played=parsed_match.rounds_played,
             winner_side=parsed_match.winner_side,
+            is_valid=parsed_match.is_valid,
+            validation_error=parsed_match.validation_error
         )
 
         for p in parsed_match.players:
+            # Расчет метрик выполняется ТОЛЬКО при валидных раундах
+            if parsed_match.is_valid and parsed_match.rounds_played > 0:
+                kd_val = calculate_kd(p.kills, p.deaths)
+                adr_val = calculate_adr(p.damage, parsed_match.rounds_played)
+                hs_val = calculate_hs_percent(p.headshots, p.kills)
+            else:
+                kd_val, adr_val, hs_val = None, None, None
+
             player_stat = PlayerStat(
+                steam_id=p.steam_id,
                 name=p.name,
                 team=p.team,
                 kills=p.kills,
                 deaths=p.deaths,
                 assists=p.assists,
-                kd=calculate_kd(p.kills, p.deaths),
-                adr=calculate_adr(p.damage, rounds_cnt),
-                hs_percent=calculate_hs_percent(p.headshots, p.kills),
+                damage=p.damage,
+                headshots=p.headshots,
+                rounds_played=p.rounds_played,
+                kd=kd_val,
+                adr=adr_val,
+                hs_percent=hs_val,
                 first_kills=p.first_kills,
                 first_deaths=p.first_deaths,
             )
@@ -61,14 +71,24 @@ def save_match(parsed_match: ParsedMatch) -> Optional[Match]:
 
 
 def get_all_matches() -> List[Match]:
+    """Возвращает список всех матчей вместе со связанными игроками и раундами."""
     with get_session() as session:
-        stmt = select(Match).options(joinedload(Match.players), joinedload(Match.rounds)).order_by(Match.played_at.desc())
+        stmt = (
+            select(Match)
+            .options(joinedload(Match.players), joinedload(Match.rounds))
+            .order_by(Match.played_at.desc())
+        )
         return list(session.scalars(stmt).unique().all())
 
 
 def get_match_by_id(match_id: str) -> Optional[Match]:
+    """Возвращает матч по ID вместе со статистикой."""
     with get_session() as session:
-        stmt = select(Match).options(joinedload(Match.players), joinedload(Match.rounds)).where(Match.match_id == match_id)
+        stmt = (
+            select(Match)
+            .options(joinedload(Match.players), joinedload(Match.rounds))
+            .where(Match.match_id == match_id)
+        )
         return session.scalar(stmt)
 
 
@@ -80,11 +100,15 @@ def get_match_players_stats(match_id: str) -> List[Dict[str, Any]]:
 
         return [
             {
+                "steam_id": p.steam_id,
                 "name": p.name,
                 "team": p.team,
                 "kills": p.kills,
                 "deaths": p.deaths,
                 "assists": p.assists,
+                "damage": p.damage,
+                "headshots": p.headshots,
+                "rounds_played": p.rounds_played,
                 "kd": p.kd,
                 "adr": p.adr,
                 "hs_percent": p.hs_percent,
@@ -95,13 +119,13 @@ def get_match_players_stats(match_id: str) -> List[Dict[str, Any]]:
         ]
 
 
-def get_player_history(player_name: str) -> List[Dict[str, Any]]:
-    """Возвращает историю матчей конкретного игрока."""
+def get_player_history(steam_id: str) -> List[Dict[str, Any]]:
+    """Поиск истории игрока строго по SteamID (Identity)."""
     with get_session() as session:
         stmt = (
             select(PlayerStat, Match)
             .join(Match, PlayerStat.match_id == Match.match_id)
-            .where(PlayerStat.name == player_name)
+            .where(PlayerStat.steam_id == steam_id)
             .order_by(Match.played_at.asc())
         )
         results = session.execute(stmt).all()
@@ -114,9 +138,12 @@ def get_player_history(player_name: str) -> List[Dict[str, Any]]:
                 "kills": stat.kills or 0,
                 "deaths": stat.deaths or 0,
                 "assists": stat.assists or 0,
-                "kd": stat.kd or 0.0,
-                "adr": stat.adr or 0.0,
-                "hs_percent": stat.hs_percent or 0.0,
+                "damage": stat.damage or 0.0,
+                "headshots": stat.headshots or 0,
+                "rounds_played": stat.rounds_played or 0,
+                "kd": stat.kd,
+                "adr": stat.adr,
+                "hs_percent": stat.hs_percent,
                 "first_kills": stat.first_kills or 0,
                 "first_deaths": stat.first_deaths or 0,
             }
