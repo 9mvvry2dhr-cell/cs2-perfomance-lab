@@ -1,5 +1,5 @@
 import os
-from typing import List, Dict, Any
+from typing import List
 
 from demoparser2 import DemoParser as RawDemoParser
 
@@ -63,24 +63,25 @@ class DemoParser:
 
         # --------------------------------------------------------------
         # Players
+        #
+        # Базовые K / D / A / Damage / HS берём из финальных
+        # scoreboard counters, а не считаем вручную по событиям.
         # --------------------------------------------------------------
 
         players = self._parse_players(
-            rounds_played=rounds_played
+            rounds=rounds
         )
 
         # --------------------------------------------------------------
         # Final score
         #
-        # ВАЖНО:
         # round_end.winner показывает сторону CT/T,
         # выигравшую конкретный раунд.
         #
-        # Это НЕ постоянная команда, потому что команды меняются
-        # сторонами после halftime и в overtime.
+        # Это НЕ постоянная команда: команды меняются сторонами.
         #
         # Поэтому настоящий финальный счёт берём из
-        # team_rounds_total на последнем валидном round_end tick.
+        # team_rounds_total на финальном игровом состоянии.
         # --------------------------------------------------------------
 
         (
@@ -95,10 +96,6 @@ class DemoParser:
 
         # --------------------------------------------------------------
         # Duration
-        #
-        # Пока не пытаемся угадывать длительность по tickrate.
-        # Если header даёт готовое значение — используем его.
-        # Иначе ставим 0, чтобы не выдавать ложную цифру.
         # --------------------------------------------------------------
 
         duration_seconds = self._parse_duration_seconds(
@@ -227,6 +224,7 @@ class DemoParser:
         # --------------------------------------------------------------
 
         for index, row in df_valid_rounds.iterrows():
+
             winner_side = self._normalize_side(
                 row.get("winner")
             )
@@ -265,221 +263,167 @@ class DemoParser:
 
     def _parse_players(
         self,
-        rounds_played: int
+        rounds: List[ParsedRound]
     ) -> List[ParsedPlayer]:
         """
-        Парсит базовую статистику игроков:
+        Получает базовую статистику игроков из финальных
+        игровых scoreboard counters.
 
-        - kills
-        - deaths
-        - assists
-        - damage
-        - headshots
+        Используем:
+        - kills_total
+        - deaths_total
+        - assists_total
+        - damage_total
+        - headshot_kills_total
+
+        Почему не считаем Damage через player_hurt.dmg_health:
+        dmg_health может содержать overkill damage.
+
+        Например, если у игрока осталось 20 HP,
+        смертельный выстрел может иметь dmg_health > 20.
+
+        Scoreboard damage уже содержит правильную игровую
+        итоговую статистику.
         """
 
+        rounds_played = len(rounds)
+
+        if rounds_played <= 0:
+            return []
+
         # --------------------------------------------------------------
-        # Death events
+        # Последний подтверждённый сыгранный раунд
         # --------------------------------------------------------------
 
-        death_events = self.raw_parser.parse_events(
-            ["player_death"]
+        final_tick = max(
+            round_data.end_tick
+            for round_data in rounds
         )
 
-        df_deaths = self._extract_dataframe(
-            death_events
-        )
+        if final_tick <= 0:
+            return []
 
         # --------------------------------------------------------------
-        # Player info
+        # Финальные scoreboard counters
         # --------------------------------------------------------------
 
         try:
-            player_info = self.raw_parser.parse_player_info()
+            player_ticks = self.raw_parser.parse_ticks(
+                [
+                    "kills_total",
+                    "deaths_total",
+                    "assists_total",
+                    "damage_total",
+                    "headshot_kills_total",
+                ],
+                ticks=[final_tick]
+            )
+
         except Exception as exc:
             print(
-                f"⚠️ Не удалось получить player_info: {exc}"
+                "⚠️ Не удалось получить "
+                f"player scoreboard stats: {exc}"
             )
-            player_info = None
-
-        players_dict: Dict[str, Dict[str, Any]] = {}
-
-        # --------------------------------------------------------------
-        # Инициализация игроков
-        # --------------------------------------------------------------
+            return []
 
         if (
-            player_info is not None
-            and hasattr(player_info, "iterrows")
-            and not player_info.empty
+            player_ticks is None
+            or not hasattr(player_ticks, "empty")
+            or player_ticks.empty
         ):
-            for _, player in player_info.iterrows():
+            print(
+                "⚠️ Player scoreboard stats пусты"
+            )
+            return []
 
-                steam_id = str(
-                    player.get(
-                        "steamid",
-                        player.get(
-                            "steam_id",
-                            ""
-                        )
-                    )
-                )
-
-                name = str(
-                    player.get(
-                        "name",
-                        player.get(
-                            "user_name",
-                            "Unknown"
-                        )
-                    )
-                )
-
-                if (
-                    steam_id
-                    and steam_id != "0"
-                    and steam_id != "None"
-                ):
-                    players_dict[steam_id] = {
-                        "name": name,
-                        "kills": 0,
-                        "deaths": 0,
-                        "assists": 0,
-                        "damage": 0.0,
-                        "headshots": 0,
-                    }
-
-        # --------------------------------------------------------------
-        # Deaths / kills / assists / headshots
-        # --------------------------------------------------------------
-
-        if (
-            df_deaths is not None
-            and not df_deaths.empty
-        ):
-            for _, row in df_deaths.iterrows():
-
-                attacker_id = str(
-                    row.get(
-                        "attacker_steamid",
-                        ""
-                    )
-                )
-
-                victim_id = str(
-                    row.get(
-                        "user_steamid",
-                        ""
-                    )
-                )
-
-                assistant_id = str(
-                    row.get(
-                        "assistant_steamid",
-                        ""
-                    )
-                )
-
-                headshot = bool(
-                    row.get(
-                        "headshot",
-                        False
-                    )
-                )
-
-                # Kill
-                if (
-                    attacker_id in players_dict
-                    and attacker_id != victim_id
-                ):
-                    players_dict[
-                        attacker_id
-                    ]["kills"] += 1
-
-                    if headshot:
-                        players_dict[
-                            attacker_id
-                        ]["headshots"] += 1
-
-                # Death
-                if victim_id in players_dict:
-                    players_dict[
-                        victim_id
-                    ]["deaths"] += 1
-
-                # Assist
-                if (
-                    assistant_id in players_dict
-                    and assistant_id != victim_id
-                ):
-                    players_dict[
-                        assistant_id
-                    ]["assists"] += 1
-
-        # --------------------------------------------------------------
-        # Damage
-        # --------------------------------------------------------------
-
-        hurt_events = self.raw_parser.parse_events(
-            ["player_hurt"]
-        )
-
-        df_hurt = self._extract_dataframe(
-            hurt_events
-        )
-
-        if (
-            df_hurt is not None
-            and not df_hurt.empty
-        ):
-            for _, row in df_hurt.iterrows():
-
-                attacker_id = str(
-                    row.get(
-                        "attacker_steamid",
-                        ""
-                    )
-                )
-
-                victim_id = str(
-                    row.get(
-                        "user_steamid",
-                        ""
-                    )
-                )
-
-                damage = self._safe_float(
-                    row.get(
-                        "dmg_health",
-                        0
-                    ),
-                    default=0.0
-                )
-
-                if (
-                    attacker_id in players_dict
-                    and attacker_id != victim_id
-                ):
-                    players_dict[
-                        attacker_id
-                    ]["damage"] += damage
-
-        # --------------------------------------------------------------
-        # DTO
-        # --------------------------------------------------------------
+        if "steamid" not in player_ticks.columns:
+            print(
+                "⚠️ В player scoreboard stats "
+                "отсутствует steamid"
+            )
+            return []
 
         parsed_players: List[ParsedPlayer] = []
 
-        for steam_id, data in players_dict.items():
+        # --------------------------------------------------------------
+        # Один игрок = один SteamID
+        # --------------------------------------------------------------
+
+        for steam_id, group in player_ticks.groupby(
+            "steamid"
+        ):
+            steam_id = str(steam_id)
+
+            if steam_id in {
+                "",
+                "0",
+                "None",
+                "nan",
+            }:
+                continue
+
+            # На выбранном final_tick обычно одна строка на игрока.
+            # Но на всякий случай берём последнюю.
+            if "tick" in group.columns:
+                last_row = (
+                    group
+                    .sort_values("tick")
+                    .iloc[-1]
+                )
+            else:
+                last_row = group.iloc[-1]
+
+            name = str(
+                last_row.get(
+                    "name",
+                    "Unknown"
+                )
+            )
+
+            kills = self._safe_int(
+                last_row.get(
+                    "kills_total",
+                    0
+                )
+            )
+
+            deaths = self._safe_int(
+                last_row.get(
+                    "deaths_total",
+                    0
+                )
+            )
+
+            assists = self._safe_int(
+                last_row.get(
+                    "assists_total",
+                    0
+                )
+            )
+
+            damage = self._safe_float(
+                last_row.get(
+                    "damage_total",
+                    0.0
+                )
+            )
+
+            headshots = self._safe_int(
+                last_row.get(
+                    "headshot_kills_total",
+                    0
+                )
+            )
 
             parsed_players.append(
                 ParsedPlayer(
                     steam_id=steam_id,
-                    name=data["name"],
-                    kills=data["kills"],
-                    deaths=data["deaths"],
-                    assists=data["assists"],
-                    damage=data["damage"],
-                    headshots=data["headshots"],
+                    name=name,
+                    kills=kills,
+                    deaths=deaths,
+                    assists=assists,
+                    damage=damage,
+                    headshots=headshots,
                     rounds_played=rounds_played,
                 )
             )
@@ -501,6 +445,8 @@ class DemoParser:
         - Utility
         - Entry
         - Clutch
+
+        Эти метрики пока проходят отдельный Data Trust аудит.
         """
 
         steam_ids = [
@@ -516,6 +462,7 @@ class DemoParser:
             utility_stats = calculate_utility_metrics(
                 self.raw_parser
             )
+
         except Exception as exc:
             print(
                 f"⚠️ Ошибка при расчёте Utility: {exc}"
@@ -530,6 +477,7 @@ class DemoParser:
             entry_stats = calculate_entry_metrics(
                 self.raw_parser
             )
+
         except Exception as exc:
             print(
                 f"⚠️ Ошибка при расчёте Entry: {exc}"
@@ -545,6 +493,7 @@ class DemoParser:
                 self.raw_parser,
                 steam_ids
             )
+
         except Exception as exc:
             print(
                 f"⚠️ Ошибка при расчёте Clutch: {exc}"
@@ -559,7 +508,9 @@ class DemoParser:
 
             sid = player.steam_id
 
+            # ----------------------------------------------------------
             # Utility
+            # ----------------------------------------------------------
 
             utility_data = utility_stats.get(
                 sid,
@@ -594,7 +545,9 @@ class DemoParser:
                 )
             )
 
+            # ----------------------------------------------------------
             # Entry
+            # ----------------------------------------------------------
 
             entry_data = entry_stats.get(
                 sid,
@@ -615,7 +568,9 @@ class DemoParser:
                 )
             )
 
+            # ----------------------------------------------------------
             # Clutch
+            # ----------------------------------------------------------
 
             player.clutches_won = self._safe_int(
                 clutch_stats.get(
@@ -638,14 +593,16 @@ class DemoParser:
         round_end.winner показывает сторону CT/T,
         выигравшую конкретный раунд.
 
-        Команды меняются сторонами после halftime и могут
-        менять стороны повторно в overtime.
+        Команды меняются сторонами после halftime
+        и могут менять стороны повторно в overtime.
 
         Поэтому настоящий командный счёт берём из
         team_rounds_total на последнем валидном round_end tick.
 
-        score_ct / score_t в текущем DTO означают:
-        счёт команды, находящейся за CT/T в финальном состоянии.
+        В текущем DTO:
+        score_ct / score_t означают счёт команды,
+        находящейся соответственно за CT / T
+        в финальном состоянии матча.
         """
 
         if not rounds:
@@ -657,7 +614,10 @@ class DemoParser:
                 "Unable to determine final score: no rounds."
             )
 
-        # Последний подтверждённый сыгранный раунд.
+        # --------------------------------------------------------------
+        # Последний подтверждённый сыгранный раунд
+        # --------------------------------------------------------------
+
         final_tick = max(
             round_data.end_tick
             for round_data in rounds
@@ -671,6 +631,10 @@ class DemoParser:
                 False,
                 "Unable to determine final score tick."
             )
+
+        # --------------------------------------------------------------
+        # Получаем командное состояние
+        # --------------------------------------------------------------
 
         try:
             df_score = self.raw_parser.parse_ticks(
@@ -725,10 +689,12 @@ class DemoParser:
         # team_num:
         # 3 = CT
         # 2 = TERRORIST
+
         for team_num, side in (
             (3, "CT"),
             (2, "T"),
         ):
+
             team_rows = df_score[
                 df_score["team_num"].apply(
                     lambda value: self._safe_int(
@@ -747,8 +713,11 @@ class DemoParser:
                     f"Final state for {side} team is missing."
                 )
 
+            # ----------------------------------------------------------
             # У всех игроков одной команды на одном tick
-            # должен быть один и тот же team_rounds_total.
+            # должен быть одинаковый team_rounds_total.
+            # ----------------------------------------------------------
+
             team_scores = {
                 self._safe_int(
                     value,
@@ -779,7 +748,7 @@ class DemoParser:
         score_t = scores["T"]
 
         # --------------------------------------------------------------
-        # Data Trust invariant
+        # DATA TRUST INVARIANT
         #
         # Каждый сыгранный раунд должен добавить ровно одно очко
         # одной из двух команд.
@@ -800,9 +769,13 @@ class DemoParser:
                 )
             )
 
-        # winner_side здесь означает сторону,
-        # на которой победившая команда находилась
-        # в финальном состоянии матча.
+        # --------------------------------------------------------------
+        # Winner
+        #
+        # winner_side означает сторону, на которой победившая
+        # команда находилась в финальном состоянии.
+        # --------------------------------------------------------------
+
         if score_ct > score_t:
             winner_side = "CT"
 
@@ -890,7 +863,10 @@ class DemoParser:
         return "UNKNOWN"
 
     @staticmethod
-    def _safe_int(value, default: int = 0) -> int:
+    def _safe_int(
+        value,
+        default: int = 0
+    ) -> int:
         """
         Безопасное преобразование значения в int.
         """
