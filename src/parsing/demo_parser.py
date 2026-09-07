@@ -70,31 +70,28 @@ class DemoParser:
         )
 
         # --------------------------------------------------------------
-        # Score
+        # Final score
+        #
+        # ВАЖНО:
+        # round_end.winner показывает сторону CT/T,
+        # выигравшую конкретный раунд.
+        #
+        # Это НЕ постоянная команда, потому что команды меняются
+        # сторонами после halftime и в overtime.
+        #
+        # Поэтому настоящий финальный счёт берём из
+        # team_rounds_total на последнем валидном round_end tick.
         # --------------------------------------------------------------
 
-        score_ct = sum(
-            1
-            for round_data in rounds
-            if round_data.winner_side == "CT"
+        (
+            score_ct,
+            score_t,
+            winner_side,
+            score_valid,
+            score_error,
+        ) = self._parse_final_score(
+            rounds=rounds
         )
-
-        score_t = sum(
-            1
-            for round_data in rounds
-            if round_data.winner_side == "T"
-        )
-
-        # --------------------------------------------------------------
-        # Winner
-        # --------------------------------------------------------------
-
-        if score_ct > score_t:
-            winner_side = "CT"
-        elif score_t > score_ct:
-            winner_side = "T"
-        else:
-            winner_side = "UNKNOWN"
 
         # --------------------------------------------------------------
         # Duration
@@ -109,7 +106,24 @@ class DemoParser:
             rounds=rounds
         )
 
-        is_valid = rounds_played > 0
+        # --------------------------------------------------------------
+        # Data Trust validation
+        # --------------------------------------------------------------
+
+        is_valid = (
+            rounds_played > 0
+            and score_valid
+        )
+
+        validation_error = None
+
+        if rounds_played <= 0:
+            validation_error = (
+                "Unable to determine played rounds."
+            )
+
+        elif not score_valid:
+            validation_error = score_error
 
         # --------------------------------------------------------------
         # Advanced metrics
@@ -135,6 +149,7 @@ class DemoParser:
             players=players,
             rounds=rounds,
             is_valid=is_valid,
+            validation_error=validation_error,
         )
 
     # ------------------------------------------------------------------
@@ -459,18 +474,12 @@ class DemoParser:
             parsed_players.append(
                 ParsedPlayer(
                     steam_id=steam_id,
-
-                    # ВАЖНО:
-                    # ParsedPlayer ожидает name,
-                    # НЕ nickname.
                     name=data["name"],
-
                     kills=data["kills"],
                     deaths=data["deaths"],
                     assists=data["assists"],
                     damage=data["damage"],
                     headshots=data["headshots"],
-
                     rounds_played=rounds_played,
                 )
             )
@@ -501,8 +510,6 @@ class DemoParser:
 
         # --------------------------------------------------------------
         # Utility
-        #
-        # calculate_utility_metrics принимает ТОЛЬКО raw_parser.
         # --------------------------------------------------------------
 
         try:
@@ -517,8 +524,6 @@ class DemoParser:
 
         # --------------------------------------------------------------
         # Entry
-        #
-        # calculate_entry_metrics принимает ТОЛЬКО raw_parser.
         # --------------------------------------------------------------
 
         try:
@@ -533,8 +538,6 @@ class DemoParser:
 
         # --------------------------------------------------------------
         # Clutch
-        #
-        # calculate_clutches принимает parser + список steam_id.
         # --------------------------------------------------------------
 
         try:
@@ -556,9 +559,7 @@ class DemoParser:
 
             sid = player.steam_id
 
-            # -------------------------
             # Utility
-            # -------------------------
 
             utility_data = utility_stats.get(
                 sid,
@@ -593,9 +594,7 @@ class DemoParser:
                 )
             )
 
-            # -------------------------
             # Entry
-            # -------------------------
 
             entry_data = entry_stats.get(
                 sid,
@@ -616,9 +615,7 @@ class DemoParser:
                 )
             )
 
-            # -------------------------
             # Clutch
-            # -------------------------
 
             player.clutches_won = self._safe_int(
                 clutch_stats.get(
@@ -626,6 +623,202 @@ class DemoParser:
                     0
                 )
             )
+
+    # ------------------------------------------------------------------
+    # FINAL SCORE
+    # ------------------------------------------------------------------
+
+    def _parse_final_score(
+        self,
+        rounds: List[ParsedRound]
+    ):
+        """
+        Получает настоящий финальный счёт матча.
+
+        round_end.winner показывает сторону CT/T,
+        выигравшую конкретный раунд.
+
+        Команды меняются сторонами после halftime и могут
+        менять стороны повторно в overtime.
+
+        Поэтому настоящий командный счёт берём из
+        team_rounds_total на последнем валидном round_end tick.
+
+        score_ct / score_t в текущем DTO означают:
+        счёт команды, находящейся за CT/T в финальном состоянии.
+        """
+
+        if not rounds:
+            return (
+                0,
+                0,
+                "UNKNOWN",
+                False,
+                "Unable to determine final score: no rounds."
+            )
+
+        # Последний подтверждённый сыгранный раунд.
+        final_tick = max(
+            round_data.end_tick
+            for round_data in rounds
+        )
+
+        if final_tick <= 0:
+            return (
+                0,
+                0,
+                "UNKNOWN",
+                False,
+                "Unable to determine final score tick."
+            )
+
+        try:
+            df_score = self.raw_parser.parse_ticks(
+                [
+                    "team_num",
+                    "team_name",
+                    "team_rounds_total",
+                ],
+                ticks=[final_tick]
+            )
+
+        except Exception as exc:
+            return (
+                0,
+                0,
+                "UNKNOWN",
+                False,
+                f"Unable to parse final team score: {exc}"
+            )
+
+        if (
+            df_score is None
+            or not hasattr(df_score, "empty")
+            or df_score.empty
+        ):
+            return (
+                0,
+                0,
+                "UNKNOWN",
+                False,
+                "Final team state is empty."
+            )
+
+        required_columns = {
+            "team_num",
+            "team_rounds_total",
+        }
+
+        if not required_columns.issubset(
+            set(df_score.columns)
+        ):
+            return (
+                0,
+                0,
+                "UNKNOWN",
+                False,
+                "Final team score columns are missing."
+            )
+
+        scores = {}
+
+        # team_num:
+        # 3 = CT
+        # 2 = TERRORIST
+        for team_num, side in (
+            (3, "CT"),
+            (2, "T"),
+        ):
+            team_rows = df_score[
+                df_score["team_num"].apply(
+                    lambda value: self._safe_int(
+                        value,
+                        default=-1
+                    ) == team_num
+                )
+            ]
+
+            if team_rows.empty:
+                return (
+                    0,
+                    0,
+                    "UNKNOWN",
+                    False,
+                    f"Final state for {side} team is missing."
+                )
+
+            # У всех игроков одной команды на одном tick
+            # должен быть один и тот же team_rounds_total.
+            team_scores = {
+                self._safe_int(
+                    value,
+                    default=-1
+                )
+                for value
+                in team_rows["team_rounds_total"]
+            }
+
+            team_scores = {
+                value
+                for value in team_scores
+                if value >= 0
+            }
+
+            if len(team_scores) != 1:
+                return (
+                    0,
+                    0,
+                    "UNKNOWN",
+                    False,
+                    f"Inconsistent final score for {side}."
+                )
+
+            scores[side] = team_scores.pop()
+
+        score_ct = scores["CT"]
+        score_t = scores["T"]
+
+        # --------------------------------------------------------------
+        # Data Trust invariant
+        #
+        # Каждый сыгранный раунд должен добавить ровно одно очко
+        # одной из двух команд.
+        # --------------------------------------------------------------
+
+        if (
+            score_ct + score_t
+            != len(rounds)
+        ):
+            return (
+                score_ct,
+                score_t,
+                "UNKNOWN",
+                False,
+                (
+                    "Final score does not match round count: "
+                    f"{score_ct} + {score_t} != {len(rounds)}."
+                )
+            )
+
+        # winner_side здесь означает сторону,
+        # на которой победившая команда находилась
+        # в финальном состоянии матча.
+        if score_ct > score_t:
+            winner_side = "CT"
+
+        elif score_t > score_ct:
+            winner_side = "T"
+
+        else:
+            winner_side = "UNKNOWN"
+
+        return (
+            score_ct,
+            score_t,
+            winner_side,
+            True,
+            None,
+        )
 
     # ------------------------------------------------------------------
     # HELPERS
