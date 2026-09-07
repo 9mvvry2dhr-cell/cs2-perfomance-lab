@@ -1,0 +1,131 @@
+{
+  "match": {
+    "map_name": "de_mirage",
+    "rounds_played": 24,
+    "score_ct": 13,
+    "score_t": 11,
+    "is_valid": true
+  },
+  "players": {
+    "TUNKKAAJA": {
+      "kills": 13,
+      "deaths": 18,
+      "assists": 4,
+      "damage": 1350,
+      "he_damage": 105,
+      "inferno_damage": 60,
+      "enemies_flashed": 9,
+      "flash_duration": 13.6,
+      "entry_kills": 2,
+      "entry_deaths": 5
+    },
+    "KmL": {
+      "kills": 9,
+      "deaths": 14,
+      "assists": 7,
+      "damage": 1382,
+      "he_damage": 72,
+      "inferno_damage": 0,
+      "enemies_flashed": 5,
+      "flash_duration": 8.0,
+      "entry_kills": 1,
+      "entry_deaths": 1
+    },
+    "///M POWER": {
+      "kills": 11,
+      "deaths": 19,
+      "assists": 4,
+      "damage": 1204,
+      "he_damage": 0,
+      "inferno_damage": 0,
+      "enemies_flashed": 7,
+      "flash_duration": 20.0,
+      "entry_kills": 5,
+      "entry_deaths": 3
+    },
+    "Axello": {
+      "kills": 31,
+      "deaths": 15,
+      "assists": 4,
+      "damage": 3151,
+      "he_damage": 115,
+      "inferno_damage": 115,
+      "enemies_flashed": 15,
+      "flash_duration": 37.8,
+      "entry_kills": 7,
+      "entry_deaths": 1
+    },
+    "Snobbish": {
+      "kills": 13,
+      "deaths": 21,
+      "assists": 8,
+      "damage": 1707,
+      "he_damage": 28,
+      "inferno_damage": 0,
+      "enemies_flashed": 5,
+      "flash_duration": 15.3,
+      "entry_kills": 2,
+      "entry_deaths": 5
+    },
+    "GOAT": {
+      "kills": 15,
+      "deaths": 19,
+      "assists": 4,
+      "damage": 1627,
+      "he_damage": 55,
+      "inferno_damage": 0,
+      "enemies_flashed": 18,
+      "flash_duration": 45.2,
+      "entry_kills": 1,
+      "entry_deaths": 2
+    },
+    "p✝": {
+      "kills": 23,
+      "deaths": 16,
+      "assists": 3,
+      "damage": 2332,
+      "he_damage": 136,
+      "inferno_damage": 0,
+      "enemies_flashed": 11,
+      "flash_duration": 35.2,
+      "entry_kills": 3,
+      "entry_deaths": 3
+    },
+    "kbn_san": {
+      "kills": 24,
+      "deaths": 16,
+      "assists": 1,
+      "damage": 2242,
+      "he_damage": 67,
+      "inferno_damage": 21,
+      "enemies_flashed": 12,
+      "flash_duration": 34.1,
+      "entry_kills": 2,
+      "entry_deaths": 1
+    },
+    "Jimmyhardhat": {
+      "kills": 12,
+      "deaths": 18,
+      "assists": 4,
+      "damage": 1518,
+      "he_damage": 138,
+      "inferno_damage": 0,
+      "enemies_flashed": 15,
+      "flash_duration": 32.1,
+      "entry_kills": 0,
+      "entry_deaths": 1
+    },
+    "IONA": {
+      "kills": 22,
+      "deaths": 17,
+      "assists": 4,
+      "damage": 2199,
+      "he_damage": 9,
+      "inferno_damage": 0,
+      "enemies_flashed": 6,
+      "flash_duration": 13.3,
+      "entry_kills": 1,
+      "entry_deaths": 2
+    }
+  }
+}
