@@ -198,6 +198,16 @@ class TestKnownMirageDemo(unittest.TestCase):
                     expected["entry_deaths"],
                 )
 
+    def test_player_clutches(self):
+        for name, expected in (
+            self.expected["players"].items()
+        ):
+            with self.subTest(player=name):
+                player = self.players[name]
 
+                self.assertEqual(
+                    player.clutches_won,
+                    expected["clutches_won"],
+                )
 if __name__ == "__main__":
     unittest.main()
