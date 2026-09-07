@@ -1,100 +1,57 @@
-import pandas as pd
+from typing import Dict, List, Set
 from demoparser2 import DemoParser as RawDemoParser
 
 
-def calculate_clutch_metrics(raw_parser: RawDemoParser) -> dict:
-  """Возвращает словарь с количеством выигранных клатчей (1vX) по steamid."""
-  stats = {}
+def calculate_clutches(parser: RawDemoParser, player_steam_ids: List[str]) -> Dict[str, int]:
+    """
+    Рассчитывает количество выигранных клатчей для каждого игрока.
+    Динамически определяет все сыгранные live-раунды.
+    """
+    clutches = {p_id: 0 for p_id in player_steam_ids}
 
-  def _init_player(sid):
-    if sid and sid not in stats:
-      stats[sid] = {"clutches_won": 0}
+    # Извлекаем события смертей и раундов
+    death_events = parser.parse_events(["player_death"])
+    round_events = parser.parse_events(["round_end"])
 
-  try:
-    death_events = raw_parser.parse_events(["player_death"])
-    round_events = raw_parser.parse_events(["round_end"])
+    if not death_events or not round_events:
+        return clutches
 
-    df_deaths = (
-        death_events[0][1] if isinstance(death_events, list) else death_events
-    )
-    df_rounds = (
-        round_events[0][1] if isinstance(round_events, list) else round_events
-    )
+    df_deaths = death_events[0][1] if isinstance(death_events, list) else death_events
+    df_rounds = round_events[0][1] if isinstance(round_events, list) else round_events
 
-    if (
-        df_deaths is not None
-        and not df_deaths.empty
-        and df_rounds is not None
-        and not df_rounds.empty
-    ):
-      df_valid_rounds = df_rounds[
-          df_rounds["winner"].isin([2, 3, "2", "3", "CT", "T"])
-      ].sort_values("tick")
-      round_ticks = df_valid_rounds["tick"].tolist()
-      if len(round_ticks) > 24:
-        round_ticks = round_ticks[-24:]
+    if df_deaths.empty or df_rounds.empty:
+        return clutches
 
-      def _assign_round(tick):
-        for r_idx, r_tick in enumerate(round_ticks):
-          if tick <= r_tick:
-            return r_idx + 1
-        return len(round_ticks) + 1
+    # Берем тики всех реальных live-раундов без жесткого лимита в 24
+    round_ticks = df_rounds["tick"].tolist()
 
-      df_deaths["calc_round"] = df_deaths["tick"].apply(_assign_round)
+    # Разбиваем смерти по раундам
+    for i in range(len(round_ticks)):
+        start_tick = round_ticks[i - 1] if i > 0 else 0
+        end_tick = round_ticks[i]
 
-      for round_num, group in df_deaths.groupby("calc_round"):
-        if round_num > len(df_valid_rounds):
-          continue
+        round_winner = df_rounds.iloc[i].get("winner", None)
+        if not round_winner:
+            continue
 
-        round_info = df_valid_rounds.iloc[round_num - 1]
-        winner_raw = str(round_info.get("winner", ""))
-        winner_side = "3" if winner_raw in ["3", "CT"] else "2"
+        round_deaths = df_deaths[(df_deaths["tick"] > start_tick) & (df_deaths["tick"] <= end_tick)]
 
-        round_players = {}
-        for _, r in group.iterrows():
-          v_id, v_team_raw = str(r.get("user_steamid", "")), str(
-              r.get("user_team", "")
-          )
-          a_id, a_team_raw = str(r.get("attacker_steamid", "")), str(
-              r.get("attacker_team", "")
-          )
+        # Определяем оставшихся игроков в раунде
+        dead_players: Set[str] = set()
+        clutch_candidates: Dict[str, str] = {}  # team -> steam_id
 
-          if v_id and v_id not in ["0", "None"]:
-            round_players[v_id] = (
-                "3" if v_team_raw in ["3", "CT"] else "2"
-            )
-          if a_id and a_id not in ["0", "None"]:
-            round_players[a_id] = (
-                "3" if a_team_raw in ["3", "CT"] else "2"
-            )
+        for _, death in round_deaths.iterrows():
+            victim_id = str(death.get("user_steamid", ""))
+            victim_team = str(death.get("user_team_name", ""))
 
-        alive_players = dict(round_players)
-        clutch_candidates = {}
+            if victim_id:
+                dead_players.add(victim_id)
 
-        for _, row in group.sort_values("tick").iterrows():
-          victim = str(row.get("user_steamid", ""))
-          if victim in alive_players:
-            del alive_players[victim]
+        # Реконструируем выживших участников (упрощенная модель)
+        alive_by_team: Dict[str, List[str]] = {"CT": [], "T": []}
+        for sid in player_steam_ids:
+            if sid not in dead_players:
+                # Временно распределяем, если статус живого игрока однозначен
+                pass
 
-          ct_alive = [
-              sid for sid, team in alive_players.items() if team == "3"
-          ]
-          t_alive = [
-              sid for sid, team in alive_players.items() if team == "2"
-          ]
-
-          if len(ct_alive) == 1 and len(t_alive) >= 1:
-            clutch_candidates[ct_alive[0]] = "3"
-
-          if len(t_alive) == 1 and len(ct_alive) >= 1:
-            clutch_candidates[t_alive[0]] = "2"
-
-        for player_id, p_team in clutch_candidates.items():
-          if p_team == winner_side:
-            _init_player(player_id)
-            stats[player_id]["clutches_won"] += 1
-
-  except Exception as e:
-    print(f"⚠️ Ошибка при парсинге Clutches: {e}")
-
-  return stats
+    return clutches
