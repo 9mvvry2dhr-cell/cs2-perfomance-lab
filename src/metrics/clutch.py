@@ -2,7 +2,12 @@ from typing import Dict, List
 
 from demoparser2 import DemoParser as RawDemoParser
 
-from src.metrics.round_context import build_round_contexts
+from src.metrics.round_context import (
+    build_round_contexts,
+    extract_dataframe,
+    safe_int,
+    valid_sid,
+)
 
 
 def calculate_clutches(
@@ -34,7 +39,7 @@ def calculate_clutches(
     clutches = {
         str(steam_id): 0
         for steam_id in player_steam_ids
-        if _valid_sid(steam_id)
+        if valid_sid(steam_id)
     }
 
     # ------------------------------------------------------------------
@@ -98,7 +103,7 @@ def calculate_clutches(
 
     for _, row in df_teams.iterrows():
 
-        tick = _safe_int(
+        tick = safe_int(
             row.get("tick"),
             default=-1
         )
@@ -117,10 +122,10 @@ def calculate_clutches(
             )
         )
 
-        if not _valid_sid(steam_id):
+        if not valid_sid(steam_id):
             continue
 
-        team_num = _safe_int(
+        team_num = safe_int(
             row.get(
                 "team_num",
                 -1
@@ -146,7 +151,7 @@ def calculate_clutches(
             ["player_death"]
         )
 
-        df_deaths = _extract_dataframe(
+        df_deaths = extract_dataframe(
             death_events
         )
 
@@ -289,7 +294,7 @@ def calculate_clutches(
                 )
             )
 
-            if not _valid_sid(victim):
+            if not valid_sid(victim):
                 continue
 
             # Не важно, была это обычная смерть,
@@ -330,62 +335,3 @@ def calculate_clutches(
             clutches[player] += 1
 
     return clutches
-
-
-# ======================================================================
-# HELPERS
-# ======================================================================
-
-def _extract_dataframe(events):
-    if events is None:
-        return None
-
-    if hasattr(events, "iterrows"):
-        return events
-
-    if (
-        isinstance(events, list)
-        and events
-    ):
-        first = events[0]
-
-        if (
-            isinstance(first, tuple)
-            and len(first) >= 2
-        ):
-            return first[1]
-
-        return first
-
-    return None
-
-
-def _valid_sid(value) -> bool:
-    steam_id = str(
-        value
-    )
-
-    return steam_id not in {
-        "",
-        "0",
-        "None",
-        "nan",
-        "NaN",
-    }
-
-
-def _safe_int(
-    value,
-    default=0
-) -> int:
-    try:
-        if value is None:
-            return default
-
-        return int(value)
-
-    except (
-        TypeError,
-        ValueError,
-    ):
-        return default
