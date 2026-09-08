@@ -33,6 +33,12 @@ class ParsedPlayer:
     # KAST
     kast_rounds: int = 0
 
+    # Multikill
+    two_k_rounds: int = 0
+    three_k_rounds: int = 0
+    four_k_rounds: int = 0
+    five_k_rounds: int = 0
+
 
 @dataclass
 class ParsedRound:

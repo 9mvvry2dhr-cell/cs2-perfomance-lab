@@ -9,6 +9,7 @@ from src.metrics.entry import calculate_entry_metrics
 from src.metrics.clutch import calculate_clutches
 from src.metrics.trade import calculate_trade_metrics
 from src.metrics.kast import calculate_kast_metrics
+from src.metrics.multikill import calculate_multikill_metrics
 
 
 class DemoParser:
@@ -533,6 +534,20 @@ class DemoParser:
             )
             kast_stats = {}
 
+        # Multikill
+
+        try:
+            multikill_stats = calculate_multikill_metrics(
+                self.raw_parser,
+                steam_ids,
+            )
+
+        except Exception as exc:
+            print(
+                f"Multikill metrics calculation failed: {exc}"
+            )
+            multikill_stats = {}
+
         # --------------------------------------------------------------
         # Записываем результаты в DTO
         # --------------------------------------------------------------
@@ -635,6 +650,41 @@ class DemoParser:
             player.kast_rounds = self._safe_int(
                 kast_stats.get(
                     sid,
+                    0
+                )
+            )
+
+            # Multikill
+
+            multikill_data = multikill_stats.get(
+                sid,
+                {}
+            )
+
+            player.two_k_rounds = self._safe_int(
+                multikill_data.get(
+                    "two_k_rounds",
+                    0
+                )
+            )
+
+            player.three_k_rounds = self._safe_int(
+                multikill_data.get(
+                    "three_k_rounds",
+                    0
+                )
+            )
+
+            player.four_k_rounds = self._safe_int(
+                multikill_data.get(
+                    "four_k_rounds",
+                    0
+                )
+            )
+
+            player.five_k_rounds = self._safe_int(
+                multikill_data.get(
+                    "five_k_rounds",
                     0
                 )
             )
