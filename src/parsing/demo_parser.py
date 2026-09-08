@@ -10,6 +10,7 @@ from src.metrics.clutch import calculate_clutches
 from src.metrics.trade import calculate_trade_metrics
 from src.metrics.kast import calculate_kast_metrics
 from src.metrics.multikill import calculate_multikill_metrics
+from src.metrics.survival import calculate_survival_metrics
 
 
 class DemoParser:
@@ -548,6 +549,20 @@ class DemoParser:
             )
             multikill_stats = {}
 
+        # Survival
+
+        try:
+            survival_stats = calculate_survival_metrics(
+                self.raw_parser,
+                steam_ids,
+            )
+
+        except Exception as exc:
+            print(
+                f"Survival metrics calculation failed: {exc}"
+            )
+            survival_stats = {}
+
         # --------------------------------------------------------------
         # Записываем результаты в DTO
         # --------------------------------------------------------------
@@ -685,6 +700,15 @@ class DemoParser:
             player.five_k_rounds = self._safe_int(
                 multikill_data.get(
                     "five_k_rounds",
+                    0
+                )
+            )
+
+            # Survival
+
+            player.survived_rounds = self._safe_int(
+                survival_stats.get(
+                    sid,
                     0
                 )
             )

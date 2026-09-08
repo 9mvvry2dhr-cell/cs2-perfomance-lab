@@ -39,6 +39,9 @@ class ParsedPlayer:
     four_k_rounds: int = 0
     five_k_rounds: int = 0
 
+    # Survival
+    survived_rounds: int = 0
+
 
 @dataclass
 class ParsedRound:
