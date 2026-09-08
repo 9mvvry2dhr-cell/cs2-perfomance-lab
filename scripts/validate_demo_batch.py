@@ -57,6 +57,33 @@ def validate_demo(demo_path: Path) -> bool:
         for player in match.players
     )
 
+    total_two_k = sum(
+        player.two_k_rounds
+        for player in match.players
+    )
+
+    total_three_k = sum(
+        player.three_k_rounds
+        for player in match.players
+    )
+
+    total_four_k = sum(
+        player.four_k_rounds
+        for player in match.players
+    )
+
+    total_five_k = sum(
+        player.five_k_rounds
+        for player in match.players
+    )
+
+    total_multikill_rounds = (
+        total_two_k
+        + total_three_k
+        + total_four_k
+        + total_five_k
+    )
+
     kast_percentages = [
         (
             player.kast_rounds
@@ -99,6 +126,33 @@ def validate_demo(demo_path: Path) -> bool:
             total_trade_kills <= total_traded_deaths,
         "kast_in_range": all(
             0 <= player.kast_rounds <= match.rounds_played
+            for player in match.players
+        ),
+        "multikill_nonnegative": all(
+            player.two_k_rounds >= 0
+            and player.three_k_rounds >= 0
+            and player.four_k_rounds >= 0
+            and player.five_k_rounds >= 0
+            for player in match.players
+        ),
+        "multikill_rounds_in_range": all(
+            (
+                player.two_k_rounds
+                + player.three_k_rounds
+                + player.four_k_rounds
+                + player.five_k_rounds
+            )
+            <= match.rounds_played
+            for player in match.players
+        ),
+        "multikill_kills_not_above_total": all(
+            (
+                player.two_k_rounds * 2
+                + player.three_k_rounds * 3
+                + player.four_k_rounds * 4
+                + player.five_k_rounds * 5
+            )
+            <= player.kills
             for player in match.players
         ),
     }
@@ -146,6 +200,17 @@ def validate_demo(demo_path: Path) -> bool:
     print(
         f"  KAST range:  "
         f"{kast_min:.1f}% - {kast_max:.1f}%"
+    )
+    print(
+        f"  Multikills:  "
+        f"2K={total_two_k} "
+        f"3K={total_three_k} "
+        f"4K={total_four_k} "
+        f"5K={total_five_k}"
+    )
+    print(
+        f"  MK rounds:   "
+        f"{total_multikill_rounds}"
     )
 
     failed_checks = [
