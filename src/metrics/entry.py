@@ -8,6 +8,11 @@ from src.metrics.round_context import (
     valid_sid,
 )
 
+from src.metrics.team_context import (
+    build_team_state,
+    team_relation,
+)
+
 
 def calculate_entry_metrics(
     raw_parser: RawDemoParser
@@ -107,64 +112,20 @@ def calculate_entry_metrics(
         return stats
 
     # ------------------------------------------------------------------
-    # TEAM STATE
+    # SHARED TEAM CONTEXT
     #
-    # Получаем team_num непосредственно на death ticks.
-    # Поэтому смена сторон после halftime / overtime
-    # учитывается автоматически.
+    # ???????? team_num ??????????????? ?? death ticks.
+    # ??????? ????? ?????? ????? halftime / overtime
+    # ??????????? ?????????????.
     # ------------------------------------------------------------------
 
-    try:
-        df_teams = raw_parser.parse_ticks(
-            ["team_num"],
-            ticks=death_ticks,
-        )
+    team_at_tick = build_team_state(
+        raw_parser,
+        death_ticks,
+    )
 
-    except Exception as exc:
-        print(
-            f"⚠️ Ошибка при получении team_num для Entry: {exc}"
-        )
+    if not team_at_tick:
         return stats
-
-    if (
-        df_teams is None
-        or df_teams.empty
-        or "steamid" not in df_teams.columns
-        or "team_num" not in df_teams.columns
-    ):
-        return stats
-
-    team_at_tick = {}
-
-    for _, row in df_teams.iterrows():
-
-        tick = safe_int(
-            row.get("tick"),
-            default=-1,
-        )
-
-        steam_id = str(
-            row.get(
-                "steamid",
-                "",
-            )
-        )
-
-        if not valid_sid(steam_id):
-            continue
-
-        team_at_tick[
-            (
-                tick,
-                steam_id,
-            )
-        ] = safe_int(
-            row.get(
-                "team_num",
-                -1,
-            ),
-            default=-1,
-        )
 
     # ------------------------------------------------------------------
     # ENTRY-SPECIFIC HELPERS
@@ -183,53 +144,6 @@ def calculate_entry_metrics(
                 "entry_kills": 0,
                 "entry_deaths": 0,
             }
-
-    def relation(
-        tick,
-        attacker,
-        victim,
-    ):
-        attacker = str(
-            attacker
-        )
-
-        victim = str(
-            victim
-        )
-
-        if (
-            not valid_sid(attacker)
-            or not valid_sid(victim)
-        ):
-            return "unknown"
-
-        if attacker == victim:
-            return "self"
-
-        attacker_team = team_at_tick.get(
-            (
-                tick,
-                attacker,
-            )
-        )
-
-        victim_team = team_at_tick.get(
-            (
-                tick,
-                victim,
-            )
-        )
-
-        if (
-            attacker_team not in {2, 3}
-            or victim_team not in {2, 3}
-        ):
-            return "unknown"
-
-        if attacker_team == victim_team:
-            return "teammate"
-
-        return "enemy"
 
     # ------------------------------------------------------------------
     # OPENING KILLS
@@ -293,7 +207,8 @@ def calculate_entry_metrics(
         if attacker == victim:
             continue
 
-        event_relation = relation(
+        event_relation = team_relation(
+            team_at_tick,
             tick,
             attacker,
             victim,
