@@ -2,6 +2,11 @@ from collections import defaultdict
 
 from demoparser2 import DemoParser as RawDemoParser
 
+from src.metrics.round_context import (
+    build_round_contexts,
+    find_round,
+)
+
 
 UTILITY_WEAPONS = {
     "hegrenade": "he",
@@ -57,31 +62,26 @@ def calculate_utility_metrics(
             }
 
     # ------------------------------------------------------------------
-    # LIVE ROUND WINDOWS
+    # SHARED ROUND CONTEXT
     # ------------------------------------------------------------------
 
-    round_windows = _build_round_windows(
+    rounds = build_round_contexts(
         raw_parser
     )
 
-    if not round_windows:
+    if not rounds:
         return stats
 
     def _assign_round(tick):
-        tick = _safe_int(
+        round_context = find_round(
             tick,
-            default=-1
+            rounds,
         )
 
-        for round_num, start_tick, end_tick in round_windows:
-            if (
-                start_tick
-                <= tick
-                <= end_tick
-            ):
-                return round_num
+        if round_context is None:
+            return None
 
-        return None
+        return round_context.round_num
 
     # ------------------------------------------------------------------
     # EVENTS
@@ -498,153 +498,6 @@ def calculate_utility_metrics(
 
 
 # ======================================================================
-# ROUND WINDOWS
-# ======================================================================
-
-def _build_round_windows(
-    raw_parser: RawDemoParser
-):
-    """
-    Строит окна сыгранных раундов:
-
-        round_start <= event <= round_end
-
-    Нет хардкода на 24 раунда.
-    """
-
-    try:
-        start_events = raw_parser.parse_events(
-            ["round_start"]
-        )
-
-        end_events = raw_parser.parse_events(
-            ["round_end"]
-        )
-
-        df_start = _extract_dataframe(
-            start_events
-        )
-
-        df_end = _extract_dataframe(
-            end_events
-        )
-
-    except Exception as exc:
-        print(
-            f"⚠️ Ошибка при построении round windows: {exc}"
-        )
-        return []
-
-    if (
-        df_start is None
-        or df_start.empty
-        or "tick" not in df_start.columns
-    ):
-        return []
-
-    if (
-        df_end is None
-        or df_end.empty
-        or "tick" not in df_end.columns
-    ):
-        return []
-
-    df_end = df_end.copy()
-
-    # ------------------------------------------------------------------
-    # Оставляем только настоящие CT/T round_end.
-    # ------------------------------------------------------------------
-
-    if "winner" in df_end.columns:
-        df_end = df_end[
-            df_end["winner"].apply(
-                lambda value:
-                _normalize_side(value)
-                != "UNKNOWN"
-            )
-        ].copy()
-
-    # ------------------------------------------------------------------
-    # Официальный конец матча.
-    # ------------------------------------------------------------------
-
-    try:
-        panel_events = raw_parser.parse_events(
-            ["cs_win_panel_match"]
-        )
-
-        df_panel = _extract_dataframe(
-            panel_events
-        )
-
-        if (
-            df_panel is not None
-            and not df_panel.empty
-            and "tick" in df_panel.columns
-        ):
-            match_end_tick = _safe_int(
-                df_panel["tick"].max(),
-                default=-1
-            )
-
-            if match_end_tick >= 0:
-                df_end = df_end[
-                    df_end["tick"]
-                    <= match_end_tick
-                ].copy()
-
-    except Exception:
-        pass
-
-    start_ticks = sorted(
-        df_start["tick"]
-        .dropna()
-        .astype(int)
-        .tolist()
-    )
-
-    end_ticks = sorted(
-        df_end["tick"]
-        .dropna()
-        .astype(int)
-        .tolist()
-    )
-
-    if (
-        not start_ticks
-        or not end_ticks
-    ):
-        return []
-
-    # Для нашей текущей нормализованной demo-модели
-    # один round_start соответствует одному round_end.
-    count = min(
-        len(start_ticks),
-        len(end_ticks)
-    )
-
-    windows = []
-
-    for index in range(count):
-
-        start_tick = start_ticks[index]
-        end_tick = end_ticks[index]
-
-        if start_tick > end_tick:
-            continue
-
-        windows.append(
-            (
-                index + 1,
-                start_tick,
-                end_tick,
-            )
-        )
-
-    return windows
-
-
-# ======================================================================
 # GENERIC HELPERS
 # ======================================================================
 
@@ -687,33 +540,6 @@ def _valid_sid(value) -> bool:
         "nan",
         "NaN",
     }
-
-
-def _normalize_side(value) -> str:
-    if value is None:
-        return "UNKNOWN"
-
-    value = str(
-        value
-    ).strip().upper()
-
-    if value in {
-        "CT",
-        "3",
-        "COUNTER-TERRORIST",
-        "COUNTER_TERRORIST",
-    }:
-        return "CT"
-
-    if value in {
-        "T",
-        "2",
-        "TERRORIST",
-        "TERRORISTS",
-    }:
-        return "T"
-
-    return "UNKNOWN"
 
 
 def _safe_int(
