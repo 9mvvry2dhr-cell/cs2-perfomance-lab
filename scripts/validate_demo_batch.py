@@ -47,6 +47,38 @@ def validate_demo(demo_path: Path) -> bool:
         for player in match.players
     )
 
+    total_trade_kills = sum(
+        player.trade_kills
+        for player in match.players
+    )
+
+    total_traded_deaths = sum(
+        player.traded_deaths
+        for player in match.players
+    )
+
+    kast_percentages = [
+        (
+            player.kast_rounds
+            / match.rounds_played
+            * 100.0
+        )
+        for player in match.players
+        if match.rounds_played > 0
+    ]
+
+    kast_min = (
+        min(kast_percentages)
+        if kast_percentages
+        else 0.0
+    )
+
+    kast_max = (
+        max(kast_percentages)
+        if kast_percentages
+        else 0.0
+    )
+
     overtime = (
         match.rounds_played > 24
     )
@@ -58,6 +90,17 @@ def validate_demo(demo_path: Path) -> bool:
             score_total == match.rounds_played,
         "entry_balanced":
             total_entry_kills == total_entry_deaths,
+        "trade_nonnegative": all(
+            player.trade_kills >= 0
+            and player.traded_deaths >= 0
+            for player in match.players
+        ),
+        "trade_consistent":
+            total_trade_kills <= total_traded_deaths,
+        "kast_in_range": all(
+            0 <= player.kast_rounds <= match.rounds_played
+            for player in match.players
+        ),
     }
 
     passed = all(
@@ -92,6 +135,17 @@ def validate_demo(demo_path: Path) -> bool:
     )
     print(
         f"  Clutches:    {total_clutches}"
+    )
+    print(
+        f"  Trade kills: {total_trade_kills}"
+    )
+    print(
+        f"  Traded deaths: "
+        f"{total_traded_deaths}"
+    )
+    print(
+        f"  KAST range:  "
+        f"{kast_min:.1f}% - {kast_max:.1f}%"
     )
 
     failed_checks = [
