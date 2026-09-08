@@ -1,3 +1,4 @@
+from dataclasses import dataclass
 from typing import Dict, List, Tuple
 
 from demoparser2 import DemoParser as RawDemoParser
@@ -19,55 +20,45 @@ from src.metrics.team_context import (
 TRADE_WINDOW_SECONDS = 5.0
 
 
-def calculate_trade_metrics(
+@dataclass(frozen=True)
+class TradeEvent:
+    round_num: int
+
+    victim: str
+    trader: str
+    original_killer: str
+
+    death_tick: int
+    retaliation_tick: int
+
+    death_game_time: float
+    retaliation_game_time: float
+
+    retaliation_event_order: int
+
+
+def detect_trade_events(
     parser: RawDemoParser,
-    player_steam_ids: List[str],
     trade_window_seconds: float = TRADE_WINDOW_SECONDS,
-) -> Tuple[
-    Dict[str, int],
-    Dict[str, int],
-]:
+) -> List[TradeEvent]:
     """
-    Calculate confirmed trade kills and traded deaths.
+    Return confirmed round-level trade events.
 
-    A death is traded when:
+    One TradeEvent represents one traded death.
 
-    - player A is killed by enemy X;
-    - in the same round;
-    - within the configured time window;
-    - a teammate of A kills X.
-
-    The retaliation kill is counted as one trade kill even if it
-    trades more than one recent teammate death.
+    A single retaliation kill may therefore produce multiple
+    TradeEvent objects when it trades multiple recent teammate deaths.
     """
-
-    trade_kills = {
-        str(steam_id): 0
-        for steam_id in player_steam_ids
-        if valid_sid(steam_id)
-    }
-
-    traded_deaths = {
-        str(steam_id): 0
-        for steam_id in player_steam_ids
-        if valid_sid(steam_id)
-    }
 
     if trade_window_seconds < 0:
-        return (
-            trade_kills,
-            traded_deaths,
-        )
+        return []
 
     rounds = build_round_contexts(
         parser
     )
 
     if not rounds:
-        return (
-            trade_kills,
-            traded_deaths,
-        )
+        return []
 
     try:
         death_events = parser.parse_event(
@@ -80,10 +71,7 @@ def calculate_trade_metrics(
         )
 
     except Exception:
-        return (
-            trade_kills,
-            traded_deaths,
-        )
+        return []
 
     required_columns = {
         "tick",
@@ -100,10 +88,7 @@ def calculate_trade_metrics(
             df_deaths.columns
         )
     ):
-        return (
-            trade_kills,
-            traded_deaths,
-        )
+        return []
 
     df_deaths = df_deaths.copy()
 
@@ -132,9 +117,7 @@ def calculate_trade_metrics(
         death_ticks,
     )
 
-    # Only confirmed enemy kills are allowed to participate
-    # in trade detection.
-    kills = []
+    confirmed_enemy_kills = []
 
     for _, row in df_deaths.iterrows():
 
@@ -187,31 +170,33 @@ def calculate_trade_metrics(
             )
             != "enemy"
         ):
-            # Ignore suicide, teamkill, and unknown relation.
+            # Suicide, teamkill and unknown relation
+            # cannot participate in a confirmed trade.
             continue
 
-        kills.append({
+        confirmed_enemy_kills.append({
             "event_order": safe_int(
                 row.get("_event_order"),
                 default=-1,
             ),
-            "round_num":
-                round_context.round_num,
+            "round_num": round_context.round_num,
             "tick": tick,
             "game_time": game_time,
             "attacker": attacker,
             "victim": victim,
         })
 
-    trade_kill_events = set()
+    trade_events: List[TradeEvent] = []
 
-    for index, death in enumerate(kills):
+    for index, death in enumerate(
+        confirmed_enemy_kills
+    ):
 
         dead_player = death[
             "victim"
         ]
 
-        killer = death[
+        original_killer = death[
             "attacker"
         ]
 
@@ -228,7 +213,7 @@ def calculate_trade_metrics(
         }:
             continue
 
-        for retaliation in kills[
+        for retaliation in confirmed_enemy_kills[
             index + 1:
         ]:
 
@@ -236,9 +221,6 @@ def calculate_trade_metrics(
                 retaliation["round_num"]
                 != death["round_num"]
             ):
-                # Events are sorted by tick, therefore once
-                # the next round begins this death cannot
-                # be traded anymore.
                 if (
                     retaliation["round_num"]
                     > death["round_num"]
@@ -258,11 +240,10 @@ def calculate_trade_metrics(
             if elapsed > trade_window_seconds:
                 break
 
-            # The original killer must be the victim
-            # of the retaliation kill.
+            # The original killer must die in the retaliation.
             if (
                 retaliation["victim"]
-                != killer
+                != original_killer
             ):
                 continue
 
@@ -277,44 +258,109 @@ def calculate_trade_metrics(
                 )
             )
 
-            # The retaliation must come from the same
-            # team as the originally killed player.
+            # Trader must belong to the original victim's team.
             if (
                 trader_team
                 != dead_player_team
             ):
                 continue
 
-            if dead_player in traded_deaths:
-                traded_deaths[
-                    dead_player
-                ] += 1
-
-            trade_kill_events.add(
-                retaliation[
-                    "event_order"
-                ]
+            trade_events.append(
+                TradeEvent(
+                    round_num=death[
+                        "round_num"
+                    ],
+                    victim=dead_player,
+                    trader=trader,
+                    original_killer=original_killer,
+                    death_tick=death[
+                        "tick"
+                    ],
+                    retaliation_tick=retaliation[
+                        "tick"
+                    ],
+                    death_game_time=death[
+                        "game_time"
+                    ],
+                    retaliation_game_time=retaliation[
+                        "game_time"
+                    ],
+                    retaliation_event_order=retaliation[
+                        "event_order"
+                    ],
+                )
             )
 
+            # First confirmed valid retaliation closes this death.
             break
 
-    # One retaliation kill is one trade kill, even if
-    # several teammate deaths are covered by it.
-    for kill in kills:
+    return trade_events
 
-        if (
-            kill["event_order"]
-            not in trade_kill_events
-        ):
+
+def calculate_trade_metrics(
+    parser: RawDemoParser,
+    player_steam_ids: List[str],
+    trade_window_seconds: float = TRADE_WINDOW_SECONDS,
+) -> Tuple[
+    Dict[str, int],
+    Dict[str, int],
+]:
+    """
+    Calculate confirmed trade kills and traded deaths.
+
+    trade_kills:
+        number of distinct retaliation kills made by a player.
+
+    traded_deaths:
+        number of the player's deaths successfully traded.
+
+    One retaliation kill can trade multiple teammate deaths,
+    but it is still only one trade kill.
+    """
+
+    trade_kills = {
+        str(steam_id): 0
+        for steam_id in player_steam_ids
+        if valid_sid(steam_id)
+    }
+
+    traded_deaths = {
+        str(steam_id): 0
+        for steam_id in player_steam_ids
+        if valid_sid(steam_id)
+    }
+
+    trade_events = detect_trade_events(
+        parser,
+        trade_window_seconds=trade_window_seconds,
+    )
+
+    retaliation_events = set()
+
+    for event in trade_events:
+
+        if event.victim in traded_deaths:
+            traded_deaths[
+                event.victim
+            ] += 1
+
+        retaliation_key = (
+            event.retaliation_event_order,
+            event.retaliation_tick,
+            event.trader,
+            event.original_killer,
+        )
+
+        if retaliation_key in retaliation_events:
             continue
 
-        trader = kill[
-            "attacker"
-        ]
+        retaliation_events.add(
+            retaliation_key
+        )
 
-        if trader in trade_kills:
+        if event.trader in trade_kills:
             trade_kills[
-                trader
+                event.trader
             ] += 1
 
     return (
