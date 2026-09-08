@@ -1,5 +1,13 @@
 from demoparser2 import DemoParser as RawDemoParser
 
+from src.metrics.round_context import (
+    build_round_contexts,
+    extract_dataframe,
+    find_round,
+    safe_int,
+    valid_sid,
+)
+
 
 def calculate_entry_metrics(
     raw_parser: RawDemoParser
@@ -20,37 +28,22 @@ def calculate_entry_metrics(
     - suicide не является entry kill;
     - teamkill не является entry kill;
     - выбирается конкретное первое событие,
-      а не pandas GroupBy.first().
+      а не pandas GroupBy.first();
+    - структура раундов берётся из общего round_context.
     """
 
     stats = {}
 
     # ------------------------------------------------------------------
-    # ROUND WINDOWS
+    # SHARED ROUND CONTEXT
     # ------------------------------------------------------------------
 
-    round_windows = _build_round_windows(
+    rounds = build_round_contexts(
         raw_parser
     )
 
-    if not round_windows:
+    if not rounds:
         return stats
-
-    def assign_round(tick):
-        tick = _safe_int(
-            tick,
-            default=-1
-        )
-
-        for round_num, start_tick, end_tick in round_windows:
-            if (
-                start_tick
-                <= tick
-                <= end_tick
-            ):
-                return round_num
-
-        return None
 
     # ------------------------------------------------------------------
     # PLAYER DEATH
@@ -61,7 +54,7 @@ def calculate_entry_metrics(
             ["player_death"]
         )
 
-        df_deaths = _extract_dataframe(
+        df_deaths = extract_dataframe(
             death_events
         )
 
@@ -91,7 +84,7 @@ def calculate_entry_metrics(
             "tick",
             "_event_order",
         ],
-        kind="stable"
+        kind="stable",
     )
 
     # ------------------------------------------------------------------
@@ -99,13 +92,14 @@ def calculate_entry_metrics(
     # ------------------------------------------------------------------
 
     death_ticks = sorted({
-        _safe_int(
+        safe_int(
             row.get("tick"),
-            default=-1
+            default=-1,
         )
         for _, row in df_deaths.iterrows()
-        if assign_round(
-            row.get("tick")
+        if find_round(
+            row.get("tick"),
+            rounds,
         ) is not None
     })
 
@@ -123,7 +117,7 @@ def calculate_entry_metrics(
     try:
         df_teams = raw_parser.parse_ticks(
             ["team_num"],
-            ticks=death_ticks
+            ticks=death_ticks,
         )
 
     except Exception as exc:
@@ -144,19 +138,19 @@ def calculate_entry_metrics(
 
     for _, row in df_teams.iterrows():
 
-        tick = _safe_int(
+        tick = safe_int(
             row.get("tick"),
-            default=-1
+            default=-1,
         )
 
         steam_id = str(
             row.get(
                 "steamid",
-                ""
+                "",
             )
         )
 
-        if not _valid_sid(steam_id):
+        if not valid_sid(steam_id):
             continue
 
         team_at_tick[
@@ -164,16 +158,16 @@ def calculate_entry_metrics(
                 tick,
                 steam_id,
             )
-        ] = _safe_int(
+        ] = safe_int(
             row.get(
                 "team_num",
-                -1
+                -1,
             ),
-            default=-1
+            default=-1,
         )
 
     # ------------------------------------------------------------------
-    # HELPERS
+    # ENTRY-SPECIFIC HELPERS
     # ------------------------------------------------------------------
 
     def init_player(steam_id):
@@ -181,7 +175,7 @@ def calculate_entry_metrics(
             steam_id
         )
 
-        if not _valid_sid(steam_id):
+        if not valid_sid(steam_id):
             return
 
         if steam_id not in stats:
@@ -193,7 +187,7 @@ def calculate_entry_metrics(
     def relation(
         tick,
         attacker,
-        victim
+        victim,
     ):
         attacker = str(
             attacker
@@ -204,8 +198,8 @@ def calculate_entry_metrics(
         )
 
         if (
-            not _valid_sid(attacker)
-            or not _valid_sid(victim)
+            not valid_sid(attacker)
+            or not valid_sid(victim)
         ):
             return "unknown"
 
@@ -249,18 +243,21 @@ def calculate_entry_metrics(
 
     for _, row in df_deaths.iterrows():
 
-        tick = _safe_int(
+        tick = safe_int(
             row.get("tick"),
-            default=-1
+            default=-1,
         )
 
-        round_num = assign_round(
-            tick
+        round_context = find_round(
+            tick,
+            rounds,
         )
 
         # Warmup / post-match / вне live round.
-        if round_num is None:
+        if round_context is None:
             continue
+
+        round_num = round_context.round_num
 
         # Entry этого раунда уже найден.
         if round_num in opened_rounds:
@@ -273,22 +270,23 @@ def calculate_entry_metrics(
         attacker = str(
             row.get(
                 "attacker_steamid",
-                ""
+                "",
             )
         )
 
         victim = str(
             row.get(
                 "user_steamid",
-                ""
+                "",
             )
         )
 
-        # World / отсутствующий attacker.
-        if not _valid_sid(victim):
+        # World / отсутствующая жертва.
+        if not valid_sid(victim):
             continue
 
-        if not _valid_sid(attacker):
+        # World / отсутствующий attacker.
+        if not valid_sid(attacker):
             continue
 
         # Suicide.
@@ -298,7 +296,7 @@ def calculate_entry_metrics(
         event_relation = relation(
             tick,
             attacker,
-            victim
+            victim,
         )
 
         # Teamkill не является opening enemy kill.
@@ -349,260 +347,3 @@ def calculate_entry_metrics(
         )
 
     return stats
-
-
-# ======================================================================
-# ROUND WINDOWS
-# ======================================================================
-
-def _build_round_windows(
-    raw_parser: RawDemoParser
-):
-    """
-    Строит реальные окна:
-
-        round_start <= event <= round_end
-
-    Один window соответствует одному завершённому раунду.
-    """
-
-    try:
-        start_events = raw_parser.parse_events(
-            ["round_start"]
-        )
-
-        end_events = raw_parser.parse_events(
-            ["round_end"]
-        )
-
-        df_start = _extract_dataframe(
-            start_events
-        )
-
-        df_end = _extract_dataframe(
-            end_events
-        )
-
-    except Exception as exc:
-        print(
-            f"⚠️ Ошибка при построении Entry round windows: {exc}"
-        )
-        return []
-
-    if (
-        df_start is None
-        or df_start.empty
-        or "tick" not in df_start.columns
-    ):
-        return []
-
-    if (
-        df_end is None
-        or df_end.empty
-        or "tick" not in df_end.columns
-    ):
-        return []
-
-    df_end = df_end.copy()
-
-    # ------------------------------------------------------------------
-    # Только настоящие завершённые CT/T раунды.
-    # ------------------------------------------------------------------
-
-    if "winner" in df_end.columns:
-        df_end = df_end[
-            df_end["winner"].apply(
-                lambda value:
-                _normalize_side(value)
-                != "UNKNOWN"
-            )
-        ].copy()
-
-    # ------------------------------------------------------------------
-    # Официальный конец матча.
-    # ------------------------------------------------------------------
-
-    try:
-        panel_events = raw_parser.parse_events(
-            ["cs_win_panel_match"]
-        )
-
-        df_panel = _extract_dataframe(
-            panel_events
-        )
-
-        if (
-            df_panel is not None
-            and not df_panel.empty
-            and "tick" in df_panel.columns
-        ):
-            match_end_tick = _safe_int(
-                df_panel["tick"].max(),
-                default=-1
-            )
-
-            if match_end_tick >= 0:
-                df_end = df_end[
-                    df_end["tick"]
-                    <= match_end_tick
-                ].copy()
-
-    except Exception:
-        pass
-
-    start_ticks = sorted(
-        df_start["tick"]
-        .dropna()
-        .astype(int)
-        .tolist()
-    )
-
-    end_ticks = sorted(
-        df_end["tick"]
-        .dropna()
-        .astype(int)
-        .tolist()
-    )
-
-    if (
-        not start_ticks
-        or not end_ticks
-    ):
-        return []
-
-    # ------------------------------------------------------------------
-    # Для каждого round_end ищем последний round_start
-    # после предыдущего round_end.
-    #
-    # Это безопаснее простого zip(start_ticks, end_ticks),
-    # если когда-нибудь встретятся лишние round_start.
-    # ------------------------------------------------------------------
-
-    windows = []
-
-    previous_end = -1
-
-    for round_num, end_tick in enumerate(
-        end_ticks,
-        start=1
-    ):
-        possible_starts = [
-            start_tick
-            for start_tick in start_ticks
-            if (
-                previous_end
-                < start_tick
-                <= end_tick
-            )
-        ]
-
-        if not possible_starts:
-            previous_end = end_tick
-            continue
-
-        start_tick = max(
-            possible_starts
-        )
-
-        windows.append(
-            (
-                round_num,
-                start_tick,
-                end_tick,
-            )
-        )
-
-        previous_end = end_tick
-
-    return windows
-
-
-# ======================================================================
-# GENERIC HELPERS
-# ======================================================================
-
-def _extract_dataframe(events):
-    """
-    demoparser2 может вернуть DataFrame напрямую
-    или list/tuple.
-    """
-
-    if events is None:
-        return None
-
-    if hasattr(events, "iterrows"):
-        return events
-
-    if (
-        isinstance(events, list)
-        and events
-    ):
-        first = events[0]
-
-        if (
-            isinstance(first, tuple)
-            and len(first) >= 2
-        ):
-            return first[1]
-
-        return first
-
-    return None
-
-
-def _valid_sid(value) -> bool:
-    steam_id = str(
-        value
-    )
-
-    return steam_id not in {
-        "",
-        "0",
-        "None",
-        "nan",
-        "NaN",
-    }
-
-
-def _normalize_side(value) -> str:
-    if value is None:
-        return "UNKNOWN"
-
-    value = str(
-        value
-    ).strip().upper()
-
-    if value in {
-        "CT",
-        "3",
-        "COUNTER-TERRORIST",
-        "COUNTER_TERRORIST",
-    }:
-        return "CT"
-
-    if value in {
-        "T",
-        "2",
-        "TERRORIST",
-        "TERRORISTS",
-    }:
-        return "T"
-
-    return "UNKNOWN"
-
-
-def _safe_int(
-    value,
-    default=0
-) -> int:
-    try:
-        if value is None:
-            return default
-
-        return int(value)
-
-    except (
-        TypeError,
-        ValueError,
-    ):
-        return default
