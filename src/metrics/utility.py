@@ -4,7 +4,11 @@ from demoparser2 import DemoParser as RawDemoParser
 
 from src.metrics.round_context import (
     build_round_contexts,
+    extract_dataframe,
     find_round,
+    safe_float,
+    safe_int,
+    valid_sid,
 )
 
 from src.metrics.team_context import (
@@ -55,7 +59,7 @@ def calculate_utility_metrics(
     def _init_player(steam_id):
         steam_id = str(steam_id)
 
-        if not _valid_sid(steam_id):
+        if not valid_sid(steam_id):
             return
 
         if steam_id not in stats:
@@ -97,7 +101,7 @@ def calculate_utility_metrics(
             ["player_hurt"]
         )
 
-        df_hurt = _extract_dataframe(
+        df_hurt = extract_dataframe(
             hurt_events
         )
 
@@ -112,7 +116,7 @@ def calculate_utility_metrics(
             ["player_blind"]
         )
 
-        df_blind = _extract_dataframe(
+        df_blind = extract_dataframe(
             blind_events
         )
 
@@ -145,7 +149,7 @@ def calculate_utility_metrics(
             if weapon not in UTILITY_WEAPONS:
                 continue
 
-            tick = _safe_int(
+            tick = safe_int(
                 row.get("tick"),
                 default=-1
             )
@@ -160,7 +164,7 @@ def calculate_utility_metrics(
     ):
         for _, row in df_blind.iterrows():
 
-            tick = _safe_int(
+            tick = safe_int(
                 row.get("tick"),
                 default=-1
             )
@@ -211,7 +215,7 @@ def calculate_utility_metrics(
 
         for _, row in df_hurt.iterrows():
 
-            tick = _safe_int(
+            tick = safe_int(
                 row.get("tick"),
                 default=-1
             )
@@ -241,7 +245,7 @@ def calculate_utility_metrics(
 
             raw_damage = max(
                 0.0,
-                _safe_float(
+                safe_float(
                     row.get(
                         "dmg_health",
                         0
@@ -251,7 +255,7 @@ def calculate_utility_metrics(
 
             current_health = max(
                 0.0,
-                _safe_float(
+                safe_float(
                     row.get(
                         "health",
                         0
@@ -308,7 +312,7 @@ def calculate_utility_metrics(
             if utility_type is None:
                 continue
 
-            if not _valid_sid(attacker):
+            if not valid_sid(attacker):
                 continue
 
             # Utility damage только по врагу.
@@ -351,7 +355,7 @@ def calculate_utility_metrics(
 
         for _, row in df_blind.iterrows():
 
-            tick = _safe_int(
+            tick = safe_int(
                 row.get("tick"),
                 default=-1
             )
@@ -374,7 +378,7 @@ def calculate_utility_metrics(
                 )
             )
 
-            duration = _safe_float(
+            duration = safe_float(
                 row.get(
                     "blind_duration",
                     0.0
@@ -383,8 +387,8 @@ def calculate_utility_metrics(
             )
 
             if (
-                not _valid_sid(attacker)
-                or not _valid_sid(victim)
+                not valid_sid(attacker)
+                or not valid_sid(victim)
                 or duration <= 0
             ):
                 continue
@@ -414,82 +418,3 @@ def calculate_utility_metrics(
             ]["flash_duration"] += duration
 
     return stats
-
-
-# ======================================================================
-# GENERIC HELPERS
-# ======================================================================
-
-def _extract_dataframe(events):
-    """
-    demoparser2 может вернуть DataFrame напрямую
-    либо list/tuple.
-    """
-
-    if events is None:
-        return None
-
-    if hasattr(events, "iterrows"):
-        return events
-
-    if (
-        isinstance(events, list)
-        and events
-    ):
-        first = events[0]
-
-        if (
-            isinstance(first, tuple)
-            and len(first) >= 2
-        ):
-            return first[1]
-
-        return first
-
-    return None
-
-
-def _valid_sid(value) -> bool:
-    sid = str(value)
-
-    return sid not in {
-        "",
-        "0",
-        "None",
-        "nan",
-        "NaN",
-    }
-
-
-def _safe_int(
-    value,
-    default=0
-) -> int:
-    try:
-        if value is None:
-            return default
-
-        return int(value)
-
-    except (
-        TypeError,
-        ValueError,
-    ):
-        return default
-
-
-def _safe_float(
-    value,
-    default=0.0
-) -> float:
-    try:
-        if value is None:
-            return default
-
-        return float(value)
-
-    except (
-        TypeError,
-        ValueError,
-    ):
-        return default
