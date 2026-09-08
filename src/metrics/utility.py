@@ -7,6 +7,11 @@ from src.metrics.round_context import (
     find_round,
 )
 
+from src.metrics.team_context import (
+    build_team_state,
+    team_relation,
+)
+
 
 UTILITY_WEAPONS = {
     "hegrenade": "he",
@@ -164,104 +169,16 @@ def calculate_utility_metrics(
                 event_ticks.add(tick)
 
     # ------------------------------------------------------------------
-    # TEAM STATE
+    # SHARED TEAM CONTEXT
     #
-    # Получаем стороны игроков прямо на ticks событий.
-    # Это автоматически переживает halftime / overtime.
+    # ???????? ??????? ??????? ??????????????? ?? ticks ???????.
+    # ??????? halftime / overtime ??????????? ?????????????.
     # ------------------------------------------------------------------
 
-    team_at_tick = {}
-
-    if event_ticks:
-        try:
-            df_teams = raw_parser.parse_ticks(
-                ["team_num"],
-                ticks=sorted(event_ticks)
-            )
-
-            if (
-                df_teams is not None
-                and not df_teams.empty
-                and "steamid" in df_teams.columns
-                and "team_num" in df_teams.columns
-            ):
-                for _, row in df_teams.iterrows():
-
-                    tick = _safe_int(
-                        row.get("tick"),
-                        default=-1
-                    )
-
-                    steam_id = str(
-                        row.get(
-                            "steamid",
-                            ""
-                        )
-                    )
-
-                    if not _valid_sid(steam_id):
-                        continue
-
-                    team_at_tick[
-                        (tick, steam_id)
-                    ] = _safe_int(
-                        row.get(
-                            "team_num",
-                            -1
-                        ),
-                        default=-1
-                    )
-
-        except Exception as exc:
-            print(
-                f"⚠️ Ошибка при получении team_num: {exc}"
-            )
-
-    # ------------------------------------------------------------------
-    # TEAM RELATION
-    # ------------------------------------------------------------------
-
-    def _relation(
-        tick,
-        attacker,
-        victim
-    ):
-        attacker = str(attacker)
-        victim = str(victim)
-
-        if (
-            not _valid_sid(attacker)
-            or not _valid_sid(victim)
-        ):
-            return "unknown"
-
-        if attacker == victim:
-            return "self"
-
-        attacker_team = team_at_tick.get(
-            (
-                tick,
-                attacker,
-            )
-        )
-
-        victim_team = team_at_tick.get(
-            (
-                tick,
-                victim,
-            )
-        )
-
-        if (
-            attacker_team not in {2, 3}
-            or victim_team not in {2, 3}
-        ):
-            return "unknown"
-
-        if attacker_team == victim_team:
-            return "teammate"
-
-        return "enemy"
+    team_at_tick = build_team_state(
+        raw_parser,
+        event_ticks,
+    )
 
     # ==================================================================
     # UTILITY DAMAGE
@@ -396,10 +313,11 @@ def calculate_utility_metrics(
 
             # Utility damage только по врагу.
             if (
-                _relation(
+                team_relation(
+                    team_at_tick,
                     tick,
                     attacker,
-                    victim
+                    victim,
                 )
                 != "enemy"
             ):
@@ -473,10 +391,11 @@ def calculate_utility_metrics(
 
             # Только enemy flash.
             if (
-                _relation(
+                team_relation(
+                    team_at_tick,
                     tick,
                     attacker,
-                    victim
+                    victim,
                 )
                 != "enemy"
             ):
