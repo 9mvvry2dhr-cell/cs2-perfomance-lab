@@ -11,15 +11,18 @@ if str(PROJECT_ROOT) not in sys.path:
     )
 
 from src.parsing.demo_parser import DemoParser
+from src.metrics.survival import detect_survival_rounds
 
 
 def validate_demo(demo_path: Path) -> bool:
     print(f"\n{demo_path.name}")
 
     try:
-        match = DemoParser(
+        demo_parser = DemoParser(
             str(demo_path)
-        ).parse()
+        )
+
+        match = demo_parser.parse()
 
     except Exception as exc:
         print(
@@ -31,6 +34,25 @@ def validate_demo(demo_path: Path) -> bool:
         match.score_ct
         + match.score_t
     )
+
+    player_steam_ids = [
+        player.steam_id
+        for player in match.players
+    ]
+
+    survival_event_counts = {
+        steam_id: 0
+        for steam_id in player_steam_ids
+    }
+
+    for event in detect_survival_rounds(
+        demo_parser.raw_parser,
+        player_steam_ids,
+    ):
+        if event.steam_id in survival_event_counts:
+            survival_event_counts[
+                event.steam_id
+            ] += 1
 
     total_clutches = sum(
         player.clutches_won
@@ -94,6 +116,16 @@ def validate_demo(demo_path: Path) -> bool:
         if match.rounds_played > 0
     ]
 
+    survival_percentages = [
+        (
+            player.survived_rounds
+            / match.rounds_played
+            * 100.0
+        )
+        for player in match.players
+        if match.rounds_played > 0
+    ]
+
     kast_min = (
         min(kast_percentages)
         if kast_percentages
@@ -103,6 +135,18 @@ def validate_demo(demo_path: Path) -> bool:
     kast_max = (
         max(kast_percentages)
         if kast_percentages
+        else 0.0
+    )
+
+    survival_min = (
+        min(survival_percentages)
+        if survival_percentages
+        else 0.0
+    )
+
+    survival_max = (
+        max(survival_percentages)
+        if survival_percentages
         else 0.0
     )
 
@@ -153,6 +197,23 @@ def validate_demo(demo_path: Path) -> bool:
                 + player.five_k_rounds * 5
             )
             <= player.kills
+            for player in match.players
+        ),
+        "survival_nonnegative": all(
+            player.survived_rounds >= 0
+            for player in match.players
+        ),
+        "survival_in_range": all(
+            player.survived_rounds
+            <= match.rounds_played
+            for player in match.players
+        ),
+        "survival_matches_round_events": all(
+            player.survived_rounds
+            == survival_event_counts.get(
+                player.steam_id,
+                0,
+            )
             for player in match.players
         ),
     }
@@ -211,6 +272,11 @@ def validate_demo(demo_path: Path) -> bool:
     print(
         f"  MK rounds:   "
         f"{total_multikill_rounds}"
+    )
+    print(
+        f"  Survival:    "
+        f"{survival_min:.1f}% - "
+        f"{survival_max:.1f}%"
     )
 
     failed_checks = [
