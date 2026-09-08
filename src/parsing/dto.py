@@ -26,6 +26,10 @@ class ParsedPlayer:
     # Clutch
     clutches_won: int = 0
 
+    # Trade
+    trade_kills: int = 0
+    traded_deaths: int = 0
+
 
 @dataclass
 class ParsedRound:

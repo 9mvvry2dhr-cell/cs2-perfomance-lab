@@ -7,6 +7,7 @@ from src.parsing.dto import ParsedMatch, ParsedPlayer, ParsedRound
 from src.metrics.utility import calculate_utility_metrics
 from src.metrics.entry import calculate_entry_metrics
 from src.metrics.clutch import calculate_clutches
+from src.metrics.trade import calculate_trade_metrics
 
 
 class DemoParser:
@@ -501,6 +502,23 @@ class DemoParser:
             clutch_stats = {}
 
         # --------------------------------------------------------------
+        # Trade
+        # --------------------------------------------------------------
+
+        try:
+            trade_kills, traded_deaths = calculate_trade_metrics(
+                self.raw_parser,
+                steam_ids,
+            )
+
+        except Exception as exc:
+            print(
+                f"Trade metrics calculation failed: {exc}"
+            )
+            trade_kills = {}
+            traded_deaths = {}
+
+        # --------------------------------------------------------------
         # Записываем результаты в DTO
         # --------------------------------------------------------------
 
@@ -574,6 +592,24 @@ class DemoParser:
 
             player.clutches_won = self._safe_int(
                 clutch_stats.get(
+                    sid,
+                    0
+                )
+            )
+
+            # ----------------------------------------------------------
+            # Trade
+            # ----------------------------------------------------------
+
+            player.trade_kills = self._safe_int(
+                trade_kills.get(
+                    sid,
+                    0
+                )
+            )
+
+            player.traded_deaths = self._safe_int(
+                traded_deaths.get(
                     sid,
                     0
                 )
