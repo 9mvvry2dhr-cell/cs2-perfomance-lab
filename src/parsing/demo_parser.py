@@ -8,6 +8,7 @@ from src.metrics.utility import calculate_utility_metrics
 from src.metrics.entry import calculate_entry_metrics
 from src.metrics.clutch import calculate_clutches
 from src.metrics.trade import calculate_trade_metrics
+from src.metrics.kast import calculate_kast_metrics
 
 
 class DemoParser:
@@ -518,6 +519,20 @@ class DemoParser:
             trade_kills = {}
             traded_deaths = {}
 
+        # KAST
+
+        try:
+            kast_stats = calculate_kast_metrics(
+                self.raw_parser,
+                steam_ids,
+            )
+
+        except Exception as exc:
+            print(
+                f"KAST metrics calculation failed: {exc}"
+            )
+            kast_stats = {}
+
         # --------------------------------------------------------------
         # Записываем результаты в DTO
         # --------------------------------------------------------------
@@ -610,6 +625,15 @@ class DemoParser:
 
             player.traded_deaths = self._safe_int(
                 traded_deaths.get(
+                    sid,
+                    0
+                )
+            )
+
+            # KAST
+
+            player.kast_rounds = self._safe_int(
+                kast_stats.get(
                     sid,
                     0
                 )

@@ -30,6 +30,9 @@ class ParsedPlayer:
     trade_kills: int = 0
     traded_deaths: int = 0
 
+    # KAST
+    kast_rounds: int = 0
+
 
 @dataclass
 class ParsedRound:
