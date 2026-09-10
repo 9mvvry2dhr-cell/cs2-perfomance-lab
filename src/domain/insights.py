@@ -223,3 +223,30 @@ def generate_entry_findings(
         )
 
     return findings
+
+def generate_player_findings(
+    split_stats: Mapping[
+        str,
+        Mapping[str, float],
+    ],
+) -> List[Finding]:
+    """
+    Generate all verified findings for one player.
+    """
+
+    findings: List[Finding] = []
+
+    findings.extend(
+        generate_side_findings(
+            split_stats
+        )
+    )
+
+    findings.extend(
+        generate_entry_findings(
+            split_stats
+        )
+    )
+
+    return findings
+

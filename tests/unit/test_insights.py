@@ -2,6 +2,7 @@ import unittest
 
 from src.domain.insights import (
     generate_entry_findings,
+    generate_player_findings,
     generate_side_findings,
 )
 
@@ -269,6 +270,74 @@ class TestEntryFindings(unittest.TestCase):
 
         self.assertEqual(
             generate_entry_findings(stats),
+            [],
+        )
+
+
+
+
+class TestPlayerFindings(unittest.TestCase):
+
+    def test_combines_side_and_entry_findings(self):
+        stats = {
+            "CT": {
+                "rounds_played": 12,
+                "damage": 1200.0,
+                "kast_rounds": 10,
+                "entry_kills": 2,
+                "entry_deaths": 1,
+            },
+            "T": {
+                "rounds_played": 12,
+                "damage": 600.0,
+                "kast_rounds": 6,
+                "entry_kills": 0,
+                "entry_deaths": 4,
+            },
+        }
+
+        findings = generate_player_findings(
+            stats
+        )
+
+        self.assertEqual(
+            [finding.code for finding in findings],
+            [
+                "SIDE_PERFORMANCE_GAP",
+                "FREQUENT_OPENING_DEATHS",
+            ],
+        )
+
+        self.assertEqual(
+            findings[0].side,
+            "T",
+        )
+
+        self.assertEqual(
+            findings[1].side,
+            "T",
+        )
+
+    def test_returns_empty_when_no_rules_match(self):
+        stats = {
+            "CT": {
+                "rounds_played": 12,
+                "damage": 900.0,
+                "kast_rounds": 9,
+                "entry_kills": 2,
+                "entry_deaths": 1,
+            },
+            "T": {
+                "rounds_played": 12,
+                "damage": 850.0,
+                "kast_rounds": 9,
+                "entry_kills": 1,
+                "entry_deaths": 1,
+            },
+        }
+
+        self.assertEqual(
+            generate_player_findings(stats),
             [],
         )
 
