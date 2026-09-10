@@ -1,5 +1,4 @@
-streamlit
-pydantic
+﻿pydantic
 pydantic-settings
 demoparser2
 pandas

@@ -1,4 +1,4 @@
-# Virtual Environment
+﻿# Virtual Environment
 .venv/
 venv/
 ENV/
@@ -9,7 +9,6 @@ __pycache__/
 *$py.class
 
 # Streamlit
-.streamlit/cache/
 
 # SQLite / Database
 *.sqlite
