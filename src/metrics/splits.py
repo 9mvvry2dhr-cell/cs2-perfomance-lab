@@ -17,6 +17,9 @@ from src.metrics.team_context import (
 from src.metrics.survival import (
     detect_survival_rounds,
 )
+from src.metrics.kast import (
+    detect_kast_rounds,
+)
 
 
 @dataclass(frozen=True)
@@ -178,6 +181,7 @@ def calculate_split_metrics(
     - kills
     - deaths
     - survived_rounds
+    - kast_rounds
 
     Side is resolved from the player's freeze_end roster
     independently for every confirmed round.
@@ -196,12 +200,14 @@ def calculate_split_metrics(
                 "kills": 0,
                 "deaths": 0,
                 "survived_rounds": 0,
+                "kast_rounds": 0,
             },
             "T": {
                 "rounds_played": 0,
                 "kills": 0,
                 "deaths": 0,
                 "survived_rounds": 0,
+                "kast_rounds": 0,
             },
         }
         for steam_id in player_ids
@@ -270,6 +276,35 @@ def calculate_split_metrics(
             side
         ][
             "survived_rounds"
+        ] += 1
+
+    # --------------------------------------------------------------
+    # KAST
+    # --------------------------------------------------------------
+
+    kast_events = detect_kast_rounds(
+        parser,
+        list(player_ids),
+    )
+
+    for event in kast_events:
+
+        side = side_by_round_player.get(
+            (
+                event.round_num,
+                event.steam_id,
+            )
+        )
+
+        if side not in {"CT", "T"}:
+            continue
+
+        metrics[
+            event.steam_id
+        ][
+            side
+        ][
+            "kast_rounds"
         ] += 1
 
     # --------------------------------------------------------------

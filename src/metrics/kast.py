@@ -1,3 +1,4 @@
+from dataclasses import dataclass
 from typing import Dict, List
 
 from demoparser2 import DemoParser as RawDemoParser
@@ -16,12 +17,22 @@ from src.metrics.team_context import (
 from src.metrics.trade import detect_trade_events
 
 
-def calculate_kast_metrics(
+@dataclass(frozen=True)
+class KASTRound:
+    """
+    One verified KAST-positive player-round.
+    """
+
+    round_num: int
+    steam_id: str
+
+
+def detect_kast_rounds(
     parser: RawDemoParser,
     player_steam_ids: List[str],
-) -> Dict[str, int]:
+) -> List[KASTRound]:
     """
-    Calculate KAST-positive rounds for each player.
+    Detect verified KAST-positive player-rounds.
 
     A round is KAST-positive when the player has at least one:
 
@@ -30,7 +41,7 @@ def calculate_kast_metrics(
     S - survived the round
     T - their death was traded
 
-    Each round counts at most once per player.
+    Each player-round is emitted at most once.
     """
 
     player_ids = {
@@ -39,20 +50,15 @@ def calculate_kast_metrics(
         if valid_sid(steam_id)
     }
 
-    kast_rounds = {
-        steam_id: 0
-        for steam_id in player_ids
-    }
-
     if not player_ids:
-        return kast_rounds
+        return []
 
     rounds = build_round_contexts(
         parser
     )
 
     if not rounds:
-        return kast_rounds
+        return []
 
     # --------------------------------------------------------------
     # Round rosters at freeze_end
@@ -70,7 +76,7 @@ def calculate_kast_metrics(
         )
 
     except Exception:
-        return kast_rounds
+        return []
 
     if (
         df_rosters is None
@@ -80,7 +86,7 @@ def calculate_kast_metrics(
         or "team_num" not in df_rosters.columns
         or "tick" not in df_rosters.columns
     ):
-        return kast_rounds
+        return []
 
     round_by_snapshot_tick = {
         round_data.freeze_end_tick:
@@ -151,13 +157,13 @@ def calculate_kast_metrics(
         )
 
     except Exception:
-        return kast_rounds
+        return []
 
     if (
         df_deaths is None
         or not hasattr(df_deaths, "empty")
     ):
-        return kast_rounds
+        return []
 
     positive_by_round = {
         round_data.round_num: set()
@@ -180,7 +186,7 @@ def calculate_kast_metrics(
         if not required_columns.issubset(
             df_deaths.columns
         ):
-            return kast_rounds
+            return []
 
         df_deaths = df_deaths.copy()
 
@@ -358,20 +364,63 @@ def calculate_kast_metrics(
         )
 
     # --------------------------------------------------------------
-    # Final count
+    # Round-level result
     # --------------------------------------------------------------
+
+    results = []
 
     for round_data in rounds:
 
         round_num = round_data.round_num
 
-        for steam_id in positive_by_round[
-            round_num
-        ]:
+        for steam_id in sorted(
+            positive_by_round[
+                round_num
+            ]
+        ):
 
-            if steam_id in kast_rounds:
-                kast_rounds[
-                    steam_id
-                ] += 1
+            if steam_id not in player_ids:
+                continue
+
+            results.append(
+                KASTRound(
+                    round_num=round_num,
+                    steam_id=steam_id,
+                )
+            )
+
+    return results
+
+
+def calculate_kast_metrics(
+    parser: RawDemoParser,
+    player_steam_ids: List[str],
+) -> Dict[str, int]:
+    """
+    Calculate verified KAST-positive round counts.
+    """
+
+    player_ids = {
+        str(steam_id)
+        for steam_id in player_steam_ids
+        if valid_sid(steam_id)
+    }
+
+    kast_rounds = {
+        steam_id: 0
+        for steam_id in player_ids
+    }
+
+    if not player_ids:
+        return kast_rounds
+
+    for event in detect_kast_rounds(
+        parser,
+        list(player_ids),
+    ):
+        if event.steam_id in kast_rounds:
+            kast_rounds[
+                event.steam_id
+            ] += 1
 
     return kast_rounds

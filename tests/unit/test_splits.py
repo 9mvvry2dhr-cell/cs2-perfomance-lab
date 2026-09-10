@@ -625,5 +625,142 @@ class TestSplitMetrics(unittest.TestCase):
 
 
 
+    def test_kast_rounds_follow_player_side(self):
+        parser = FakeDemoParser(
+            team_rows=[
+                # Round 1: A is T.
+                {
+                    "tick": 150,
+                    "steamid": "A",
+                    "team_num": 2,
+                },
+                {
+                    "tick": 150,
+                    "steamid": "X",
+                    "team_num": 3,
+                },
+                {
+                    "tick": 150,
+                    "steamid": "Y",
+                    "team_num": 3,
+                },
+
+                # Round 1 kill.
+                {
+                    "tick": 300,
+                    "steamid": "A",
+                    "team_num": 2,
+                },
+                {
+                    "tick": 300,
+                    "steamid": "X",
+                    "team_num": 3,
+                },
+
+                # Round 1 A dies.
+                {
+                    "tick": 600,
+                    "steamid": "A",
+                    "team_num": 2,
+                },
+                {
+                    "tick": 600,
+                    "steamid": "Y",
+                    "team_num": 3,
+                },
+
+                # Round 2: A is now CT.
+                {
+                    "tick": 1050,
+                    "steamid": "A",
+                    "team_num": 3,
+                },
+                {
+                    "tick": 1050,
+                    "steamid": "Z",
+                    "team_num": 2,
+                },
+
+                # Round 2 A dies without K/A/S/T.
+                {
+                    "tick": 1400,
+                    "steamid": "A",
+                    "team_num": 3,
+                },
+                {
+                    "tick": 1400,
+                    "steamid": "Z",
+                    "team_num": 2,
+                },
+            ],
+            starts=[
+                100,
+                1000,
+            ],
+            freezes=[
+                150,
+                1050,
+            ],
+            ends=[
+                {
+                    "tick": 900,
+                    "winner": "CT",
+                },
+                {
+                    "tick": 1800,
+                    "winner": "T",
+                },
+            ],
+            deaths=[
+                {
+                    "tick": 300,
+                    "game_time": 10.0,
+                    "attacker_steamid": "A",
+                    "user_steamid": "X",
+                    "assister_steamid": "",
+                },
+                {
+                    "tick": 600,
+                    "game_time": 20.0,
+                    "attacker_steamid": "Y",
+                    "user_steamid": "A",
+                    "assister_steamid": "",
+                },
+                {
+                    "tick": 1400,
+                    "game_time": 40.0,
+                    "attacker_steamid": "Z",
+                    "user_steamid": "A",
+                    "assister_steamid": "",
+                },
+            ],
+        )
+
+        stats = calculate_split_metrics(
+            parser,
+            ["A", "X", "Y", "Z"],
+        )
+
+        self.assertEqual(
+            stats["A"]["T"]["kast_rounds"],
+            1,
+        )
+
+        self.assertEqual(
+            stats["A"]["CT"]["kast_rounds"],
+            0,
+        )
+
+        self.assertEqual(
+            stats["A"]["T"]["rounds_played"],
+            1,
+        )
+
+        self.assertEqual(
+            stats["A"]["CT"]["rounds_played"],
+            1,
+        )
+
+
 if __name__ == "__main__":
     unittest.main()

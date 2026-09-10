@@ -2,7 +2,10 @@ import unittest
 
 import pandas as pd
 
-from src.metrics.kast import calculate_kast_metrics
+from src.metrics.kast import (
+    calculate_kast_metrics,
+    detect_kast_rounds,
+)
 
 
 class FakeDemoParser:
@@ -340,6 +343,68 @@ class TestKASTMetrics(unittest.TestCase):
         self.assertEqual(
             stats["C"],
             0,
+        )
+
+
+    def test_round_level_api_exposes_kast(self):
+        parser = FakeDemoParser(
+            deaths=[
+                {
+                    "tick": 300,
+                    "game_time": 10.0,
+                    "attacker_steamid": "A",
+                    "user_steamid": "X",
+                    "assister_steamid": "",
+                }
+            ],
+            team_rows=[
+                {
+                    "tick": 150,
+                    "steamid": "A",
+                    "team_num": 2,
+                },
+                {
+                    "tick": 150,
+                    "steamid": "X",
+                    "team_num": 3,
+                },
+                {
+                    "tick": 300,
+                    "steamid": "A",
+                    "team_num": 2,
+                },
+                {
+                    "tick": 300,
+                    "steamid": "X",
+                    "team_num": 3,
+                },
+            ],
+        )
+
+        events = detect_kast_rounds(
+            parser,
+            ["A", "X"],
+        )
+
+        a_events = [
+            event
+            for event in events
+            if event.steam_id == "A"
+        ]
+
+        self.assertEqual(
+            len(a_events),
+            1,
+        )
+
+        self.assertEqual(
+            a_events[0].round_num,
+            1,
+        )
+
+        self.assertEqual(
+            a_events[0].steam_id,
+            "A",
         )
 
 
