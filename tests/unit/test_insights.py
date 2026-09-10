@@ -1,6 +1,7 @@
 import unittest
 
 from src.domain.insights import (
+    generate_entry_findings,
     generate_side_findings,
 )
 
@@ -132,6 +133,142 @@ class TestSideFindings(unittest.TestCase):
 
         self.assertEqual(
             generate_side_findings(stats),
+            [],
+        )
+
+
+
+
+class TestEntryFindings(unittest.TestCase):
+
+    def test_detects_frequent_opening_deaths_on_t(self):
+        stats = {
+            "CT": {
+                "rounds_played": 12,
+                "entry_deaths": 1,
+            },
+            "T": {
+                "rounds_played": 12,
+                "entry_deaths": 3,
+            },
+        }
+
+        findings = generate_entry_findings(
+            stats
+        )
+
+        self.assertEqual(
+            len(findings),
+            1,
+        )
+
+        self.assertEqual(
+            findings[0].code,
+            "FREQUENT_OPENING_DEATHS",
+        )
+
+        self.assertEqual(
+            findings[0].side,
+            "T",
+        )
+
+        self.assertEqual(
+            findings[0].evidence[
+                "entry_death_rate_pct"
+            ],
+            25.0,
+        )
+
+    def test_two_opening_deaths_are_not_enough(self):
+        stats = {
+            "CT": {
+                "rounds_played": 12,
+                "entry_deaths": 2,
+            },
+            "T": {
+                "rounds_played": 12,
+                "entry_deaths": 0,
+            },
+        }
+
+        self.assertEqual(
+            generate_entry_findings(stats),
+            [],
+        )
+
+    def test_high_rate_with_too_few_rounds_is_ignored(self):
+        stats = {
+            "CT": {
+                "rounds_played": 5,
+                "entry_deaths": 3,
+            },
+            "T": {
+                "rounds_played": 12,
+                "entry_deaths": 0,
+            },
+        }
+
+        self.assertEqual(
+            generate_entry_findings(stats),
+            [],
+        )
+
+    def test_below_rate_threshold_is_ignored(self):
+        stats = {
+            "CT": {
+                "rounds_played": 16,
+                "entry_deaths": 3,
+            },
+            "T": {
+                "rounds_played": 12,
+                "entry_deaths": 0,
+            },
+        }
+
+        self.assertEqual(
+            generate_entry_findings(stats),
+            [],
+        )
+
+
+
+    def test_positive_opening_balance_is_not_flagged(self):
+        stats = {
+            "CT": {
+                "rounds_played": 12,
+                "entry_kills": 5,
+                "entry_deaths": 4,
+            },
+            "T": {
+                "rounds_played": 12,
+                "entry_kills": 0,
+                "entry_deaths": 0,
+            },
+        }
+
+        self.assertEqual(
+            generate_entry_findings(stats),
+            [],
+        )
+
+
+
+    def test_one_death_opening_gap_is_not_flagged(self):
+        stats = {
+            "CT": {
+                "rounds_played": 12,
+                "entry_kills": 3,
+                "entry_deaths": 4,
+            },
+            "T": {
+                "rounds_played": 12,
+                "entry_kills": 0,
+                "entry_deaths": 0,
+            },
+        }
+
+        self.assertEqual(
+            generate_entry_findings(stats),
             [],
         )
 

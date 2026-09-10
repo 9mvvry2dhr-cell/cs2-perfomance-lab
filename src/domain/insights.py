@@ -6,6 +6,11 @@ MIN_SIDE_ROUNDS = 6
 MIN_ADR_GAP = 20.0
 MIN_KAST_GAP_PCT = 15.0
 
+MIN_ENTRY_SIDE_ROUNDS = 6
+MIN_ENTRY_DEATHS = 3
+MIN_ENTRY_DEATH_RATE_PCT = 25.0
+MIN_ENTRY_DEATH_GAP = 2
+
 
 @dataclass(frozen=True)
 class Finding:
@@ -131,3 +136,90 @@ def generate_side_findings(
             },
         )
     ]
+
+def generate_entry_findings(
+    split_stats: Mapping[
+        str,
+        Mapping[str, float],
+    ],
+) -> List[Finding]:
+    """
+    Detect frequent opening deaths on a specific side.
+
+    A finding is emitted only when:
+    - enough verified rounds were played on that side;
+    - the player has at least three opening deaths;
+    - opening-death rate is at least 25%.
+    """
+
+    findings = []
+
+    for side in ("CT", "T"):
+        bucket = split_stats.get(
+            side,
+            {},
+        )
+
+        rounds = int(
+            bucket.get(
+                "rounds_played",
+                0,
+            )
+        )
+
+        entry_deaths = int(
+            bucket.get(
+                "entry_deaths",
+                0,
+            )
+        )
+
+        entry_kills = int(
+            bucket.get(
+                "entry_kills",
+                0,
+            )
+        )
+
+        if rounds < MIN_ENTRY_SIDE_ROUNDS:
+            continue
+
+        if entry_deaths < MIN_ENTRY_DEATHS:
+            continue
+
+        entry_death_gap = (
+            entry_deaths
+            - entry_kills
+        )
+
+        if entry_death_gap < MIN_ENTRY_DEATH_GAP:
+            continue
+
+        rate = round(
+            (
+                entry_deaths
+                / rounds
+            )
+            * 100,
+            1,
+        )
+
+        if rate < MIN_ENTRY_DEATH_RATE_PCT:
+            continue
+
+        findings.append(
+            Finding(
+                code="FREQUENT_OPENING_DEATHS",
+                category="entry",
+                side=side,
+                evidence={
+                    "rounds_played": float(rounds),
+                    "entry_kills": float(entry_kills),
+                    "entry_deaths": float(entry_deaths),
+                    "entry_death_gap": float(entry_death_gap),
+                    "entry_death_rate_pct": rate,
+                },
+            )
+        )
+
+    return findings
