@@ -1,7 +1,13 @@
 import unittest
 
-from src.domain.analysis import build_player_analysis
-from src.parsing.dto import ParsedPlayer
+from src.domain.analysis import (
+    build_match_analysis,
+    build_player_analysis,
+)
+from src.parsing.dto import (
+    ParsedMatch,
+    ParsedPlayer,
+)
 
 
 class TestPlayerAnalysis(unittest.TestCase):
@@ -70,6 +76,21 @@ class TestPlayerAnalysis(unittest.TestCase):
         self.assertEqual(
             analysis.stats.adr,
             93.4,
+        )
+
+        self.assertEqual(
+            analysis.stats.headshots,
+            10,
+        )
+
+        self.assertEqual(
+            analysis.stats.kd,
+            1.5,
+        )
+
+        self.assertEqual(
+            analysis.stats.headshot_pct,
+            41.7,
         )
 
         self.assertEqual(
@@ -154,6 +175,150 @@ class TestPlayerAnalysis(unittest.TestCase):
 
         self.assertEqual(
             analysis.findings,
+            [],
+        )
+
+
+
+
+class TestMatchAnalysis(unittest.TestCase):
+
+    def _player(self):
+        return ParsedPlayer(
+            steam_id="123",
+            name="test_player",
+            kills=10,
+            deaths=8,
+            assists=3,
+            damage=1000.0,
+            headshots=5,
+            rounds_played=12,
+            kast_rounds=8,
+            survived_rounds=4,
+        )
+
+    def test_builds_match_analysis(self):
+        player = self._player()
+
+        match = ParsedMatch(
+            match_id="match_test",
+            map_name="de_mirage",
+            duration_seconds=1800,
+            rounds_played=12,
+            score_ct=7,
+            score_t=5,
+            winner_side="CT",
+            players=[player],
+            rounds=[],
+            is_valid=True,
+            validation_error=None,
+        )
+
+        splits = {
+            "123": {
+                "CT": {
+                    "rounds_played": 6,
+                    "kills": 6,
+                    "deaths": 4,
+                    "damage": 650.0,
+                    "kast_rounds": 5,
+                    "survived_rounds": 2,
+                    "entry_kills": 1,
+                    "entry_deaths": 0,
+                },
+                "T": {
+                    "rounds_played": 6,
+                    "kills": 4,
+                    "deaths": 4,
+                    "damage": 350.0,
+                    "kast_rounds": 3,
+                    "survived_rounds": 2,
+                    "entry_kills": 0,
+                    "entry_deaths": 1,
+                },
+            },
+        }
+
+        analysis = build_match_analysis(
+            match,
+            splits,
+        )
+
+        self.assertEqual(
+            analysis.match_id,
+            "match_test",
+        )
+
+        self.assertEqual(
+            analysis.map_name,
+            "de_mirage",
+        )
+
+        self.assertEqual(
+            analysis.score_ct,
+            7,
+        )
+
+        self.assertEqual(
+            analysis.score_t,
+            5,
+        )
+
+        self.assertTrue(
+            analysis.is_valid
+        )
+
+        self.assertEqual(
+            len(analysis.players),
+            1,
+        )
+
+        self.assertEqual(
+            analysis.players[0].steam_id,
+            "123",
+        )
+
+        self.assertEqual(
+            analysis.players[0].stats.adr,
+            83.3,
+        )
+
+    def test_missing_split_stats_fail_safe(self):
+        player = self._player()
+
+        match = ParsedMatch(
+            match_id="match_test",
+            map_name="de_mirage",
+            duration_seconds=1800,
+            rounds_played=12,
+            score_ct=7,
+            score_t=5,
+            winner_side="CT",
+            players=[player],
+            rounds=[],
+        )
+
+        analysis = build_match_analysis(
+            match,
+            {},
+        )
+
+        self.assertEqual(
+            analysis.players[0]
+            .sides["CT"]
+            .rounds_played,
+            0,
+        )
+
+        self.assertEqual(
+            analysis.players[0]
+            .sides["T"]
+            .rounds_played,
+            0,
+        )
+
+        self.assertEqual(
+            analysis.players[0].findings,
             [],
         )
 

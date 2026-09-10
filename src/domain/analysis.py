@@ -2,7 +2,8 @@ from dataclasses import dataclass
 from typing import Dict, List, Mapping
 
 from src.domain.insights import Finding, generate_player_findings
-from src.parsing.dto import ParsedPlayer
+from src.domain.metrics import calculate_hs_percent, calculate_kd
+from src.parsing.dto import ParsedMatch, ParsedPlayer
 
 
 @dataclass(frozen=True)
@@ -11,8 +12,11 @@ class PlayerStats:
     kills: int
     deaths: int
     assists: int
+    headshots: int
     damage: float
+    kd: float
     adr: float
+    headshot_pct: float
     kast_rounds: int
     kast_pct: float
     survived_rounds: int
@@ -61,6 +65,23 @@ class PlayerAnalysis:
     stats: PlayerStats
     sides: Dict[str, SideStats]
     findings: List[Finding]
+
+
+@dataclass(frozen=True)
+class MatchAnalysis:
+    match_id: str
+    map_name: str
+    duration_seconds: int
+    rounds_played: int
+
+    score_ct: int
+    score_t: int
+    winner_side: str
+
+    is_valid: bool
+    validation_error: str | None
+
+    players: List[PlayerAnalysis]
 
 
 def _percentage(
@@ -156,13 +177,24 @@ def build_player_analysis(
         kills=int(player.kills),
         deaths=int(player.deaths),
         assists=int(player.assists),
+        headshots=int(
+            player.headshots
+        ),
         damage=round(
             float(player.damage),
             1,
         ),
+        kd=calculate_kd(
+            int(player.kills),
+            int(player.deaths),
+        ),
         adr=_adr(
             float(player.damage),
             rounds,
+        ),
+        headshot_pct=calculate_hs_percent(
+            int(player.headshots),
+            int(player.kills),
         ),
         kast_rounds=int(
             player.kast_rounds
@@ -239,4 +271,64 @@ def build_player_analysis(
         findings=generate_player_findings(
             split_stats
         ),
+    )
+
+def build_match_analysis(
+    match: ParsedMatch,
+    split_stats_by_player: Mapping[
+        str,
+        Mapping[
+            str,
+            Mapping[str, float],
+        ],
+    ],
+) -> MatchAnalysis:
+    """
+    Build the stable analysis contract for one parsed match.
+    """
+
+    players = []
+
+    for player in match.players:
+        steam_id = str(
+            player.steam_id
+        )
+
+        split_stats = (
+            split_stats_by_player.get(
+                steam_id,
+                {},
+            )
+        )
+
+        players.append(
+            build_player_analysis(
+                player,
+                split_stats,
+            )
+        )
+
+    return MatchAnalysis(
+        match_id=match.match_id,
+        map_name=match.map_name,
+        duration_seconds=int(
+            match.duration_seconds
+        ),
+        rounds_played=int(
+            match.rounds_played
+        ),
+        score_ct=int(
+            match.score_ct
+        ),
+        score_t=int(
+            match.score_t
+        ),
+        winner_side=match.winner_side,
+        is_valid=bool(
+            match.is_valid
+        ),
+        validation_error=(
+            match.validation_error
+        ),
+        players=players,
     )
