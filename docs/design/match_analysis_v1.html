@@ -1,0 +1,2674 @@
+﻿<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<title>CS2 Performance Lab</title>
+
+<style>
+
+:root {
+    --bg: #05101a;
+    --bg-deep: #040a10;
+
+    --panel: #091827;
+    --panel-2: #0c1d2d;
+
+    --text: #f5f8fb;
+    --muted: #8499ad;
+    --muted-2: #536a7e;
+
+    --line: rgba(125, 171, 210, 0.16);
+
+    --blue: #49a8ff;
+    --orange: #f0a52f;
+    --green: #52d39f;
+
+    --radius: 16px;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+html {
+    color-scheme: dark;
+}
+
+body {
+    margin: 0;
+
+    min-height: 100vh;
+
+    color: var(--text);
+
+    font-family:
+        Inter,
+        ui-sans-serif,
+        system-ui,
+        -apple-system,
+        BlinkMacSystemFont,
+        "Segoe UI",
+        sans-serif;
+
+    background:
+        radial-gradient(
+            900px 520px
+            at 78% -5%,
+            rgba(45, 119, 180, 0.16),
+            transparent 64%
+        ),
+        linear-gradient(
+            180deg,
+            #06131f 0%,
+            #040b12 100%
+        );
+}
+
+
+/* =========================================================
+   APP
+   ========================================================= */
+
+.app {
+    min-height: 100vh;
+
+    display: grid;
+
+    grid-template-columns:
+        220px
+        minmax(0, 1fr);
+}
+
+
+/* =========================================================
+   SIDEBAR
+   ========================================================= */
+
+.sidebar {
+    position: sticky;
+    top: 0;
+
+    height: 100vh;
+
+    padding:
+        24px
+        15px
+        20px;
+
+    display: flex;
+    flex-direction: column;
+
+    background:
+        linear-gradient(
+            180deg,
+            #071725 0%,
+            #06111a 100%
+        );
+
+    border-right:
+        1px solid
+        rgba(255, 255, 255, 0.055);
+}
+
+
+.brand {
+    padding:
+        0
+        7px;
+
+    display: flex;
+    align-items: center;
+
+    gap: 10px;
+
+    margin-bottom: 30px;
+}
+
+
+.brand-logo {
+    width: 35px;
+    height: 35px;
+
+    display: grid;
+
+    place-items: center;
+
+    border-radius: 9px;
+
+    color: #101820;
+
+    font-size: 12px;
+    font-weight: 900;
+
+    background:
+        linear-gradient(
+            145deg,
+            #ffc54d,
+            #e48c18
+        );
+
+    box-shadow:
+        0 7px 20px
+        rgba(230, 147, 24, 0.19);
+}
+
+
+.brand-title {
+    font-size: 14px;
+
+    font-weight: 800;
+}
+
+
+.brand-sub {
+    margin-top: 2px;
+
+    color: var(--muted);
+
+    font-size: 9px;
+}
+
+
+.nav {
+    display: grid;
+
+    gap: 6px;
+}
+
+
+.nav-button {
+    width: 100%;
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 10px;
+
+    padding:
+        10px
+        12px;
+
+    border:
+        1px solid
+        transparent;
+
+    border-radius: 10px;
+
+    color: #8099ae;
+
+    background:
+        transparent;
+
+    cursor: pointer;
+
+    text-align: left;
+
+    transition:
+        color 160ms ease,
+        background 160ms ease,
+        border-color 160ms ease;
+}
+
+
+.nav-button svg {
+    width: 16px;
+    height: 16px;
+}
+
+
+.nav-button:hover {
+    color: #eaf4fc;
+
+    background:
+        rgba(255,255,255,0.025);
+}
+
+
+.nav-button.active {
+    color: #ffffff;
+
+    background:
+        linear-gradient(
+            90deg,
+            rgba(51, 125, 190, 0.24),
+            rgba(29, 70, 106, 0.11)
+        );
+
+    border-color:
+        rgba(82, 158, 226, 0.15);
+
+    box-shadow:
+        inset 3px 0 0
+        var(--orange);
+}
+
+
+.side-label {
+    margin:
+        28px
+        7px
+        7px;
+
+    color: #526b80;
+
+    font-size: 8px;
+
+    font-weight: 800;
+
+    letter-spacing: 0.12em;
+}
+
+
+.player-select {
+    width: 100%;
+
+    padding:
+        9px
+        10px;
+
+    border:
+        1px solid
+        var(--line);
+
+    border-radius: 9px;
+
+    color: #ffffff;
+
+    background:
+        #07131e;
+
+    outline: none;
+}
+
+
+.current-match {
+    padding:
+        0
+        7px;
+
+    color: #7b91a5;
+
+    font-size: 10px;
+
+    line-height: 1.55;
+}
+
+
+.slogan {
+    margin-top: auto;
+
+    padding:
+        17px
+        7px
+        0;
+
+    border-top:
+        1px solid
+        rgba(255,255,255,0.06);
+
+    color: #70879a;
+
+    font-size: 10px;
+
+    line-height: 1.55;
+}
+
+
+.slogan strong {
+    display: block;
+
+    margin-bottom: 4px;
+
+    color: #d6e0e9;
+
+    font-weight: 650;
+}
+
+
+/* =========================================================
+   MAIN
+   ========================================================= */
+
+.main {
+    padding:
+        17px
+        25px
+        42px;
+}
+
+
+.content {
+    max-width: 1450px;
+
+    margin: auto;
+}
+
+
+.breadcrumb {
+    margin-bottom: 9px;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: space-between;
+
+    color: #71889c;
+
+    font-size: 9px;
+}
+
+
+.verified {
+    color: var(--green);
+}
+
+
+/* =========================================================
+   CARDS
+   ========================================================= */
+
+.card {
+    border:
+        1px solid
+        var(--line);
+
+    border-radius:
+        var(--radius);
+
+    background:
+        linear-gradient(
+            145deg,
+            rgba(12, 27, 41, 0.98),
+            rgba(7, 16, 25, 0.98)
+        );
+}
+
+
+.soft-hover {
+    transition:
+        transform 160ms ease,
+        border-color 160ms ease,
+        box-shadow 160ms ease;
+}
+
+
+.soft-hover:hover {
+    transform:
+        translateY(-1px);
+
+    border-color:
+        rgba(73, 161, 240, 0.32);
+
+    box-shadow:
+        0 0 16px
+        rgba(55, 139, 214, 0.055),
+
+        0 13px 32px
+        rgba(0,0,0,0.18);
+}
+
+
+/* =========================================================
+   HERO
+   ========================================================= */
+
+.hero {
+    position: relative;
+
+    min-height: 248px;
+
+    display: grid;
+
+    grid-template-columns:
+        minmax(620px, 1.15fr)
+        0.85fr;
+
+    overflow: hidden;
+
+    margin-bottom: 13px;
+}
+
+
+.hero-left {
+    position: relative;
+
+    z-index: 3;
+
+    padding:
+        24px
+        25px;
+
+    display: flex;
+
+    flex-direction: column;
+
+    justify-content: center;
+
+    background:
+        linear-gradient(
+            90deg,
+            rgba(7, 18, 29, 0.98),
+            rgba(7, 18, 29, 0.92) 78%,
+            rgba(7, 18, 29, 0.38)
+        );
+}
+
+
+.profile {
+    display: flex;
+
+    align-items: center;
+
+    gap: 14px;
+}
+
+
+.avatar {
+    width: 68px;
+    height: 68px;
+
+    display: grid;
+
+    place-items: center;
+
+    border-radius: 50%;
+
+    border:
+        1px solid
+        rgba(73, 168, 255, 0.42);
+
+    color: #cce8ff;
+
+    font-size: 21px;
+
+    font-weight: 900;
+
+    background:
+        radial-gradient(
+            circle at 35% 25%,
+            #354f68,
+            #102233 50%,
+            #07131e 100%
+        );
+
+    box-shadow:
+        0 0 24px
+        rgba(73, 168, 255, 0.08);
+}
+
+
+.player-name {
+    display: flex;
+
+    align-items: center;
+
+    gap: 8px;
+
+    font-size: 32px;
+
+    font-weight: 820;
+
+    letter-spacing:
+        -0.04em;
+}
+
+
+.verify-icon {
+    width: 17px;
+    height: 17px;
+
+    display: grid;
+
+    place-items: center;
+
+    border-radius: 50%;
+
+    color: #06121c;
+
+    background:
+        var(--blue);
+
+    font-size: 11px;
+
+    font-weight: 900;
+}
+
+
+.steam {
+    margin-top: 5px;
+
+    color: #89a0b4;
+
+    font-size: 10px;
+}
+
+
+/* =========================================================
+   METRICS
+   ========================================================= */
+
+.metrics {
+    margin-top: 20px;
+
+    display: grid;
+
+    grid-template-columns:
+        repeat(4, 1fr);
+
+    gap: 10px;
+}
+
+
+.metric {
+    position: relative;
+
+    min-height: 84px;
+
+    padding:
+        13px
+        14px;
+
+    display: grid;
+
+    grid-template-columns:
+        32px
+        1fr;
+
+    align-items: center;
+
+    gap: 10px;
+
+    border:
+        1px solid
+        rgba(73, 168, 255, 0.18);
+
+    border-radius: 11px;
+
+    background:
+        rgba(5, 15, 24, 0.58);
+
+    cursor: default;
+
+    transition:
+        transform 160ms ease,
+        border-color 160ms ease,
+        box-shadow 160ms ease;
+}
+
+
+.metric:hover {
+    transform:
+        translateY(-1px);
+
+    border-color:
+        rgba(73, 168, 255, 0.46);
+
+    box-shadow:
+        0 0 14px
+        rgba(73, 168, 255, 0.075);
+}
+
+
+.metric-icon {
+    width: 30px;
+    height: 30px;
+
+    color: #64b5ff;
+}
+
+
+.metric-label {
+    color: #8096aa;
+
+    font-size: 9px;
+
+    letter-spacing: 0.06em;
+}
+
+
+.metric-value {
+    margin-top: 4px;
+
+    font-size: 25px;
+
+    font-weight: 790;
+
+    letter-spacing:
+        -0.04em;
+}
+
+
+.tooltip {
+    position: absolute;
+
+    z-index: 20;
+
+    left: 12px;
+    bottom: -34px;
+
+    opacity: 0;
+
+    pointer-events: none;
+
+    padding:
+        6px
+        8px;
+
+    border:
+        1px solid
+        var(--line);
+
+    border-radius: 7px;
+
+    color: #b9c6d1;
+
+    background:
+        #0d1b29;
+
+    font-size: 8px;
+
+    white-space: nowrap;
+
+    transition:
+        opacity 140ms ease,
+        transform 140ms ease;
+}
+
+
+.metric:hover .tooltip {
+    opacity: 1;
+
+    transform:
+        translateY(-2px);
+}
+
+
+/* =========================================================
+   MIRAGE ART
+   ========================================================= */
+
+.map-art {
+    position: relative;
+
+    overflow: hidden;
+
+    background:
+        linear-gradient(
+            90deg,
+            rgba(7,18,29,0.40),
+            rgba(7,18,29,0.05) 35%,
+            rgba(7,18,29,0.02)
+        ),
+
+        linear-gradient(
+            165deg,
+            #162938 0%,
+            #30414a 27%,
+            #856c48 28%,
+            #756044 44%,
+            #263b45 45%,
+            #102431 70%,
+            #081721 100%
+        );
+}
+
+
+.map-art svg {
+    position: absolute;
+
+    inset: 0;
+
+    width: 100%;
+    height: 100%;
+
+    opacity: 0.72;
+}
+
+
+.map-info {
+    position: absolute;
+
+    z-index: 4;
+
+    top: 15px;
+    right: 15px;
+
+    min-width: 150px;
+
+    padding:
+        11px
+        12px;
+
+    border:
+        1px solid
+        rgba(255,255,255,0.12);
+
+    border-radius: 11px;
+
+    background:
+        rgba(5, 13, 20, 0.76);
+
+    backdrop-filter:
+        blur(7px);
+}
+
+
+.map-info small {
+    display: block;
+
+    color: #7c91a4;
+
+    font-size: 8px;
+}
+
+
+.map-info strong {
+    display: block;
+
+    margin-top: 4px;
+
+    font-size: 19px;
+}
+
+
+.map-info span {
+    display: block;
+
+    margin-top: 4px;
+
+    color: #bcc7d1;
+
+    font-size: 9px;
+}
+
+
+/* =========================================================
+   INSIGHT
+   ========================================================= */
+
+.insight {
+    position: relative;
+
+    overflow: hidden;
+
+    margin-bottom: 14px;
+
+    padding:
+        24px
+        25px;
+
+    cursor: pointer;
+
+    border:
+        1px solid
+        rgba(239, 166, 46, 0.55);
+
+    background:
+        linear-gradient(
+            105deg,
+            rgba(112, 72, 15, 0.34),
+            rgba(37, 28, 17, 0.70) 52%,
+            rgba(8, 17, 25, 0.98)
+        );
+
+    box-shadow:
+        inset 3px 0 0
+        rgba(245, 171, 48, 0.89);
+
+    transition:
+        transform 180ms ease,
+        border-color 180ms ease,
+        box-shadow 180ms ease;
+}
+
+
+.insight::before {
+    content: "";
+
+    position: absolute;
+
+    inset: 0;
+
+    pointer-events: none;
+
+    opacity: 0;
+
+    background:
+        radial-gradient(
+            680px 250px
+            at 27% 48%,
+            rgba(255, 182, 42, 0.15),
+            transparent 66%
+        );
+
+    transition:
+        opacity 180ms ease;
+}
+
+
+.insight:hover {
+    transform:
+        translateY(-1px);
+
+    border-color:
+        rgba(255, 191, 66, 0.88);
+
+    box-shadow:
+        inset 3px 0 0
+        rgba(255, 194, 68, 0.98),
+
+        0 0 20px
+        rgba(245, 168, 30, 0.13),
+
+        0 15px 36px
+        rgba(0,0,0,0.21);
+}
+
+
+.insight:hover::before {
+    opacity: 1;
+}
+
+
+.insight-layout {
+    position: relative;
+
+    z-index: 2;
+
+    display: grid;
+
+    grid-template-columns:
+        54px
+        minmax(0, 1.35fr)
+        minmax(310px, 0.65fr);
+
+    gap: 18px;
+
+    align-items: center;
+}
+
+
+.insight-icon {
+    width: 51px;
+    height: 51px;
+
+    display: grid;
+
+    place-items: center;
+
+    border-radius: 50%;
+
+    color: #ffd168;
+
+    background:
+        rgba(218, 143, 23, 0.18);
+
+    border:
+        1px solid
+        rgba(232, 169, 65, 0.20);
+}
+
+
+.insight-icon svg {
+    width: 25px;
+    height: 25px;
+}
+
+
+.eyebrow {
+    color: #e9ad46;
+
+    font-size: 9px;
+
+    font-weight: 850;
+
+    letter-spacing: 0.1em;
+}
+
+
+.finding-title {
+    margin-top: 6px;
+
+    font-size: 22px;
+
+    font-weight: 790;
+
+    letter-spacing:
+        -0.025em;
+}
+
+
+.finding-sub {
+    margin-top: 5px;
+
+    color: #aebac4;
+
+    font-size: 11px;
+}
+
+
+.chips {
+    margin-top: 11px;
+
+    display: flex;
+
+    gap: 8px;
+
+    flex-wrap: wrap;
+}
+
+
+.chip {
+    padding:
+        6px
+        9px;
+
+    border:
+        1px solid
+        rgba(255,255,255,0.11);
+
+    border-radius: 8px;
+
+    color: #dce4ea;
+
+    background:
+        rgba(255,255,255,0.035);
+
+    font-size: 10px;
+}
+
+
+.next-step {
+    min-height: 85px;
+
+    padding-left: 25px;
+
+    display: flex;
+
+    flex-direction: column;
+
+    justify-content: center;
+
+    border-left:
+        1px solid
+        rgba(255,255,255,0.10);
+}
+
+
+.next-title {
+    color: #e8ad47;
+
+    font-size: 9px;
+
+    font-weight: 850;
+
+    letter-spacing:
+        0.08em;
+}
+
+
+.next-text {
+    margin-top: 7px;
+
+    color: #c4ced7;
+
+    font-size: 11px;
+
+    line-height: 1.55;
+}
+
+
+.insight-details {
+    display: none;
+
+    position: relative;
+
+    z-index: 2;
+
+    margin-top: 16px;
+
+    padding-top: 14px;
+
+    border-top:
+        1px solid
+        rgba(255,255,255,0.09);
+
+    color: #9eafbe;
+
+    font-size: 10px;
+
+    line-height: 1.6;
+}
+
+
+.insight.open .insight-details {
+    display: block;
+}
+
+
+/* =========================================================
+   SIDES
+   ========================================================= */
+
+.section-title {
+    margin:
+        16px
+        2px
+        8px;
+
+    display: flex;
+
+    justify-content: space-between;
+
+    align-items: center;
+
+    font-size: 17px;
+
+    font-weight: 760;
+}
+
+
+.section-title small {
+    color: #72879b;
+
+    font-size: 8px;
+
+    font-weight: 500;
+}
+
+
+.sides-shell {
+    padding: 11px;
+
+    margin-bottom: 11px;
+}
+
+
+.sides {
+    display: grid;
+
+    grid-template-columns:
+        1fr
+        1fr;
+
+    gap: 10px;
+}
+
+
+.side {
+    padding:
+        17px
+        18px;
+
+    border:
+        1px solid
+        rgba(255,255,255,0.075);
+
+    border-radius: 13px;
+
+    transition:
+        transform 160ms ease,
+        border-color 160ms ease,
+        box-shadow 160ms ease;
+}
+
+
+.side:hover {
+    transform:
+        translateY(-1px);
+}
+
+
+.side.ct {
+    background:
+        linear-gradient(
+            112deg,
+            rgba(20, 81, 132, 0.30),
+            rgba(8, 20, 31, 0.97)
+        );
+}
+
+
+.side.ct:hover {
+    border-color:
+        rgba(73,168,255,0.46);
+
+    box-shadow:
+        0 0 17px
+        rgba(69,148,221,0.08);
+}
+
+
+.side.t {
+    background:
+        linear-gradient(
+            112deg,
+            rgba(123, 79, 18, 0.27),
+            rgba(27, 22, 16, 0.97)
+        );
+}
+
+
+.side.t:hover {
+    border-color:
+        rgba(224,164,65,0.44);
+
+    box-shadow:
+        0 0 17px
+        rgba(219,149,37,0.08);
+}
+
+
+.side-head {
+    display: flex;
+
+    justify-content: space-between;
+
+    align-items: center;
+
+    margin-bottom: 16px;
+}
+
+
+.side-name-group {
+    display: flex;
+
+    align-items: center;
+
+    gap: 10px;
+}
+
+
+.side-icon {
+    width: 34px;
+    height: 34px;
+
+    display: grid;
+
+    place-items: center;
+
+    border-radius: 50%;
+}
+
+
+.side-icon svg {
+    width: 18px;
+    height: 18px;
+}
+
+
+.ct .side-icon {
+    color: #74c0ff;
+
+    border:
+        1px solid
+        rgba(73,168,255,0.40);
+
+    background:
+        rgba(52,145,224,0.18);
+}
+
+
+.t .side-icon {
+    color: #edbe70;
+
+    border:
+        1px solid
+        rgba(224,164,65,0.36);
+
+    background:
+        rgba(213,145,34,0.14);
+}
+
+
+.side-name {
+    font-size: 15px;
+
+    font-weight: 760;
+}
+
+
+.ct .side-name {
+    color: #d3eaff;
+}
+
+
+.t .side-name {
+    color: #f3dfba;
+}
+
+
+.rounds {
+    color: #7b90a3;
+
+    font-size: 9px;
+}
+
+
+.side-stats {
+    display: grid;
+
+    grid-template-columns:
+        repeat(5,1fr);
+}
+
+
+.stat {
+    padding:
+        0
+        11px;
+
+    border-right:
+        1px solid
+        rgba(255,255,255,0.075);
+}
+
+
+.stat:first-child {
+    padding-left: 0;
+}
+
+
+.stat:last-child {
+    border-right: 0;
+}
+
+
+.stat-label {
+    color: #788fa3;
+
+    font-size: 8px;
+}
+
+
+.stat-value {
+    margin-top: 4px;
+
+    font-size: 18px;
+
+    font-weight: 720;
+}
+
+
+/* =========================================================
+   LOWER CARDS
+   ========================================================= */
+
+.lower {
+    display: grid;
+
+    grid-template-columns:
+        1.08fr
+        1fr
+        0.82fr;
+
+    gap: 10px;
+
+    margin-bottom: 11px;
+}
+
+
+.lower-card {
+    padding:
+        16px
+        17px;
+}
+
+
+.lower-title {
+    margin-bottom: 13px;
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 8px;
+
+    font-size: 12px;
+
+    font-weight: 740;
+}
+
+
+.lower-title svg {
+    width: 16px;
+    height: 16px;
+
+    color: #66b6ff;
+}
+
+
+.values {
+    display: grid;
+
+    grid-template-columns:
+        repeat(5,1fr);
+}
+
+
+.values.four {
+    grid-template-columns:
+        repeat(4,1fr);
+}
+
+
+.small-stat {
+    padding:
+        0
+        8px;
+
+    border-right:
+        1px solid
+        rgba(255,255,255,0.065);
+}
+
+
+.small-stat:first-child {
+    padding-left: 0;
+}
+
+
+.small-stat:last-child {
+    border-right: 0;
+}
+
+
+.small-label {
+    min-height: 22px;
+
+    color: #71879b;
+
+    font-size: 7.8px;
+}
+
+
+.small-value {
+    margin-top: 4px;
+
+    font-size: 17px;
+
+    font-weight: 720;
+}
+
+
+/* =========================================================
+   PLAYERS
+   ========================================================= */
+
+.players {
+    overflow: hidden;
+}
+
+
+.players-button {
+    width: 100%;
+
+    padding:
+        13px
+        15px;
+
+    display: flex;
+
+    justify-content: space-between;
+
+    border: 0;
+
+    color: #eaf2f9;
+
+    background:
+        transparent;
+
+    cursor: pointer;
+}
+
+
+.players-button span:last-child {
+    color: #72879b;
+
+    font-size: 9px;
+}
+
+
+.players-body {
+    display: none;
+
+    border-top:
+        1px solid
+        var(--line);
+}
+
+
+.players.open .players-body {
+    display: block;
+}
+
+
+table {
+    width: 100%;
+
+    border-collapse:
+        collapse;
+
+    font-size: 9px;
+}
+
+
+th,
+td {
+    padding:
+        8px
+        11px;
+
+    text-align: right;
+
+    border-bottom:
+        1px solid
+        rgba(255,255,255,0.05);
+}
+
+
+th:first-child,
+td:first-child {
+    text-align: left;
+}
+
+
+th {
+    color: #70869a;
+
+    font-size: 7.5px;
+}
+
+
+tr:hover td {
+    background:
+        rgba(77,151,216,0.04);
+}
+
+
+tr.selected td {
+    background:
+        rgba(63,132,191,0.10);
+}
+
+
+.finding-badge {
+    display: inline-block;
+
+    padding:
+        2px
+        6px;
+
+    border-radius: 999px;
+
+    color: #ecb75a;
+
+    background:
+        rgba(229,169,73,0.13);
+}
+
+
+/* =========================================================
+   RESPONSIVE
+   ========================================================= */
+
+@media (max-width: 1050px) {
+
+    .app {
+        grid-template-columns: 1fr;
+    }
+
+    .sidebar {
+        display: none;
+    }
+
+    .main {
+        padding: 14px;
+    }
+
+    .hero {
+        grid-template-columns: 1fr;
+    }
+
+    .map-art {
+        display: none;
+    }
+
+    .insight-layout {
+        grid-template-columns:
+            45px
+            1fr;
+    }
+
+    .next-step {
+        grid-column:
+            1 / -1;
+
+        padding:
+            14px
+            0
+            0;
+
+        border-left: 0;
+
+        border-top:
+            1px solid
+            rgba(255,255,255,0.10);
+    }
+
+    .sides,
+    .lower {
+        grid-template-columns:
+            1fr;
+    }
+}
+
+</style>
+</head>
+
+
+<body>
+
+
+<div class="app">
+
+
+<aside class="sidebar">
+
+
+<div class="brand">
+
+<div class="brand-logo">
+CS
+</div>
+
+<div>
+
+<div class="brand-title">
+CS2 Performance Lab
+</div>
+
+<div class="brand-sub">
+Анализ матча · v1
+</div>
+
+</div>
+
+</div>
+
+
+<div class="nav" id="nav">
+
+
+<button class="nav-button active">
+
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+<path d="M4 19V10"/>
+<path d="M10 19V5"/>
+<path d="M16 19v-7"/>
+<path d="M22 19H2"/>
+</svg>
+
+Анализ матча
+
+</button>
+
+
+<button class="nav-button">
+
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+<circle cx="12" cy="8" r="4"/>
+<path d="M4 21c0-4 3.5-7 8-7s8 3 8 7"/>
+</svg>
+
+Игроки
+
+</button>
+
+
+<button class="nav-button">
+
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+<path d="M3 6l6-3 6 3 6-3v15l-6 3-6-3-6 3z"/>
+<path d="M9 3v15"/>
+<path d="M15 6v15"/>
+</svg>
+
+Карты
+
+</button>
+
+
+<button class="nav-button">
+
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+<path d="M4 20V9"/>
+<path d="M10 20V4"/>
+<path d="M16 20v-7"/>
+<path d="M22 20V7"/>
+</svg>
+
+Статистика
+
+</button>
+
+
+</div>
+
+
+<div class="side-label">
+ИГРОК
+</div>
+
+<select class="player-select">
+
+<option>
+kbn_san
+</option>
+
+</select>
+
+
+<div class="side-label">
+ТЕКУЩИЙ МАТЧ
+</div>
+
+<div class="current-match">
+
+de_mirage · 13:11
+<br>
+24 раунда
+
+</div>
+
+
+<div class="slogan">
+
+<strong>
+Анализируем данные,
+<br>
+а не гадаем.
+</strong>
+
+Проверенные метрики →
+<br>
+выводы → разбор.
+
+</div>
+
+
+</aside>
+
+
+<main class="main">
+
+<div class="content">
+
+
+<div class="breadcrumb">
+
+<span>
+⌂ &nbsp;›&nbsp;
+Анализ матча
+&nbsp;›&nbsp;
+de_mirage
+&nbsp;›&nbsp;
+kbn_san
+</span>
+
+<span class="verified">
+● DATA VERIFIED
+</span>
+
+</div>
+
+
+<section class="card soft-hover hero">
+
+
+<div class="hero-left">
+
+
+<div class="profile">
+
+
+<div class="avatar">
+K
+</div>
+
+
+<div>
+
+
+<div class="player-name">
+
+kbn_san
+
+<span class="verify-icon">
+✓
+</span>
+
+</div>
+
+
+<div class="steam">
+
+Steam ID:
+76561198055629469
+
+</div>
+
+
+</div>
+
+
+</div>
+
+
+<div class="metrics">
+
+
+<div class="metric">
+
+<svg class="metric-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7">
+<circle cx="12" cy="12" r="7"/>
+<path d="M12 2v4M12 18v4M2 12h4M18 12h4"/>
+</svg>
+
+<div>
+<div class="metric-label">K/D</div>
+<div class="metric-value">1.50</div>
+</div>
+
+<div class="tooltip">
+24 убийства / 16 смертей
+</div>
+
+</div>
+
+
+<div class="metric">
+
+<svg class="metric-icon" viewBox="0 0 24 24" fill="currentColor">
+<rect x="3" y="13" width="3" height="8" rx="1"/>
+<rect x="10" y="6" width="3" height="15" rx="1"/>
+<rect x="17" y="9" width="3" height="12" rx="1"/>
+</svg>
+
+<div>
+<div class="metric-label">ADR</div>
+<div class="metric-value">93.4</div>
+</div>
+
+<div class="tooltip">
+Средний урон за раунд
+</div>
+
+</div>
+
+
+<div class="metric">
+
+<svg class="metric-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7">
+<path d="M3 8l4-4 5 4 5-4 4 4-9 10z"/>
+<path d="M7 12l5 5 5-5"/>
+</svg>
+
+<div>
+<div class="metric-label">KAST</div>
+<div class="metric-value">66.7%</div>
+</div>
+
+<div class="tooltip">
+Kill / Assist / Survive / Trade
+</div>
+
+</div>
+
+
+<div class="metric">
+
+<svg class="metric-icon" viewBox="0 0 24 24" fill="currentColor">
+<path d="M12 2a8 8 0 0 0-5 14v4h3v-2h4v2h3v-4a8 8 0 0 0-5-14zm-3 9a2 2 0 1 1 0-4 2 2 0 0 1 0 4zm6 0a2 2 0 1 1 0-4 2 2 0 0 1 0 4z"/>
+</svg>
+
+<div>
+<div class="metric-label">HS</div>
+<div class="metric-value">50.0%</div>
+</div>
+
+<div class="tooltip">
+Доля убийств в голову
+</div>
+
+</div>
+
+
+</div>
+
+
+</div>
+
+
+<div class="map-art">
+
+
+<svg
+viewBox="0 0 600 300"
+preserveAspectRatio="none"
+>
+
+
+<rect
+x="70"
+y="74"
+width="180"
+height="190"
+fill="#a88e69"
+opacity=".42"
+/>
+
+
+<rect
+x="110"
+y="40"
+width="75"
+height="220"
+fill="#b79d73"
+opacity=".35"
+/>
+
+
+<rect
+x="320"
+y="92"
+width="180"
+height="180"
+fill="#8f7659"
+opacity=".36"
+/>
+
+
+<rect
+x="390"
+y="55"
+width="85"
+height="215"
+fill="#a58c68"
+opacity=".32"
+/>
+
+
+<path
+d="M145 0v62M420 0v88"
+stroke="#202b29"
+stroke-width="10"
+/>
+
+
+<path
+d="M145 25
+c-45-45-70-8-65 5
+c25-8 43 0 65 18
+c22-18 40-26 65-18
+c5-13-20-50-65-5z"
+fill="#192c29"
+opacity=".8"
+/>
+
+
+<path
+d="M420 30
+c-48-45-72-8-67 5
+c26-9 45 0 67 19
+c23-19 43-28 69-19
+c4-13-21-50-69-5z"
+fill="#162b28"
+opacity=".8"
+/>
+
+
+<text
+x="360"
+y="215"
+font-size="120"
+font-family="Arial Black"
+fill="#8e3228"
+opacity=".60"
+transform="rotate(-7 360 215)"
+>
+A
+</text>
+
+
+</svg>
+
+
+<div class="map-info">
+
+<small>
+Карта
+</small>
+
+<strong>
+de_mirage
+</strong>
+
+<span>
+Счёт: 13 : 11
+</span>
+
+<span>
+Всего раундов: 24
+</span>
+
+</div>
+
+
+</div>
+
+
+</section>
+
+
+<section
+class="card insight"
+id="insight"
+>
+
+
+<div class="insight-layout">
+
+
+<div class="insight-icon">
+
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7">
+
+<path d="M9 18h6"/>
+<path d="M10 22h4"/>
+<path d="M8 15c-1.7-1.2-3-3-3-5a7 7 0 0 1 14 0c0 2-1.3 3.8-3 5-.8.6-1 1.2-1 2H9c0-.8-.2-1.4-1-2z"/>
+
+</svg>
+
+</div>
+
+
+<div>
+
+
+<div class="eyebrow">
+КЛЮЧЕВОЙ ВЫВОД
+</div>
+
+
+<div class="finding-title">
+T-сторона заметно слабее CT
+по влиянию и стабильности
+</div>
+
+
+<div class="finding-sub">
+На T ниже ADR и KAST.
+</div>
+
+
+<div class="chips">
+
+
+<div class="chip">
+
+ADR&nbsp;
+<strong>
+63.3
+</strong>
+&nbsp;vs 123.5
+
+</div>
+
+
+<div class="chip">
+
+KAST&nbsp;
+<strong>
+50.0%
+</strong>
+&nbsp;vs 83.3%
+
+</div>
+
+
+</div>
+
+
+</div>
+
+
+<div class="next-step">
+
+
+<div class="next-title">
+ЧТО ДЕЛАТЬ ДАЛЬШЕ
+</div>
+
+
+<div class="next-text">
+
+Разбери T-раунды:
+первые контакты,
+размены,
+utility
+и выживание.
+
+<br><br>
+
+<span style="color:#e5a744">
+Нажми на блок →
+</span>
+
+</div>
+
+
+</div>
+
+
+</div>
+
+
+<div class="insight-details">
+
+<strong style="color:#d8e2ea">
+
+С чего начать просмотр:
+
+</strong>
+
+выходы и первые контакты на T,
+возможность быстрого размена,
+использование utility перед контактом
+и раунды,
+в которых влияние игрока
+заканчивалось слишком рано.
+
+</div>
+
+
+</section>
+
+
+<div class="section-title">
+
+<span>
+CT / T сравнение
+</span>
+
+<small>
+Сравнение на основе
+24 подтверждённых раундов
+</small>
+
+</div>
+
+
+<section class="card sides-shell">
+
+<div class="sides">
+
+
+<div class="side ct">
+
+
+<div class="side-head">
+
+
+<div class="side-name-group">
+
+
+<div class="side-icon">
+
+<svg viewBox="0 0 24 24" fill="currentColor">
+<path d="M12 2l7 4v5c0 5-3 9-7 11-4-2-7-6-7-11V6z"/>
+</svg>
+
+</div>
+
+
+<div class="side-name">
+Контр-террористы
+</div>
+
+
+</div>
+
+
+<div class="rounds">
+12 раундов
+</div>
+
+
+</div>
+
+
+<div class="side-stats">
+
+
+<div class="stat">
+<div class="stat-label">K / D</div>
+<div class="stat-value">13 / 8</div>
+</div>
+
+
+<div class="stat">
+<div class="stat-label">ADR</div>
+<div class="stat-value">123.5</div>
+</div>
+
+
+<div class="stat">
+<div class="stat-label">KAST</div>
+<div class="stat-value">83.3%</div>
+</div>
+
+
+<div class="stat">
+<div class="stat-label">Выживание</div>
+<div class="stat-value">33.3%</div>
+</div>
+
+
+<div class="stat">
+<div class="stat-label">Первые K / D</div>
+<div class="stat-value">2 / 0</div>
+</div>
+
+
+</div>
+
+
+</div>
+
+
+<div class="side t">
+
+
+<div class="side-head">
+
+
+<div class="side-name-group">
+
+
+<div class="side-icon">
+
+<svg viewBox="0 0 24 24" fill="currentColor">
+<path d="M12 2l2.4 6.2L21 9l-5 4.2L17.5 20 12 16.5 6.5 20 8 13.2 3 9l6.6-.8z"/>
+</svg>
+
+</div>
+
+
+<div class="side-name">
+Террористы
+</div>
+
+
+</div>
+
+
+<div class="rounds">
+12 раундов
+</div>
+
+
+</div>
+
+
+<div class="side-stats">
+
+
+<div class="stat">
+<div class="stat-label">K / D</div>
+<div class="stat-value">11 / 8</div>
+</div>
+
+
+<div class="stat">
+<div class="stat-label">ADR</div>
+<div class="stat-value">63.3</div>
+</div>
+
+
+<div class="stat">
+<div class="stat-label">KAST</div>
+<div class="stat-value">50.0%</div>
+</div>
+
+
+<div class="stat">
+<div class="stat-label">Выживание</div>
+<div class="stat-value">33.3%</div>
+</div>
+
+
+<div class="stat">
+<div class="stat-label">Первые K / D</div>
+<div class="stat-value">0 / 1</div>
+</div>
+
+
+</div>
+
+
+</div>
+
+
+</div>
+
+</section>
+
+
+<section class="lower">
+
+
+<div class="card soft-hover lower-card">
+
+
+<div class="lower-title">
+
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+<path d="M4 19V10"/>
+<path d="M10 19V5"/>
+<path d="M16 19v-7"/>
+<path d="M22 19H2"/>
+</svg>
+
+Влияние
+
+</div>
+
+
+<div class="values">
+
+
+<div class="small-stat">
+<div class="small-label">Первые K / D</div>
+<div class="small-value">2 / 1</div>
+</div>
+
+
+<div class="small-stat">
+<div class="small-label">Клатчи</div>
+<div class="small-value">1</div>
+</div>
+
+
+<div class="small-stat">
+<div class="small-label">Трейд-киллы</div>
+<div class="small-value">3</div>
+</div>
+
+
+<div class="small-stat">
+<div class="small-label">Размененные смерти</div>
+<div class="small-value">2</div>
+</div>
+
+
+<div class="small-stat">
+<div class="small-label">Выживание</div>
+<div class="small-value">33.3%</div>
+</div>
+
+
+</div>
+
+
+</div>
+
+
+<div class="card soft-hover lower-card">
+
+
+<div class="lower-title">
+
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+<path d="M8 3h8"/>
+<path d="M10 3v5l-5 8a4 4 0 0 0 3.5 6h7a4 4 0 0 0 3.5-6l-5-8V3"/>
+</svg>
+
+Утилиты
+
+</div>
+
+
+<div class="values four">
+
+
+<div class="small-stat">
+<div class="small-label">Урон HE</div>
+<div class="small-value">67.0</div>
+</div>
+
+
+<div class="small-stat">
+<div class="small-label">Урон Molotov</div>
+<div class="small-value">21.0</div>
+</div>
+
+
+<div class="small-stat">
+<div class="small-label">Врагов ослеплено</div>
+<div class="small-value">12</div>
+</div>
+
+
+<div class="small-stat">
+<div class="small-label">Время ослепления</div>
+<div class="small-value">34.1 c</div>
+</div>
+
+
+</div>
+
+
+</div>
+
+
+<div class="card soft-hover lower-card">
+
+
+<div class="lower-title">
+
+<svg viewBox="0 0 24 24" fill="currentColor">
+<path d="M12 2l2.7 5.5 6.1.9-4.4 4.3 1 6.1-5.4-2.9-5.4 2.9 1-6.1-4.4-4.3 6.1-.9z"/>
+</svg>
+
+Мультикиллы
+
+</div>
+
+
+<div class="values four">
+
+
+<div class="small-stat">
+<div class="small-label">2K</div>
+<div class="small-value">8</div>
+</div>
+
+
+<div class="small-stat">
+<div class="small-label">3K</div>
+<div class="small-value">1</div>
+</div>
+
+
+<div class="small-stat">
+<div class="small-label">4K</div>
+<div class="small-value">0</div>
+</div>
+
+
+<div class="small-stat">
+<div class="small-label">5K</div>
+<div class="small-value">0</div>
+</div>
+
+
+</div>
+
+
+</div>
+
+
+</section>
+
+
+<section
+class="card players"
+id="players"
+>
+
+
+<button
+class="players-button"
+id="playersToggle"
+>
+
+
+<span>
+Все игроки матча
+</span>
+
+
+<span id="playersToggleText">
+Показать ▾
+</span>
+
+
+</button>
+
+
+<div class="players-body">
+
+
+<table>
+
+
+<thead>
+
+<tr>
+<th>Игрок</th>
+<th>K</th>
+<th>D</th>
+<th>K/D</th>
+<th>ADR</th>
+<th>KAST</th>
+<th>HS</th>
+<th>Findings</th>
+</tr>
+
+</thead>
+
+
+<tbody>
+
+
+<tr>
+<td>Axello</td>
+<td>31</td>
+<td>15</td>
+<td>2.07</td>
+<td>131.3</td>
+<td>87.5%</td>
+<td>32.3%</td>
+<td>—</td>
+</tr>
+
+
+<tr>
+<td>p✝</td>
+<td>23</td>
+<td>16</td>
+<td>1.44</td>
+<td>97.2</td>
+<td>70.8%</td>
+<td>47.8%</td>
+<td>—</td>
+</tr>
+
+
+<tr class="selected">
+<td>kbn_san</td>
+<td>24</td>
+<td>16</td>
+<td>1.50</td>
+<td>93.4</td>
+<td>66.7%</td>
+<td>50.0%</td>
+
+<td>
+<span class="finding-badge">
+1
+</span>
+</td>
+
+</tr>
+
+
+<tr>
+<td>IONA</td>
+<td>22</td>
+<td>17</td>
+<td>1.29</td>
+<td>91.6</td>
+<td>79.2%</td>
+<td>45.5%</td>
+
+<td>
+<span class="finding-badge">
+1
+</span>
+</td>
+
+</tr>
+
+
+<tr>
+<td>Snobbish</td>
+<td>13</td>
+<td>21</td>
+<td>0.62</td>
+<td>71.1</td>
+<td>66.7%</td>
+<td>23.1%</td>
+
+<td>
+<span class="finding-badge">
+1
+</span>
+</td>
+
+</tr>
+
+
+</tbody>
+
+
+</table>
+
+
+</div>
+
+
+</section>
+
+
+</div>
+
+</main>
+
+
+</div>
+
+
+<script>
+
+/* Players table */
+
+const players =
+    document.getElementById(
+        "players"
+    );
+
+const playersToggle =
+    document.getElementById(
+        "playersToggle"
+    );
+
+const playersToggleText =
+    document.getElementById(
+        "playersToggleText"
+    );
+
+
+playersToggle.addEventListener(
+    "click",
+    () => {
+
+        players.classList.toggle(
+            "open"
+        );
+
+        playersToggleText.textContent =
+            players.classList.contains(
+                "open"
+            )
+            ? "Скрыть ▴"
+            : "Показать ▾";
+    }
+);
+
+
+/* Finding details */
+
+const insight =
+    document.getElementById(
+        "insight"
+    );
+
+
+insight.addEventListener(
+    "click",
+    () => {
+
+        insight.classList.toggle(
+            "open"
+        );
+    }
+);
+
+
+/* Sidebar active state */
+
+document
+    .querySelectorAll(
+        ".nav-button"
+    )
+    .forEach(
+        button => {
+
+            button.addEventListener(
+                "click",
+                () => {
+
+                    document
+                        .querySelectorAll(
+                            ".nav-button"
+                        )
+                        .forEach(
+                            item =>
+                                item
+                                    .classList
+                                    .remove(
+                                        "active"
+                                    )
+                        );
+
+                    button
+                        .classList
+                        .add(
+                            "active"
+                        );
+                }
+            );
+        }
+    );
+
+</script>
+
+
+</body>
+</html>
