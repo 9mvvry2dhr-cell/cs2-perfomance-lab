@@ -1059,5 +1059,115 @@ class TestSplitMetrics(unittest.TestCase):
         )
 
 
+
+    def test_entry_kills_and_deaths_follow_player_side(self):
+        parser = FakeDemoParser(
+            team_rows=[
+                # Round 1 freeze_end: A=T, B=CT
+                {
+                    "tick": 150,
+                    "steamid": "A",
+                    "team_num": 2,
+                },
+                {
+                    "tick": 150,
+                    "steamid": "B",
+                    "team_num": 3,
+                },
+
+                # Round 1 opening kill
+                {
+                    "tick": 500,
+                    "steamid": "A",
+                    "team_num": 2,
+                },
+                {
+                    "tick": 500,
+                    "steamid": "B",
+                    "team_num": 3,
+                },
+
+                # Round 2 freeze_end: A=CT, B=T
+                {
+                    "tick": 1050,
+                    "steamid": "A",
+                    "team_num": 3,
+                },
+                {
+                    "tick": 1050,
+                    "steamid": "B",
+                    "team_num": 2,
+                },
+
+                # Round 2 opening kill
+                {
+                    "tick": 1400,
+                    "steamid": "A",
+                    "team_num": 3,
+                },
+                {
+                    "tick": 1400,
+                    "steamid": "B",
+                    "team_num": 2,
+                },
+            ],
+            starts=[
+                100,
+                1000,
+            ],
+            freezes=[
+                150,
+                1050,
+            ],
+            ends=[
+                {
+                    "tick": 900,
+                    "winner": "T",
+                },
+                {
+                    "tick": 1800,
+                    "winner": "CT",
+                },
+            ],
+            deaths=[
+                {
+                    "tick": 500,
+                    "attacker_steamid": "A",
+                    "user_steamid": "B",
+                },
+                {
+                    "tick": 1400,
+                    "attacker_steamid": "A",
+                    "user_steamid": "B",
+                },
+            ],
+        )
+
+        stats = calculate_split_metrics(
+            parser,
+            ["A", "B"],
+        )
+
+        self.assertEqual(
+            stats["A"]["T"]["entry_kills"],
+            1,
+        )
+
+        self.assertEqual(
+            stats["A"]["CT"]["entry_kills"],
+            1,
+        )
+
+        self.assertEqual(
+            stats["B"]["CT"]["entry_deaths"],
+            1,
+        )
+
+        self.assertEqual(
+            stats["B"]["T"]["entry_deaths"],
+            1,
+        )
+
+
 if __name__ == "__main__":
     unittest.main()

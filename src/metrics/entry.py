@@ -1,3 +1,6 @@
+from dataclasses import dataclass
+from typing import List
+
 from demoparser2 import DemoParser as RawDemoParser
 
 from src.metrics.round_context import (
@@ -14,45 +17,37 @@ from src.metrics.team_context import (
 )
 
 
-def calculate_entry_metrics(
-    raw_parser: RawDemoParser
-) -> dict:
+@dataclass(frozen=True)
+class EntryEvent:
+    """One verified opening enemy kill."""
+
+    round_num: int
+    attacker: str
+    victim: str
+    tick: int
+
+
+def detect_entry_events(
+    raw_parser: RawDemoParser,
+) -> List[EntryEvent]:
     """
-    Считает Entry Kill / Entry Death.
+    Return verified opening enemy kills by round.
 
-    Entry Kill:
-        первый настоящий enemy kill сыгранного раунда.
-
-    Entry Death:
-        жертва этого opening kill.
-
-    Правила Data Trust:
-    - только события внутри live-round;
-    - без хардкода на 24 раунда;
-    - halftime / overtime поддерживаются;
-    - suicide не является entry kill;
-    - teamkill не является entry kill;
-    - выбирается конкретное первое событие,
-      а не pandas GroupBy.first();
-    - структура раундов берётся из общего round_context.
+    Rules:
+    - only events inside confirmed rounds;
+    - first confirmed enemy kill is the entry event;
+    - suicide and teamkill are skipped;
+    - unknown team relation blocks the round;
+    - equal-tick events preserve original event order;
+    - no fixed round-count assumptions.
     """
-
-    stats = {}
-
-    # ------------------------------------------------------------------
-    # SHARED ROUND CONTEXT
-    # ------------------------------------------------------------------
 
     rounds = build_round_contexts(
         raw_parser
     )
 
     if not rounds:
-        return stats
-
-    # ------------------------------------------------------------------
-    # PLAYER DEATH
-    # ------------------------------------------------------------------
+        return []
 
     try:
         death_events = raw_parser.parse_events(
@@ -65,21 +60,19 @@ def calculate_entry_metrics(
 
     except Exception as exc:
         print(
-            f"⚠️ Ошибка при парсинге player_death: {exc}"
+            f"Entry player_death parsing failed: {exc}"
         )
-        return stats
+        return []
 
     if (
         df_deaths is None
         or df_deaths.empty
         or "tick" not in df_deaths.columns
     ):
-        return stats
+        return []
 
     df_deaths = df_deaths.copy()
 
-    # Сохраняем исходный порядок событий.
-    # Это важно, если несколько death events имеют одинаковый tick.
     df_deaths["_event_order"] = range(
         len(df_deaths)
     )
@@ -91,10 +84,6 @@ def calculate_entry_metrics(
         ],
         kind="stable",
     )
-
-    # ------------------------------------------------------------------
-    # DEATH TICKS INSIDE LIVE ROUNDS
-    # ------------------------------------------------------------------
 
     death_ticks = sorted({
         safe_int(
@@ -109,14 +98,7 @@ def calculate_entry_metrics(
     })
 
     if not death_ticks:
-        return stats
-
-    # ------------------------------------------------------------------
-    # SHARED TEAM CONTEXT
-    #
-    # Read team_num directly at death-event ticks.
-    # This naturally handles halftime and overtime side changes.
-    # ------------------------------------------------------------------
+        return []
 
     team_at_tick = build_team_state(
         raw_parser,
@@ -124,35 +106,12 @@ def calculate_entry_metrics(
     )
 
     if not team_at_tick:
-        return stats
-
-    # ------------------------------------------------------------------
-    # ENTRY-SPECIFIC HELPERS
-    # ------------------------------------------------------------------
-
-    def init_player(steam_id):
-        steam_id = str(
-            steam_id
-        )
-
-        if not valid_sid(steam_id):
-            return
-
-        if steam_id not in stats:
-            stats[steam_id] = {
-                "entry_kills": 0,
-                "entry_deaths": 0,
-            }
-
-    # ------------------------------------------------------------------
-    # OPENING KILLS
-    # ------------------------------------------------------------------
+        return []
 
     opened_rounds = set()
-
-    # Если для потенциального PvP death мы не можем определить
-    # команды, такой раунд лучше не угадывать.
     blocked_rounds = set()
+
+    detected: List[EntryEvent] = []
 
     for _, row in df_deaths.iterrows():
 
@@ -166,17 +125,16 @@ def calculate_entry_metrics(
             rounds,
         )
 
-        # Warmup / post-match / вне live round.
         if round_context is None:
             continue
 
-        round_num = round_context.round_num
+        round_num = (
+            round_context.round_num
+        )
 
-        # Entry этого раунда уже найден.
         if round_num in opened_rounds:
             continue
 
-        # На этом раунде ранее была неоднозначность.
         if round_num in blocked_rounds:
             continue
 
@@ -194,60 +152,42 @@ def calculate_entry_metrics(
             )
         )
 
-        # World / отсутствующая жертва.
         if not valid_sid(victim):
             continue
 
-        # World / отсутствующий attacker.
         if not valid_sid(attacker):
             continue
 
-        # Suicide.
         if attacker == victim:
             continue
 
-        event_relation = team_relation(
+        relation = team_relation(
             team_at_tick,
             tick,
             attacker,
             victim,
         )
 
-        # Teamkill не является opening enemy kill.
-        # Продолжаем искать первый enemy kill раунда.
-        if event_relation == "teammate":
+        if relation == "teammate":
             continue
 
-        # Если оба SteamID известны, но команда не определилась,
-        # не угадываем Entry для этого раунда.
-        if event_relation == "unknown":
+        if relation == "unknown":
             blocked_rounds.add(
                 round_num
             )
             continue
 
-        if event_relation != "enemy":
+        if relation != "enemy":
             continue
 
-        # --------------------------------------------------------------
-        # Нашли первый подтверждённый enemy kill раунда.
-        # --------------------------------------------------------------
-
-        init_player(
-            attacker
+        detected.append(
+            EntryEvent(
+                round_num=round_num,
+                attacker=attacker,
+                victim=victim,
+                tick=tick,
+            )
         )
-
-        init_player(
-            victim
-        )
-
-        stats[
-            attacker
-        ]["entry_kills"] += 1
-
-        stats[
-            victim
-        ]["entry_deaths"] += 1
 
         opened_rounds.add(
             round_num
@@ -255,9 +195,43 @@ def calculate_entry_metrics(
 
     if blocked_rounds:
         print(
-            "⚠️ Entry не рассчитан для раундов "
-            "с неизвестной team relation: "
+            "Entry not calculated for rounds with "
+            "unknown team relation: "
             f"{sorted(blocked_rounds)}"
         )
+
+    return detected
+
+
+def calculate_entry_metrics(
+    raw_parser: RawDemoParser
+) -> dict:
+    """
+    Calculate aggregate verified Entry Kill / Entry Death counts.
+    """
+
+    stats = {}
+
+    for event in detect_entry_events(
+        raw_parser
+    ):
+
+        for steam_id in (
+            event.attacker,
+            event.victim,
+        ):
+            if steam_id not in stats:
+                stats[steam_id] = {
+                    "entry_kills": 0,
+                    "entry_deaths": 0,
+                }
+
+        stats[
+            event.attacker
+        ]["entry_kills"] += 1
+
+        stats[
+            event.victim
+        ]["entry_deaths"] += 1
 
     return stats

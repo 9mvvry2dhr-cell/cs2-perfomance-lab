@@ -21,6 +21,9 @@ from src.metrics.survival import (
 from src.metrics.kast import (
     detect_kast_rounds,
 )
+from src.metrics.entry import (
+    detect_entry_events,
+)
 
 
 @dataclass(frozen=True)
@@ -360,6 +363,8 @@ def calculate_split_metrics(
                 "survived_rounds": 0,
                 "kast_rounds": 0,
                 "damage": 0.0,
+                "entry_kills": 0,
+                "entry_deaths": 0,
             },
             "T": {
                 "rounds_played": 0,
@@ -368,6 +373,8 @@ def calculate_split_metrics(
                 "survived_rounds": 0,
                 "kast_rounds": 0,
                 "damage": 0.0,
+                "entry_kills": 0,
+                "entry_deaths": 0,
             },
         }
         for steam_id in player_ids
@@ -495,6 +502,54 @@ def calculate_split_metrics(
         ][
             "damage"
         ] += event.damage
+
+    # --------------------------------------------------------------
+    # Entry
+    # --------------------------------------------------------------
+
+    entry_events = detect_entry_events(
+        parser
+    )
+
+    for event in entry_events:
+
+        attacker_side = side_by_round_player.get(
+            (
+                event.round_num,
+                event.attacker,
+            )
+        )
+
+        if (
+            event.attacker in metrics
+            and attacker_side in {"CT", "T"}
+        ):
+            metrics[
+                event.attacker
+            ][
+                attacker_side
+            ][
+                "entry_kills"
+            ] += 1
+
+        victim_side = side_by_round_player.get(
+            (
+                event.round_num,
+                event.victim,
+            )
+        )
+
+        if (
+            event.victim in metrics
+            and victim_side in {"CT", "T"}
+        ):
+            metrics[
+                event.victim
+            ][
+                victim_side
+            ][
+                "entry_deaths"
+            ] += 1
 
     # --------------------------------------------------------------
     # Death events

@@ -2,7 +2,10 @@ import unittest
 
 import pandas as pd
 
-from src.metrics.entry import calculate_entry_metrics
+from src.metrics.entry import (
+    calculate_entry_metrics,
+    detect_entry_events,
+)
 
 
 class FakeDemoParser:
@@ -417,6 +420,60 @@ class TestEntryMetrics(unittest.TestCase):
         self.assertNotIn(
             "D",
             stats,
+        )
+
+
+
+    def test_round_level_entry_event_is_exposed(self):
+        parser = FakeDemoParser(
+            deaths=[
+                {
+                    "tick": 300,
+                    "attacker_steamid": "A",
+                    "user_steamid": "B",
+                },
+            ],
+            team_rows=[
+                {
+                    "tick": 300,
+                    "steamid": "A",
+                    "team_num": 2,
+                },
+                {
+                    "tick": 300,
+                    "steamid": "B",
+                    "team_num": 3,
+                },
+            ],
+        )
+
+        events = detect_entry_events(
+            parser
+        )
+
+        self.assertEqual(
+            len(events),
+            1,
+        )
+
+        self.assertEqual(
+            events[0].round_num,
+            1,
+        )
+
+        self.assertEqual(
+            events[0].attacker,
+            "A",
+        )
+
+        self.assertEqual(
+            events[0].victim,
+            "B",
+        )
+
+        self.assertEqual(
+            events[0].tick,
+            300,
         )
 
 
