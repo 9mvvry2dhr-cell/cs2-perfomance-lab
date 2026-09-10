@@ -1,0 +1,455 @@
+from dataclasses import dataclass
+from typing import List
+
+from demoparser2 import DemoParser as RawDemoParser
+
+from src.metrics.round_context import (
+    build_round_contexts,
+    extract_dataframe,
+    find_round,
+    safe_int,
+    valid_sid,
+)
+from src.metrics.team_context import (
+    build_team_state,
+    team_relation,
+)
+from src.metrics.survival import (
+    detect_survival_rounds,
+)
+
+
+@dataclass(frozen=True)
+class PlayerRoundSide:
+    """
+    One verified player's side in one confirmed round.
+    """
+
+    round_num: int
+    steam_id: str
+    side: str
+
+
+def detect_player_round_sides(
+    parser: RawDemoParser,
+    player_steam_ids: List[str],
+) -> List[PlayerRoundSide]:
+    """
+    Detect each player's CT/T side per confirmed round.
+
+    Rules:
+    - player must exist in the freeze_end roster;
+    - team_num 2 = T;
+    - team_num 3 = CT;
+    - unknown / invalid team values are ignored;
+    - side is resolved independently for every round;
+    - no halftime or fixed-round assumptions.
+    """
+
+    player_ids = {
+        str(steam_id)
+        for steam_id in player_steam_ids
+        if valid_sid(steam_id)
+    }
+
+    if not player_ids:
+        return []
+
+    rounds = build_round_contexts(
+        parser
+    )
+
+    if not rounds:
+        return []
+
+    snapshot_ticks = [
+        round_data.freeze_end_tick
+        for round_data in rounds
+    ]
+
+    try:
+        df_rosters = parser.parse_ticks(
+            ["team_num"],
+            ticks=snapshot_ticks,
+        )
+
+    except Exception:
+        return []
+
+    if (
+        df_rosters is None
+        or not hasattr(df_rosters, "empty")
+        or df_rosters.empty
+        or "tick" not in df_rosters.columns
+        or "steamid" not in df_rosters.columns
+        or "team_num" not in df_rosters.columns
+    ):
+        return []
+
+    round_by_tick = {
+        round_data.freeze_end_tick:
+        round_data.round_num
+        for round_data in rounds
+    }
+
+    detected = set()
+
+    for _, row in df_rosters.iterrows():
+
+        tick = safe_int(
+            row.get("tick"),
+            default=-1,
+        )
+
+        round_num = round_by_tick.get(
+            tick
+        )
+
+        if round_num is None:
+            continue
+
+        steam_id = str(
+            row.get(
+                "steamid",
+                "",
+            )
+        )
+
+        if (
+            steam_id not in player_ids
+            or not valid_sid(steam_id)
+        ):
+            continue
+
+        team_num = safe_int(
+            row.get(
+                "team_num",
+                -1,
+            ),
+            default=-1,
+        )
+
+        if team_num == 2:
+            side = "T"
+        elif team_num == 3:
+            side = "CT"
+        else:
+            continue
+
+        detected.add(
+            (
+                round_num,
+                steam_id,
+                side,
+            )
+        )
+
+    return [
+        PlayerRoundSide(
+            round_num=round_num,
+            steam_id=steam_id,
+            side=side,
+        )
+        for (
+            round_num,
+            steam_id,
+            side,
+        ) in sorted(
+            detected,
+            key=lambda item: (
+                item[0],
+                item[1],
+                item[2],
+            ),
+        )
+    ]
+
+
+
+def calculate_split_metrics(
+    parser: RawDemoParser,
+    player_steam_ids: List[str],
+):
+    """
+    Calculate verified CT/T split counts.
+
+    Current metrics:
+    - rounds_played
+    - kills
+    - deaths
+    - survived_rounds
+
+    Side is resolved from the player's freeze_end roster
+    independently for every confirmed round.
+    """
+
+    player_ids = {
+        str(steam_id)
+        for steam_id in player_steam_ids
+        if valid_sid(steam_id)
+    }
+
+    metrics = {
+        steam_id: {
+            "CT": {
+                "rounds_played": 0,
+                "kills": 0,
+                "deaths": 0,
+                "survived_rounds": 0,
+            },
+            "T": {
+                "rounds_played": 0,
+                "kills": 0,
+                "deaths": 0,
+                "survived_rounds": 0,
+            },
+        }
+        for steam_id in player_ids
+    }
+
+    if not player_ids:
+        return metrics
+
+    rounds = build_round_contexts(
+        parser
+    )
+
+    if not rounds:
+        return metrics
+
+    side_events = detect_player_round_sides(
+        parser,
+        list(player_ids),
+    )
+
+    side_by_round_player = {
+        (
+            event.round_num,
+            event.steam_id,
+        ): event.side
+        for event in side_events
+    }
+
+    # --------------------------------------------------------------
+    # Rounds played
+    # --------------------------------------------------------------
+
+    for event in side_events:
+        metrics[
+            event.steam_id
+        ][
+            event.side
+        ][
+            "rounds_played"
+        ] += 1
+
+    # --------------------------------------------------------------
+    # Survival
+    # --------------------------------------------------------------
+
+    survival_events = detect_survival_rounds(
+        parser,
+        list(player_ids),
+    )
+
+    for event in survival_events:
+
+        side = side_by_round_player.get(
+            (
+                event.round_num,
+                event.steam_id,
+            )
+        )
+
+        if side not in {"CT", "T"}:
+            continue
+
+        metrics[
+            event.steam_id
+        ][
+            side
+        ][
+            "survived_rounds"
+        ] += 1
+
+    # --------------------------------------------------------------
+    # Death events
+    # --------------------------------------------------------------
+
+    try:
+        events = parser.parse_events(
+            ["player_death"]
+        )
+
+        df_deaths = extract_dataframe(
+            events
+        )
+
+    except Exception:
+        return metrics
+
+    if (
+        df_deaths is None
+        or not hasattr(df_deaths, "empty")
+        or df_deaths.empty
+    ):
+        return metrics
+
+    required_columns = {
+        "tick",
+        "attacker_steamid",
+        "user_steamid",
+    }
+
+    if not required_columns.issubset(
+        df_deaths.columns
+    ):
+        return metrics
+
+    df_deaths = df_deaths.copy()
+
+    df_deaths["_event_order"] = range(
+        len(df_deaths)
+    )
+
+    df_deaths = df_deaths.sort_values(
+        [
+            "tick",
+            "_event_order",
+        ],
+        kind="stable",
+    )
+
+    death_ticks = [
+        safe_int(
+            tick,
+            default=-1,
+        )
+        for tick in df_deaths["tick"]
+    ]
+
+    team_state = build_team_state(
+        parser,
+        death_ticks,
+    )
+
+    dead_player_rounds = set()
+
+    for _, row in df_deaths.iterrows():
+
+        tick = safe_int(
+            row.get("tick"),
+            default=-1,
+        )
+
+        if tick < 0:
+            continue
+
+        round_context = find_round(
+            tick,
+            rounds,
+        )
+
+        if round_context is None:
+            continue
+
+        round_num = (
+            round_context.round_num
+        )
+
+        attacker = str(
+            row.get(
+                "attacker_steamid",
+                "",
+            )
+        )
+
+        victim = str(
+            row.get(
+                "user_steamid",
+                "",
+            )
+        )
+
+        # ----------------------------------------------------------
+        # Death
+        #
+        # Any real death breaks survival and counts as a death,
+        # including teamkill or suicide.
+        # Count at most one death per player-round.
+        # ----------------------------------------------------------
+
+        victim_side = (
+            side_by_round_player.get(
+                (
+                    round_num,
+                    victim,
+                )
+            )
+        )
+
+        death_key = (
+            round_num,
+            victim,
+        )
+
+        if (
+            valid_sid(victim)
+            and victim in metrics
+            and victim_side in {"CT", "T"}
+            and death_key
+            not in dead_player_rounds
+        ):
+            metrics[
+                victim
+            ][
+                victim_side
+            ][
+                "deaths"
+            ] += 1
+
+            dead_player_rounds.add(
+                death_key
+            )
+
+        # ----------------------------------------------------------
+        # Kill
+        #
+        # Only confirmed enemy kills count.
+        # ----------------------------------------------------------
+
+        attacker_side = (
+            side_by_round_player.get(
+                (
+                    round_num,
+                    attacker,
+                )
+            )
+        )
+
+        if (
+            attacker not in metrics
+            or attacker_side not in {"CT", "T"}
+        ):
+            continue
+
+        if (
+            team_relation(
+                team_state,
+                tick,
+                attacker,
+                victim,
+            )
+            != "enemy"
+        ):
+            continue
+
+        metrics[
+            attacker
+        ][
+            attacker_side
+        ][
+            "kills"
+        ] += 1
+
+    return metrics
