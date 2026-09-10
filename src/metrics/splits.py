@@ -7,6 +7,7 @@ from src.metrics.round_context import (
     build_round_contexts,
     extract_dataframe,
     find_round,
+    safe_float,
     safe_int,
     valid_sid,
 )
@@ -169,6 +170,162 @@ def detect_player_round_sides(
 
 
 
+@dataclass(frozen=True)
+class PlayerRoundDamage:
+    """
+    Verified scoreboard damage gained in one confirmed round.
+    """
+
+    round_num: int
+    steam_id: str
+    damage: float
+
+
+def detect_player_round_damage(
+    parser: RawDemoParser,
+    player_steam_ids: List[str],
+) -> List[PlayerRoundDamage]:
+    """
+    Detect per-round damage using cumulative scoreboard damage_total.
+
+    Damage for a round is:
+
+        current round_end damage_total
+        - previous round_end damage_total
+
+    This avoids player_hurt overkill inflation.
+
+    Fail closed:
+    - missing snapshot breaks continuity for that player;
+    - negative delta means counter reset and breaks continuity;
+    - no combined multi-round delta is attributed to one round.
+    """
+
+    player_ids = {
+        str(steam_id)
+        for steam_id in player_steam_ids
+        if valid_sid(steam_id)
+    }
+
+    if not player_ids:
+        return []
+
+    rounds = build_round_contexts(
+        parser
+    )
+
+    if not rounds:
+        return []
+
+    end_ticks = [
+        round_data.end_tick
+        for round_data in rounds
+    ]
+
+    try:
+        df_damage = parser.parse_ticks(
+            ["damage_total"],
+            ticks=end_ticks,
+        )
+
+    except Exception:
+        return []
+
+    if (
+        df_damage is None
+        or not hasattr(df_damage, "empty")
+        or df_damage.empty
+        or "tick" not in df_damage.columns
+        or "steamid" not in df_damage.columns
+        or "damage_total" not in df_damage.columns
+    ):
+        return []
+
+    damage_by_tick_player = {}
+
+    for _, row in df_damage.iterrows():
+
+        tick = safe_int(
+            row.get("tick"),
+            default=-1,
+        )
+
+        steam_id = str(
+            row.get(
+                "steamid",
+                "",
+            )
+        )
+
+        if (
+            tick < 0
+            or steam_id not in player_ids
+            or not valid_sid(steam_id)
+        ):
+            continue
+
+        damage_by_tick_player[
+            (
+                tick,
+                steam_id,
+            )
+        ] = safe_float(
+            row.get(
+                "damage_total",
+                0.0,
+            ),
+            default=0.0,
+        )
+
+    results = []
+
+    for steam_id in sorted(
+        player_ids
+    ):
+
+        previous = 0.0
+        continuity_valid = True
+
+        for round_data in rounds:
+
+            current = damage_by_tick_player.get(
+                (
+                    round_data.end_tick,
+                    steam_id,
+                )
+            )
+
+            if current is None:
+                continuity_valid = False
+                continue
+
+            if not continuity_valid:
+                previous = current
+                continuity_valid = True
+                continue
+
+            delta = (
+                current
+                - previous
+            )
+
+            if delta < 0:
+                previous = current
+                continue
+
+            results.append(
+                PlayerRoundDamage(
+                    round_num=round_data.round_num,
+                    steam_id=steam_id,
+                    damage=delta,
+                )
+            )
+
+            previous = current
+
+    return results
+
+
 def calculate_split_metrics(
     parser: RawDemoParser,
     player_steam_ids: List[str],
@@ -182,6 +339,7 @@ def calculate_split_metrics(
     - deaths
     - survived_rounds
     - kast_rounds
+    - damage
 
     Side is resolved from the player's freeze_end roster
     independently for every confirmed round.
@@ -201,6 +359,7 @@ def calculate_split_metrics(
                 "deaths": 0,
                 "survived_rounds": 0,
                 "kast_rounds": 0,
+                "damage": 0.0,
             },
             "T": {
                 "rounds_played": 0,
@@ -208,6 +367,7 @@ def calculate_split_metrics(
                 "deaths": 0,
                 "survived_rounds": 0,
                 "kast_rounds": 0,
+                "damage": 0.0,
             },
         }
         for steam_id in player_ids
@@ -306,6 +466,35 @@ def calculate_split_metrics(
         ][
             "kast_rounds"
         ] += 1
+
+    # --------------------------------------------------------------
+    # Damage
+    # --------------------------------------------------------------
+
+    damage_events = detect_player_round_damage(
+        parser,
+        list(player_ids),
+    )
+
+    for event in damage_events:
+
+        side = side_by_round_player.get(
+            (
+                event.round_num,
+                event.steam_id,
+            )
+        )
+
+        if side not in {"CT", "T"}:
+            continue
+
+        metrics[
+            event.steam_id
+        ][
+            side
+        ][
+            "damage"
+        ] += event.damage
 
     # --------------------------------------------------------------
     # Death events

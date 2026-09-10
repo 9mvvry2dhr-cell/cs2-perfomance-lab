@@ -11,6 +11,7 @@ from src.metrics.trade import calculate_trade_metrics
 from src.metrics.kast import calculate_kast_metrics
 from src.metrics.multikill import calculate_multikill_metrics
 from src.metrics.survival import calculate_survival_metrics
+from src.metrics.splits import detect_player_round_sides
 
 
 class DemoParser:
@@ -430,6 +431,42 @@ class DemoParser:
                     headshots=headshots,
                     rounds_played=rounds_played,
                 )
+            )
+
+        # --------------------------------------------------------------
+        # Verified player participation
+        #
+        # A player's rounds_played must represent rounds where the
+        # player was actually present in the freeze_end roster.
+        #
+        # This matters for disconnects, late joins and partial matches.
+        # --------------------------------------------------------------
+
+        player_ids = [
+            player.steam_id
+            for player in parsed_players
+        ]
+
+        side_events = detect_player_round_sides(
+            self.raw_parser,
+            player_ids,
+        )
+
+        rounds_by_player = {
+            steam_id: 0
+            for steam_id in player_ids
+        }
+
+        for event in side_events:
+            if event.steam_id in rounds_by_player:
+                rounds_by_player[
+                    event.steam_id
+                ] += 1
+
+        for player in parsed_players:
+            player.rounds_played = rounds_by_player.get(
+                player.steam_id,
+                0,
             )
 
         return parsed_players
