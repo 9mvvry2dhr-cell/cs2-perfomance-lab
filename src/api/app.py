@@ -1,4 +1,4 @@
-﻿from __future__ import annotations
+from __future__ import annotations
 
 from contextlib import asynccontextmanager
 from typing import Annotated
@@ -17,14 +17,17 @@ from sqlalchemy.orm import Session
 
 from src.api.dependencies import (
     dispose_database_resources,
+    get_analysis_job_repository,
     get_analysis_repository,
     get_database_session,
 )
 from src.api.schemas import (
+    AnalysisJobResponse,
     HealthResponse,
     MatchAnalysisResponse,
     ReadyResponse,
 )
+from src.database.job_repository import AnalysisJobRepository
 from src.database.repository import AnalysisRepository
 
 
@@ -82,6 +85,32 @@ def ready(
 
     return ReadyResponse(
         status="ready"
+    )
+
+
+@app.get(
+    "/analysis-jobs/{job_id}",
+    response_model=AnalysisJobResponse,
+)
+def get_analysis_job(
+    job_id: str,
+    repository: Annotated[
+        AnalysisJobRepository,
+        Depends(get_analysis_job_repository),
+    ],
+) -> AnalysisJobResponse:
+    job = repository.get_job(
+        job_id
+    )
+
+    if job is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Analysis job not found",
+        )
+
+    return AnalysisJobResponse.model_validate(
+        job
     )
 
 

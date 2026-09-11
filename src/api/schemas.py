@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from datetime import datetime
 from typing import Literal
 
 from pydantic import BaseModel, ConfigDict
@@ -17,6 +18,24 @@ class HealthResponse(ApiModel):
 
 class ReadyResponse(ApiModel):
     status: Literal["ready"]
+
+
+class AnalysisJobResponse(ApiModel):
+    id: str
+    status: Literal[
+        "queued",
+        "processing",
+        "completed",
+        "failed",
+    ]
+    original_filename: str
+
+    match_id: str | None
+    error: str | None
+
+    created_at: datetime
+    started_at: datetime | None
+    finished_at: datetime | None
 
 
 class FindingResponse(ApiModel):

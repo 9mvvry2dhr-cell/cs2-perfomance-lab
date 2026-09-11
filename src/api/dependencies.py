@@ -1,4 +1,4 @@
-﻿from __future__ import annotations
+from __future__ import annotations
 
 from collections.abc import Iterator
 from functools import lru_cache
@@ -12,6 +12,7 @@ from src.database.connection import (
     create_db_engine,
     create_session_factory,
 )
+from src.database.job_repository import AnalysisJobRepository
 from src.database.repository import AnalysisRepository
 
 
@@ -43,6 +44,17 @@ def get_analysis_repository(
     ],
 ) -> AnalysisRepository:
     return AnalysisRepository(
+        session
+    )
+
+
+def get_analysis_job_repository(
+    session: Annotated[
+        Session,
+        Depends(get_database_session),
+    ],
+) -> AnalysisJobRepository:
+    return AnalysisJobRepository(
         session
     )
 
