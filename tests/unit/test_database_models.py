@@ -1,9 +1,10 @@
-﻿import unittest
+import unittest
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
 from src.database.models import (
+    AnalysisJobModel,
     Base,
     FindingModel,
     MatchModel,
@@ -66,6 +67,7 @@ class DatabaseModelsTest(unittest.TestCase):
         self.assertEqual(
             set(Base.metadata.tables),
             {
+                "analysis_jobs",
                 "matches",
                 "match_players",
                 "player_side_stats",
@@ -205,6 +207,51 @@ class DatabaseModelsTest(unittest.TestCase):
                     "adr_gap"
                 ],
                 60.2,
+            )
+
+
+    def test_analysis_job_can_round_trip(self):
+        job = AnalysisJobModel(
+            id="job-test-001",
+            original_filename="match.dem",
+            storage_key="demos/job-test-001.dem",
+            file_sha256="a" * 64,
+        )
+
+        with self.Session() as session:
+            session.add(job)
+            session.commit()
+
+            loaded = session.get(
+                AnalysisJobModel,
+                "job-test-001",
+            )
+
+            self.assertIsNotNone(loaded)
+            self.assertEqual(
+                loaded.status,
+                "queued",
+            )
+            self.assertEqual(
+                loaded.original_filename,
+                "match.dem",
+            )
+            self.assertEqual(
+                loaded.storage_key,
+                "demos/job-test-001.dem",
+            )
+            self.assertEqual(
+                loaded.file_sha256,
+                "a" * 64,
+            )
+            self.assertIsNone(
+                loaded.match_id
+            )
+            self.assertIsNone(
+                loaded.error
+            )
+            self.assertIsNotNone(
+                loaded.created_at
             )
 
 
