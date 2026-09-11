@@ -1,4 +1,4 @@
-﻿import unittest
+import unittest
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
@@ -116,6 +116,81 @@ class AnalysisJobRepositoryTest(
 
         self.assertIsNone(
             loaded
+        )
+
+    def test_claim_next_job_returns_none_when_queue_empty(
+        self,
+    ):
+        claimed = (
+            self.repository.claim_next_job()
+        )
+
+        self.assertIsNone(
+            claimed
+        )
+
+    def test_claim_next_job_claims_queued_jobs_one_by_one(
+        self,
+    ):
+        first = self._create_job()
+
+        second = self.repository.create_job(
+            original_filename=(
+                "second.dem"
+            ),
+            storage_key=(
+                "demos/second.dem"
+            ),
+            file_sha256="b" * 64,
+        )
+
+        claimed_first = (
+            self.repository.claim_next_job()
+        )
+
+        claimed_second = (
+            self.repository.claim_next_job()
+        )
+
+        self.assertIsNotNone(
+            claimed_first
+        )
+
+        self.assertIsNotNone(
+            claimed_second
+        )
+
+        self.assertEqual(
+            {
+                claimed_first.id,
+                claimed_second.id,
+            },
+            {
+                first.id,
+                second.id,
+            },
+        )
+
+        self.assertEqual(
+            claimed_first.status,
+            "processing",
+        )
+
+        self.assertEqual(
+            claimed_second.status,
+            "processing",
+        )
+
+        self.assertIsNotNone(
+            claimed_first.started_at
+        )
+
+        self.assertIsNotNone(
+            claimed_second.started_at
+        )
+
+        self.assertIsNone(
+            self.repository.claim_next_job()
         )
 
     def test_mark_processing(self):

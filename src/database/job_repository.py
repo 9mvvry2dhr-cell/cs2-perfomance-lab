@@ -1,4 +1,4 @@
-﻿from __future__ import annotations
+from __future__ import annotations
 
 from datetime import datetime, timezone
 from typing import cast
@@ -69,6 +69,52 @@ class AnalysisJobRepository:
         return self._to_domain(
             model
         )
+
+    def claim_next_job(
+        self,
+    ) -> AnalysisJob | None:
+        try:
+            stmt = (
+                select(AnalysisJobModel)
+                .where(
+                    AnalysisJobModel.status
+                    == "queued"
+                )
+                .order_by(
+                    AnalysisJobModel.created_at,
+                    AnalysisJobModel.id,
+                )
+                .limit(1)
+                .with_for_update(
+                    skip_locked=True
+                )
+            )
+
+            model = self.session.scalar(
+                stmt
+            )
+
+            if model is None:
+                self.session.rollback()
+                return None
+
+            model.status = "processing"
+            model.started_at = datetime.now(
+                timezone.utc
+            )
+            model.finished_at = None
+            model.error = None
+
+            self.session.commit()
+            self.session.refresh(model)
+
+            return self._to_domain(
+                model
+            )
+
+        except Exception:
+            self.session.rollback()
+            raise
 
     def mark_processing(
         self,
