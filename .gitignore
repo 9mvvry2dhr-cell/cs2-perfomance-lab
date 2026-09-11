@@ -1,4 +1,4 @@
-# Virtual Environment
+﻿# Virtual Environment
 .venv/
 venv/
 ENV/
@@ -18,10 +18,13 @@ __pycache__/
 *.sqlite3
 *.db
 
-# CS2 Demos / Data
+# CS2 Demos / Runtime Data
 *.dem
-data/*.dem
+/data/uploads/
 !data/.gitkeep
+
+# Local diagnostics / scratch
+/scratch/
 
 # IDE Settings
 .vscode/
