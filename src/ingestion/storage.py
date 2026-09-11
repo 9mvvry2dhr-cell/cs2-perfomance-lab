@@ -1,4 +1,4 @@
-﻿from __future__ import annotations
+from __future__ import annotations
 
 from dataclasses import dataclass
 from hashlib import sha256
@@ -174,10 +174,10 @@ class LocalDemoStorage:
 
             raise
 
-    def delete(
+    def path_for(
         self,
         storage_key: str,
-    ) -> None:
+    ) -> Path:
         if (
             "/" in storage_key
             or "\\" in storage_key
@@ -188,10 +188,14 @@ class LocalDemoStorage:
                 "Invalid storage key"
             )
 
-        path = (
-            self.root / storage_key
-        )
+        return self.root / storage_key
 
-        path.unlink(
+    def delete(
+        self,
+        storage_key: str,
+    ) -> None:
+        self.path_for(
+            storage_key
+        ).unlink(
             missing_ok=True
         )
