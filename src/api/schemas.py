@@ -1,4 +1,4 @@
-﻿from __future__ import annotations
+from __future__ import annotations
 
 from typing import Literal
 
@@ -13,6 +13,10 @@ class ApiModel(BaseModel):
 
 class HealthResponse(ApiModel):
     status: Literal["ok"]
+
+
+class ReadyResponse(ApiModel):
+    status: Literal["ready"]
 
 
 class FindingResponse(ApiModel):
