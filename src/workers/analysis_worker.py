@@ -77,6 +77,29 @@ class AnalysisWorker:
             .mark_processing(job_id)
         )
 
+        return self._process_claimed(
+            job
+        )
+
+    def process_next(
+        self,
+    ) -> AnalysisJob | None:
+        job = (
+            self.job_repository
+            .claim_next_job()
+        )
+
+        if job is None:
+            return None
+
+        return self._process_claimed(
+            job
+        )
+
+    def _process_claimed(
+        self,
+        job: AnalysisJob,
+    ) -> AnalysisJob:
         try:
             demo_path = (
                 self.storage.path_for(
@@ -110,7 +133,7 @@ class AnalysisWorker:
             return (
                 self.job_repository
                 .mark_completed(
-                    job_id,
+                    job.id,
                     match_id=(
                         analysis.match_id
                     ),
@@ -119,7 +142,7 @@ class AnalysisWorker:
 
         except Exception:
             self.job_repository.mark_failed(
-                job_id,
+                job.id,
                 error="Analysis failed",
             )
             raise

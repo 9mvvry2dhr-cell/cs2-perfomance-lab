@@ -34,11 +34,35 @@ class StubJobRepository:
     ):
         self.job = job
         self.failed_error = None
+        self.mark_processing_calls = 0
+        self.claimed = False
+
+    def claim_next_job(
+        self,
+    ) -> AnalysisJob | None:
+        if (
+            self.claimed
+            or self.job.status
+            != "queued"
+        ):
+            return None
+
+        self.claimed = True
+
+        self.job = replace(
+            self.job,
+            status="processing",
+            started_at=NOW,
+        )
+
+        return self.job
 
     def mark_processing(
         self,
         job_id: str,
     ) -> AnalysisJob:
+        self.mark_processing_calls += 1
+
         self.job = replace(
             self.job,
             status="processing",
@@ -181,6 +205,93 @@ class AnalysisWorkerTest(
         self.assertEqual(
             analyses.saved,
             expected_saved,
+        )
+
+    def test_process_next_claims_and_completes_job(
+        self,
+    ):
+        expected_analysis = (
+            make_analysis()
+        )
+
+        jobs = StubJobRepository(
+            self._make_job()
+        )
+
+        analyses = (
+            StubAnalysisRepository()
+        )
+
+        worker = AnalysisWorker(
+            storage=self.storage,
+            job_repository=jobs,
+            analysis_repository=analyses,
+            analyzer=lambda _: (
+                expected_analysis
+            ),
+        )
+
+        result = worker.process_next()
+
+        self.assertIsNotNone(
+            result
+        )
+
+        self.assertEqual(
+            result.status,
+            "completed",
+        )
+
+        self.assertEqual(
+            result.match_id,
+            "match",
+        )
+
+        self.assertEqual(
+            jobs.mark_processing_calls,
+            0,
+        )
+
+        self.assertEqual(
+            analyses.saved,
+            replace(
+                expected_analysis,
+                match_id="match",
+            ),
+        )
+
+    def test_process_next_returns_none_when_queue_empty(
+        self,
+    ):
+        jobs = StubJobRepository(
+            self._make_job()
+        )
+
+        jobs.claimed = True
+
+        analyses = (
+            StubAnalysisRepository()
+        )
+
+        worker = AnalysisWorker(
+            storage=self.storage,
+            job_repository=jobs,
+            analysis_repository=analyses,
+        )
+
+        result = worker.process_next()
+
+        self.assertIsNone(
+            result
+        )
+
+        self.assertEqual(
+            jobs.mark_processing_calls,
+            0,
+        )
+
+        self.assertIsNone(
+            analyses.saved
         )
 
     def test_process_marks_job_failed_when_analysis_fails(
