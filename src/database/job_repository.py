@@ -69,6 +69,52 @@ class AnalysisJobRepository:
         return self._to_domain(
             model
         )
+    def requeue_stale_processing_jobs(
+        self,
+        *,
+        stale_before: datetime,
+    ) -> int:
+        try:
+            stmt = (
+                select(AnalysisJobModel)
+                .where(
+                    AnalysisJobModel.status
+                    == "processing",
+                    AnalysisJobModel.started_at.is_not(
+                        None
+                    ),
+                    AnalysisJobModel.started_at
+                    < stale_before,
+                )
+                .order_by(
+                    AnalysisJobModel.started_at,
+                    AnalysisJobModel.id,
+                )
+                .with_for_update(
+                    skip_locked=True
+                )
+            )
+
+            models = list(
+                self.session.scalars(
+                    stmt
+                )
+            )
+
+            for model in models:
+                model.status = "queued"
+                model.started_at = None
+                model.finished_at = None
+                model.match_id = None
+                model.error = None
+
+            self.session.commit()
+
+            return len(models)
+
+        except Exception:
+            self.session.rollback()
+            raise
 
     def claim_next_job(
         self,

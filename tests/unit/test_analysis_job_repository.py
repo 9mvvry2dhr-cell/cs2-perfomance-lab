@@ -1,4 +1,5 @@
 import unittest
+from datetime import datetime, timedelta, timezone
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
@@ -9,6 +10,7 @@ from src.database.job_repository import (
     InvalidAnalysisJobTransitionError,
 )
 from src.database.models import (
+    AnalysisJobModel,
     Base,
     MatchModel,
 )
@@ -191,6 +193,102 @@ class AnalysisJobRepositoryTest(
 
         self.assertIsNone(
             self.repository.claim_next_job()
+        )
+
+    def test_requeue_stale_processing_job(self):
+        created = self._create_job()
+
+        self.repository.mark_processing(
+            created.id
+        )
+
+        model = self.session.get(
+            AnalysisJobModel,
+            created.id,
+        )
+
+        model.started_at = (
+            datetime.now(timezone.utc)
+            - timedelta(hours=2)
+        )
+
+        self.session.commit()
+
+        requeued = (
+            self.repository
+            .requeue_stale_processing_jobs(
+                stale_before=(
+                    datetime.now(timezone.utc)
+                    - timedelta(hours=1)
+                )
+            )
+        )
+
+        self.assertEqual(
+            requeued,
+            1,
+        )
+
+        loaded = self.repository.get_job(
+            created.id
+        )
+
+        self.assertEqual(
+            loaded.status,
+            "queued",
+        )
+
+        self.assertIsNone(
+            loaded.started_at
+        )
+
+        self.assertIsNone(
+            loaded.finished_at
+        )
+
+        self.assertIsNone(
+            loaded.match_id
+        )
+
+        self.assertIsNone(
+            loaded.error
+        )
+
+    def test_requeue_does_not_touch_recent_processing_job(
+        self,
+    ):
+        created = self._create_job()
+
+        self.repository.mark_processing(
+            created.id
+        )
+
+        requeued = (
+            self.repository
+            .requeue_stale_processing_jobs(
+                stale_before=(
+                    datetime.now(timezone.utc)
+                    - timedelta(hours=1)
+                )
+            )
+        )
+
+        self.assertEqual(
+            requeued,
+            0,
+        )
+
+        loaded = self.repository.get_job(
+            created.id
+        )
+
+        self.assertEqual(
+            loaded.status,
+            "processing",
+        )
+
+        self.assertIsNotNone(
+            loaded.started_at
         )
 
     def test_mark_processing(self):

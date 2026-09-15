@@ -1,9 +1,10 @@
-﻿from __future__ import annotations
+from __future__ import annotations
 
 import logging
 import os
 import time
 from collections.abc import Callable
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 from sqlalchemy.orm import (
@@ -33,23 +34,52 @@ from src.workers.analysis_worker import (
 logger = logging.getLogger(__name__)
 
 DEFAULT_POLL_SECONDS = 2.0
+DEFAULT_STALE_SECONDS = 3600.0
 
 
 def process_next_job(
     *,
     session_factory: sessionmaker[Session],
     storage: LocalDemoStorage,
+    stale_seconds: float = DEFAULT_STALE_SECONDS,
 ) -> AnalysisJob | None:
+    if stale_seconds <= 0:
+        raise ValueError(
+            "stale_seconds must be positive"
+        )
+
     session = session_factory()
 
     try:
+        job_repository = (
+            AnalysisJobRepository(
+                session
+            )
+        )
+
+        stale_before = (
+            datetime.now(timezone.utc)
+            - timedelta(
+                seconds=stale_seconds
+            )
+        )
+
+        requeued = (
+            job_repository
+            .requeue_stale_processing_jobs(
+                stale_before=stale_before
+            )
+        )
+
+        if requeued:
+            logger.warning(
+                "Requeued stale analysis jobs: %s",
+                requeued,
+            )
+
         worker = AnalysisWorker(
             storage=storage,
-            job_repository=(
-                AnalysisJobRepository(
-                    session
-                )
-            ),
+            job_repository=job_repository,
             analysis_repository=(
                 AnalysisRepository(
                     session
@@ -135,6 +165,13 @@ def main() -> None:
         )
     )
 
+    stale_seconds = float(
+        os.environ.get(
+            "ANALYSIS_JOB_STALE_SECONDS",
+            str(DEFAULT_STALE_SECONDS),
+        )
+    )
+
     engine = create_db_engine()
 
     session_factory = (
@@ -158,6 +195,7 @@ def main() -> None:
                     session_factory
                 ),
                 storage=storage,
+                stale_seconds=stale_seconds,
             ),
             poll_seconds=poll_seconds,
         )
