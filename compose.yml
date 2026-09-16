@@ -1,0 +1,69 @@
+services:
+  db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: cs2_performance_lab
+      POSTGRES_USER: cs2_user
+      POSTGRES_PASSWORD: cs2_dev_password
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - pg_isready -U cs2_user -d cs2_performance_lab
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  migrate:
+    build:
+      context: .
+    command: alembic upgrade head
+    environment:
+      DATABASE_URL: postgresql+psycopg://cs2_user:cs2_dev_password@db:5432/cs2_performance_lab
+    depends_on:
+      db:
+        condition: service_healthy
+
+  api:
+    build:
+      context: .
+    command:
+      - uvicorn
+      - src.api.app:app
+      - --host
+      - 0.0.0.0
+      - --port
+      - "8000"
+    environment:
+      DATABASE_URL: postgresql+psycopg://cs2_user:cs2_dev_password@db:5432/cs2_performance_lab
+      DEMO_STORAGE_DIR: /app/data/uploads
+    ports:
+      - "8000:8000"
+    volumes:
+      - demo_uploads:/app/data/uploads
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+
+  worker:
+    build:
+      context: .
+    command:
+      - python
+      - -m
+      - src.workers.runner
+    environment:
+      DATABASE_URL: postgresql+psycopg://cs2_user:cs2_dev_password@db:5432/cs2_performance_lab
+      DEMO_STORAGE_DIR: /app/data/uploads
+      ANALYSIS_WORKER_POLL_SECONDS: "2.0"
+      ANALYSIS_JOB_STALE_SECONDS: "3600"
+    volumes:
+      - demo_uploads:/app/data/uploads
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+
+volumes:
+  postgres_data:
+  demo_uploads:
