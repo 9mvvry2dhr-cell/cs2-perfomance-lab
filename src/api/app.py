@@ -1,4 +1,4 @@
-﻿from __future__ import annotations
+from __future__ import annotations
 
 from contextlib import asynccontextmanager
 from typing import Annotated
@@ -6,8 +6,10 @@ from typing import Annotated
 from fastapi import (
     Depends,
     FastAPI,
+    File,
     HTTPException,
     Request,
+    UploadFile,
     status,
 )
 from fastapi.responses import JSONResponse
@@ -17,15 +19,24 @@ from sqlalchemy.orm import Session
 
 from src.api.dependencies import (
     dispose_database_resources,
+    get_analysis_job_repository,
     get_analysis_repository,
     get_database_session,
+    get_demo_ingestion_service,
 )
 from src.api.schemas import (
+    AnalysisJobResponse,
     HealthResponse,
     MatchAnalysisResponse,
     ReadyResponse,
 )
+from src.database.job_repository import AnalysisJobRepository
 from src.database.repository import AnalysisRepository
+from src.ingestion.service import DemoIngestionService
+from src.ingestion.storage import (
+    DemoTooLargeError,
+    InvalidDemoFileError,
+)
 
 
 @asynccontextmanager
@@ -82,6 +93,74 @@ def ready(
 
     return ReadyResponse(
         status="ready"
+    )
+
+
+@app.post(
+    "/analysis-jobs",
+    response_model=AnalysisJobResponse,
+    status_code=status.HTTP_202_ACCEPTED,
+)
+def create_analysis_job(
+    file: Annotated[
+        UploadFile,
+        File(...),
+    ],
+    service: Annotated[
+        DemoIngestionService,
+        Depends(get_demo_ingestion_service),
+    ],
+) -> AnalysisJobResponse:
+    filename = file.filename or ""
+
+    try:
+        job = service.ingest(
+            original_filename=filename,
+            source=file.file,
+        )
+
+    except DemoTooLargeError as exc:
+        raise HTTPException(
+            status_code=(
+                status.HTTP_413_REQUEST_ENTITY_TOO_LARGE
+            ),
+            detail=str(exc),
+        ) from exc
+
+    except InvalidDemoFileError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(exc),
+        ) from exc
+
+    return AnalysisJobResponse.model_validate(
+        job
+    )
+
+
+@app.get(
+    "/analysis-jobs/{job_id}",
+    response_model=AnalysisJobResponse,
+)
+def get_analysis_job(
+    job_id: str,
+    repository: Annotated[
+        AnalysisJobRepository,
+        Depends(get_analysis_job_repository),
+    ],
+) -> AnalysisJobResponse:
+    job = repository.get_job(
+        job_id
+    )
+
+    if job is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Analysis job not found",
+        )
+
+    return AnalysisJobResponse.model_validate(
+        job
     )
 
 

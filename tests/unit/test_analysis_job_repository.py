@@ -1,0 +1,418 @@
+import unittest
+from datetime import datetime, timedelta, timezone
+
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
+
+from src.database.job_repository import (
+    AnalysisJobNotFoundError,
+    AnalysisJobRepository,
+    InvalidAnalysisJobTransitionError,
+)
+from src.database.models import (
+    AnalysisJobModel,
+    Base,
+    MatchModel,
+)
+
+
+class AnalysisJobRepositoryTest(
+    unittest.TestCase
+):
+    def setUp(self):
+        self.engine = create_engine(
+            "sqlite+pysqlite:///:memory:",
+        )
+
+        Base.metadata.create_all(
+            self.engine
+        )
+
+        self.Session = sessionmaker(
+            bind=self.engine,
+            expire_on_commit=False,
+        )
+
+        self.session = self.Session()
+
+        self.repository = (
+            AnalysisJobRepository(
+                self.session
+            )
+        )
+
+    def tearDown(self):
+        self.session.close()
+
+        Base.metadata.drop_all(
+            self.engine
+        )
+
+        self.engine.dispose()
+
+    def _create_job(self):
+        return self.repository.create_job(
+            original_filename="match.dem",
+            storage_key=(
+                "demos/test-match.dem"
+            ),
+            file_sha256="a" * 64,
+        )
+
+    def _create_match(
+        self,
+        match_id: str,
+    ):
+        self.session.add(
+            MatchModel(
+                match_id=match_id,
+                map_name="de_mirage",
+                duration_seconds=0,
+                rounds_played=24,
+                score_ct=13,
+                score_t=11,
+                winner_side="CT",
+                is_valid=True,
+                validation_error=None,
+                analysis_version="v1",
+            )
+        )
+
+        self.session.commit()
+
+    def test_create_and_get_job(self):
+        created = self._create_job()
+
+        loaded = self.repository.get_job(
+            created.id
+        )
+
+        self.assertEqual(
+            loaded,
+            created,
+        )
+
+        self.assertEqual(
+            loaded.status,
+            "queued",
+        )
+
+        self.assertIsNotNone(
+            loaded.created_at
+        )
+
+        self.assertIsNone(
+            loaded.started_at
+        )
+
+        self.assertIsNone(
+            loaded.finished_at
+        )
+
+    def test_get_job_returns_none_when_missing(
+        self,
+    ):
+        loaded = self.repository.get_job(
+            "missing-job"
+        )
+
+        self.assertIsNone(
+            loaded
+        )
+
+    def test_claim_next_job_returns_none_when_queue_empty(
+        self,
+    ):
+        claimed = (
+            self.repository.claim_next_job()
+        )
+
+        self.assertIsNone(
+            claimed
+        )
+
+    def test_claim_next_job_claims_queued_jobs_one_by_one(
+        self,
+    ):
+        first = self._create_job()
+
+        second = self.repository.create_job(
+            original_filename=(
+                "second.dem"
+            ),
+            storage_key=(
+                "demos/second.dem"
+            ),
+            file_sha256="b" * 64,
+        )
+
+        claimed_first = (
+            self.repository.claim_next_job()
+        )
+
+        claimed_second = (
+            self.repository.claim_next_job()
+        )
+
+        self.assertIsNotNone(
+            claimed_first
+        )
+
+        self.assertIsNotNone(
+            claimed_second
+        )
+
+        self.assertEqual(
+            {
+                claimed_first.id,
+                claimed_second.id,
+            },
+            {
+                first.id,
+                second.id,
+            },
+        )
+
+        self.assertEqual(
+            claimed_first.status,
+            "processing",
+        )
+
+        self.assertEqual(
+            claimed_second.status,
+            "processing",
+        )
+
+        self.assertIsNotNone(
+            claimed_first.started_at
+        )
+
+        self.assertIsNotNone(
+            claimed_second.started_at
+        )
+
+        self.assertIsNone(
+            self.repository.claim_next_job()
+        )
+
+    def test_requeue_stale_processing_job(self):
+        created = self._create_job()
+
+        self.repository.mark_processing(
+            created.id
+        )
+
+        model = self.session.get(
+            AnalysisJobModel,
+            created.id,
+        )
+
+        model.started_at = (
+            datetime.now(timezone.utc)
+            - timedelta(hours=2)
+        )
+
+        self.session.commit()
+
+        requeued = (
+            self.repository
+            .requeue_stale_processing_jobs(
+                stale_before=(
+                    datetime.now(timezone.utc)
+                    - timedelta(hours=1)
+                )
+            )
+        )
+
+        self.assertEqual(
+            requeued,
+            1,
+        )
+
+        loaded = self.repository.get_job(
+            created.id
+        )
+
+        self.assertEqual(
+            loaded.status,
+            "queued",
+        )
+
+        self.assertIsNone(
+            loaded.started_at
+        )
+
+        self.assertIsNone(
+            loaded.finished_at
+        )
+
+        self.assertIsNone(
+            loaded.match_id
+        )
+
+        self.assertIsNone(
+            loaded.error
+        )
+
+    def test_requeue_does_not_touch_recent_processing_job(
+        self,
+    ):
+        created = self._create_job()
+
+        self.repository.mark_processing(
+            created.id
+        )
+
+        requeued = (
+            self.repository
+            .requeue_stale_processing_jobs(
+                stale_before=(
+                    datetime.now(timezone.utc)
+                    - timedelta(hours=1)
+                )
+            )
+        )
+
+        self.assertEqual(
+            requeued,
+            0,
+        )
+
+        loaded = self.repository.get_job(
+            created.id
+        )
+
+        self.assertEqual(
+            loaded.status,
+            "processing",
+        )
+
+        self.assertIsNotNone(
+            loaded.started_at
+        )
+
+    def test_mark_processing(self):
+        created = self._create_job()
+
+        processing = (
+            self.repository.mark_processing(
+                created.id
+            )
+        )
+
+        self.assertEqual(
+            processing.status,
+            "processing",
+        )
+
+        self.assertIsNotNone(
+            processing.started_at
+        )
+
+        self.assertIsNone(
+            processing.finished_at
+        )
+
+    def test_mark_completed(self):
+        created = self._create_job()
+
+        self.repository.mark_processing(
+            created.id
+        )
+
+        self._create_match(
+            "match-001"
+        )
+
+        completed = (
+            self.repository.mark_completed(
+                created.id,
+                match_id="match-001",
+            )
+        )
+
+        self.assertEqual(
+            completed.status,
+            "completed",
+        )
+
+        self.assertEqual(
+            completed.match_id,
+            "match-001",
+        )
+
+        self.assertIsNone(
+            completed.error
+        )
+
+        self.assertIsNotNone(
+            completed.finished_at
+        )
+
+    def test_mark_failed(self):
+        created = self._create_job()
+
+        self.repository.mark_processing(
+            created.id
+        )
+
+        failed = (
+            self.repository.mark_failed(
+                created.id,
+                error="Parser failed",
+            )
+        )
+
+        self.assertEqual(
+            failed.status,
+            "failed",
+        )
+
+        self.assertEqual(
+            failed.error,
+            "Parser failed",
+        )
+
+        self.assertIsNone(
+            failed.match_id
+        )
+
+        self.assertIsNotNone(
+            failed.finished_at
+        )
+
+    def test_invalid_transition_is_rejected(
+        self,
+    ):
+        created = self._create_job()
+
+        with self.assertRaises(
+            InvalidAnalysisJobTransitionError
+        ):
+            self.repository.mark_completed(
+                created.id,
+                match_id="match-001",
+            )
+
+        loaded = self.repository.get_job(
+            created.id
+        )
+
+        self.assertEqual(
+            loaded.status,
+            "queued",
+        )
+
+    def test_missing_job_transition_is_rejected(
+        self,
+    ):
+        with self.assertRaises(
+            AnalysisJobNotFoundError
+        ):
+            self.repository.mark_processing(
+                "missing-job"
+            )
+
+
+if __name__ == "__main__":
+    unittest.main()
