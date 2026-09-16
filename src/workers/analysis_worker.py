@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 from collections.abc import Callable
 from dataclasses import replace
 from pathlib import Path
@@ -22,6 +23,9 @@ from src.metrics.splits import (
     calculate_split_metrics,
 )
 from src.parsing.demo_parser import DemoParser
+
+
+logger = logging.getLogger(__name__)
 
 
 def analyze_demo_file(
@@ -130,7 +134,7 @@ class AnalysisWorker:
                 analysis
             )
 
-            return (
+            completed_job = (
                 self.job_repository
                 .mark_completed(
                     job.id,
@@ -146,3 +150,20 @@ class AnalysisWorker:
                 error="Analysis failed",
             )
             raise
+
+        try:
+            self.storage.delete(
+                job.storage_key
+            )
+        except Exception:
+            logger.exception(
+                "Failed to delete completed job demo",
+                extra={
+                    "job_id": job.id,
+                    "storage_key": (
+                        job.storage_key
+                    ),
+                },
+            )
+
+        return completed_job

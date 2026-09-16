@@ -4,6 +4,7 @@ from datetime import datetime, timezone
 from io import BytesIO
 from pathlib import Path
 from tempfile import TemporaryDirectory
+from unittest.mock import patch
 
 from src.domain.jobs import AnalysisJob
 from src.ingestion.storage import (
@@ -159,7 +160,7 @@ class AnalysisWorkerTest(
             finished_at=None,
         )
 
-    def test_process_completes_job_and_saves_analysis(
+    def test_process_completes_job_saves_analysis_and_deletes_demo(
         self,
     ):
         expected_analysis = (
@@ -172,6 +173,16 @@ class AnalysisWorkerTest(
 
         analyses = (
             StubAnalysisRepository()
+        )
+
+        demo_path = (
+            self.storage.path_for(
+                self.stored.storage_key
+            )
+        )
+
+        self.assertTrue(
+            demo_path.is_file()
         )
 
         worker = AnalysisWorker(
@@ -207,7 +218,11 @@ class AnalysisWorkerTest(
             expected_saved,
         )
 
-    def test_process_next_claims_and_completes_job(
+        self.assertFalse(
+            demo_path.exists()
+        )
+
+    def test_process_next_claims_completes_and_deletes_demo(
         self,
     ):
         expected_analysis = (
@@ -220,6 +235,12 @@ class AnalysisWorkerTest(
 
         analyses = (
             StubAnalysisRepository()
+        )
+
+        demo_path = (
+            self.storage.path_for(
+                self.stored.storage_key
+            )
         )
 
         worker = AnalysisWorker(
@@ -260,6 +281,10 @@ class AnalysisWorkerTest(
             ),
         )
 
+        self.assertFalse(
+            demo_path.exists()
+        )
+
     def test_process_next_returns_none_when_queue_empty(
         self,
     ):
@@ -294,7 +319,7 @@ class AnalysisWorkerTest(
             analyses.saved
         )
 
-    def test_process_marks_job_failed_when_analysis_fails(
+    def test_process_marks_job_failed_and_keeps_demo_when_analysis_fails(
         self,
     ):
         jobs = StubJobRepository(
@@ -303,6 +328,12 @@ class AnalysisWorkerTest(
 
         analyses = (
             StubAnalysisRepository()
+        )
+
+        demo_path = (
+            self.storage.path_for(
+                self.stored.storage_key
+            )
         )
 
         def fail(_):
@@ -336,6 +367,69 @@ class AnalysisWorkerTest(
 
         self.assertIsNone(
             analyses.saved
+        )
+
+        self.assertTrue(
+            demo_path.is_file()
+        )
+
+    def test_process_stays_completed_when_demo_cleanup_fails(
+        self,
+    ):
+        expected_analysis = (
+            make_analysis()
+        )
+
+        jobs = StubJobRepository(
+            self._make_job()
+        )
+
+        analyses = (
+            StubAnalysisRepository()
+        )
+
+        worker = AnalysisWorker(
+            storage=self.storage,
+            job_repository=jobs,
+            analysis_repository=analyses,
+            analyzer=lambda _: (
+                expected_analysis
+            ),
+        )
+
+        with patch.object(
+            self.storage,
+            "delete",
+            side_effect=OSError(
+                "cleanup failed"
+            ),
+        ):
+            result = worker.process(
+                "job-001"
+            )
+
+        self.assertEqual(
+            result.status,
+            "completed",
+        )
+
+        self.assertEqual(
+            jobs.job.status,
+            "completed",
+        )
+
+        self.assertIsNone(
+            jobs.failed_error
+        )
+
+        self.assertIsNotNone(
+            analyses.saved
+        )
+
+        self.assertTrue(
+            self.storage.path_for(
+                self.stored.storage_key
+            ).is_file()
         )
 
     def test_process_marks_job_failed_when_demo_is_missing(
