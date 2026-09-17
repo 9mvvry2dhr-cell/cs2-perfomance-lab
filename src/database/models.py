@@ -252,6 +252,14 @@ class FindingModel(Base):
             "position",
             name="uq_findings_player_position",
         ),
+        CheckConstraint(
+            "kind IN ('strength', 'weakness')",
+            name="ck_findings_kind",
+        ),
+        CheckConstraint(
+            "severity IN ('low', 'medium', 'high')",
+            name="ck_findings_severity",
+        ),
     )
 
     id: Mapped[int] = mapped_column(
@@ -281,6 +289,14 @@ class FindingModel(Base):
     )
     category: Mapped[str] = mapped_column(
         String(64),
+        nullable=False,
+    )
+    kind: Mapped[str] = mapped_column(
+        String(16),
+        nullable=False,
+    )
+    severity: Mapped[str] = mapped_column(
+        String(16),
         nullable=False,
     )
     side: Mapped[str] = mapped_column(

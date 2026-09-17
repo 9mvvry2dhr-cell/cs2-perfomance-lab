@@ -41,6 +41,8 @@ class AnalysisJobResponse(ApiModel):
 class FindingResponse(ApiModel):
     code: str
     category: str
+    kind: Literal["strength", "weakness"]
+    severity: Literal["low", "medium", "high"]
     side: str
     evidence: dict[str, float]
 

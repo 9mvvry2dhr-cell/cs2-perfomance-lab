@@ -43,6 +43,16 @@ class TestSideFindings(unittest.TestCase):
         )
 
         self.assertEqual(
+            findings[0].kind,
+            "weakness",
+        )
+
+        self.assertEqual(
+            findings[0].severity,
+            "medium",
+        )
+
+        self.assertEqual(
             findings[0].evidence["ct_adr"],
             100.0,
         )
@@ -178,6 +188,16 @@ class TestEntryFindings(unittest.TestCase):
                 "entry_death_rate_pct"
             ],
             25.0,
+        )
+
+        self.assertEqual(
+            findings[0].kind,
+            "weakness",
+        )
+
+        self.assertEqual(
+            findings[0].severity,
+            "medium",
         )
 
     def test_two_opening_deaths_are_not_enough(self):

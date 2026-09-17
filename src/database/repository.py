@@ -140,6 +140,8 @@ class AnalysisRepository:
                             position=finding_position,
                             code=finding.code,
                             category=finding.category,
+                            kind=finding.kind,
+                            severity=finding.severity,
                             side=finding.side,
                             evidence=dict(
                                 finding.evidence
@@ -309,6 +311,8 @@ class AnalysisRepository:
                 Finding(
                     code=finding.code,
                     category=finding.category,
+                    kind=finding.kind,
+                    severity=finding.severity,
                     side=finding.side,
                     evidence={
                         key: float(value)

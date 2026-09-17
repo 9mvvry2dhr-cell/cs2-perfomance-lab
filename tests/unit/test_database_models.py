@@ -116,6 +116,8 @@ class DatabaseModelsTest(unittest.TestCase):
                 position=0,
                 code="SIDE_PERFORMANCE_GAP",
                 category="SIDE_PERFORMANCE",
+                kind="weakness",
+                severity="medium",
                 side="T",
                 evidence={
                     "adr_gap": 60.2,
@@ -201,6 +203,14 @@ class DatabaseModelsTest(unittest.TestCase):
             self.assertEqual(
                 loaded_player.findings[0].code,
                 "SIDE_PERFORMANCE_GAP",
+            )
+            self.assertEqual(
+                loaded_player.findings[0].kind,
+                "weakness",
+            )
+            self.assertEqual(
+                loaded_player.findings[0].severity,
+                "medium",
             )
             self.assertEqual(
                 loaded_player.findings[0].evidence[

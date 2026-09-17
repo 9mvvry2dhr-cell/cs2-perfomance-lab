@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Dict, List, Mapping
+from typing import Dict, List, Literal, Mapping
 
 
 MIN_SIDE_ROUNDS = 6
@@ -16,6 +16,8 @@ MIN_ENTRY_DEATH_GAP = 2
 class Finding:
     code: str
     category: str
+    kind: Literal["strength", "weakness"]
+    severity: Literal["low", "medium", "high"]
     side: str
     evidence: Dict[str, float]
 
@@ -123,6 +125,8 @@ def generate_side_findings(
         Finding(
             code="SIDE_PERFORMANCE_GAP",
             category="side_performance",
+            kind="weakness",
+            severity="medium",
             side=weaker_side,
             evidence={
                 "ct_rounds": float(ct_rounds),
@@ -211,6 +215,8 @@ def generate_entry_findings(
             Finding(
                 code="FREQUENT_OPENING_DEATHS",
                 category="entry",
+                kind="weakness",
+                severity="medium",
                 side=side,
                 evidence={
                     "rounds_played": float(rounds),

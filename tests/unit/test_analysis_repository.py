@@ -82,6 +82,8 @@ def make_analysis(
         Finding(
             code="SIDE_PERFORMANCE_GAP",
             category="side_performance",
+            kind="weakness",
+            severity="medium",
             side="T",
             evidence={
                 "ct_rounds": 12.0,
@@ -205,6 +207,8 @@ class AnalysisRepositoryTest(unittest.TestCase):
         second_finding = Finding(
             code="FREQUENT_OPENING_DEATHS",
             category="entry",
+            kind="weakness",
+            severity="medium",
             side="T",
             evidence={
                 "rounds_played": 12.0,
