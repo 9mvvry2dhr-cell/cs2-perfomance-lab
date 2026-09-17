@@ -12,6 +12,7 @@ RUN pip install --upgrade pip \
     && pip install -r requirements.txt
 
 COPY src ./src
+COPY frontend ./frontend
 COPY migrations ./migrations
 COPY alembic.ini .
 

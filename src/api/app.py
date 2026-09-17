@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from contextlib import asynccontextmanager
+from pathlib import Path
 from typing import Annotated
 
 from fastapi import (
@@ -13,6 +14,7 @@ from fastapi import (
     status,
 )
 from fastapi.responses import JSONResponse
+from fastapi.staticfiles import StaticFiles
 from sqlalchemy import text
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
@@ -36,6 +38,12 @@ from src.ingestion.service import DemoIngestionService
 from src.ingestion.storage import (
     DemoTooLargeError,
     InvalidDemoFileError,
+)
+
+
+FRONTEND_DIR = (
+    Path(__file__).resolve().parents[2]
+    / "frontend"
 )
 
 
@@ -188,3 +196,13 @@ def get_match_analysis(
     return MatchAnalysisResponse.model_validate(
         analysis
     )
+
+# Frontend is mounted last so API routes keep priority.
+app.mount(
+    "/",
+    StaticFiles(
+        directory=str(FRONTEND_DIR),
+        html=True,
+    ),
+    name="frontend",
+)
