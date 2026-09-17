@@ -1567,6 +1567,248 @@ tr.selected td {
     }
 }
 
+
+
+/* =========================================================
+   DEMO UPLOAD
+   ========================================================= */
+
+.upload-panel {
+    margin-bottom: 18px;
+    padding: 18px 20px;
+
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    gap: 18px;
+}
+
+.upload-copy {
+    min-width: 0;
+}
+
+.upload-title {
+    font-size: 14px;
+    font-weight: 800;
+
+    color: var(--text);
+}
+
+.upload-sub {
+    margin-top: 4px;
+
+    color: var(--muted);
+
+    font-size: 11px;
+    line-height: 1.5;
+}
+
+.upload-actions {
+    display: flex;
+    align-items: center;
+
+    gap: 9px;
+}
+
+.demo-file-input {
+    max-width: 300px;
+
+    color: var(--muted);
+
+    font-size: 11px;
+}
+
+.demo-file-input::file-selector-button {
+    margin-right: 10px;
+
+    padding: 9px 12px;
+
+    border:
+        1px solid
+        rgba(73, 168, 255, 0.28);
+
+    border-radius: 8px;
+
+    color: #dbeeff;
+
+    background:
+        rgba(73, 168, 255, 0.10);
+
+    cursor: pointer;
+}
+
+.demo-upload-button {
+    padding: 10px 16px;
+
+    border:
+        1px solid
+        rgba(240, 165, 47, 0.45);
+
+    border-radius: 9px;
+
+    color: #17120a;
+
+    background:
+        linear-gradient(
+            145deg,
+            #ffc252,
+            #e79522
+        );
+
+    font-size: 11px;
+    font-weight: 900;
+
+    cursor: pointer;
+}
+
+.demo-upload-button:disabled {
+    opacity: 0.5;
+    cursor: wait;
+}
+
+.upload-status {
+    margin-bottom: 18px;
+    padding: 12px 16px;
+
+    display: none;
+
+    border:
+        1px solid
+        rgba(255,255,255,0.08);
+
+    border-radius: 10px;
+
+    color: var(--muted);
+
+    background:
+        rgba(255,255,255,0.025);
+
+    font-size: 11px;
+}
+
+.upload-status.visible {
+    display: block;
+}
+
+.upload-status[data-state="working"] {
+    color: #9bcfff;
+
+    border-color:
+        rgba(73,168,255,0.22);
+}
+
+.upload-status[data-state="success"] {
+    color: #8be6be;
+
+    border-color:
+        rgba(82,211,159,0.25);
+}
+
+.upload-status[data-state="error"] {
+    color: #ff9d96;
+
+    border-color:
+        rgba(255,110,100,0.28);
+}
+
+.analysis-loaded {
+    margin-top: 7px;
+
+    color: #d9e5ee;
+}
+
+@media (max-width: 900px) {
+    .upload-panel {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .upload-actions {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .demo-file-input {
+        max-width: none;
+    }
+}
+
+
+
+.analysis-empty-state {
+    min-height: 330px;
+
+    margin-bottom: 18px;
+    padding: 48px 28px;
+
+    display: grid;
+    place-items: center;
+
+    text-align: center;
+}
+
+.analysis-empty-inner {
+    max-width: 520px;
+}
+
+.analysis-empty-icon {
+    width: 58px;
+    height: 58px;
+
+    margin: 0 auto 18px;
+
+    display: grid;
+    place-items: center;
+
+    border:
+        1px solid
+        rgba(73, 168, 255, 0.28);
+
+    border-radius: 16px;
+
+    color: var(--blue);
+
+    background:
+        rgba(73, 168, 255, 0.08);
+
+    font-size: 24px;
+}
+
+.analysis-empty-title {
+    font-size: 20px;
+    font-weight: 850;
+
+    color: var(--text);
+}
+
+.analysis-empty-text {
+    margin-top: 9px;
+
+    color: var(--muted);
+
+    font-size: 12px;
+    line-height: 1.65;
+}
+
+.analysis-view[hidden],
+.analysis-empty-state[hidden] {
+    display: none;
+}
+
+
+
+.nav-button:disabled {
+    opacity: 0.38;
+    cursor: default;
+}
+
+.nav-button:disabled:hover {
+    color: #8099ae;
+    background: transparent;
+    border-color: transparent;
+}
+
 </style>
 </head>
 
@@ -1630,7 +1872,7 @@ CS2 Performance Lab
 </button>
 
 
-<button class="nav-button">
+<button class="nav-button" disabled>
 
 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
 <path d="M3 6l6-3 6 3 6-3v15l-6 3-6-3-6 3z"/>
@@ -1643,7 +1885,7 @@ CS2 Performance Lab
 </button>
 
 
-<button class="nav-button">
+<button class="nav-button" disabled>
 
 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
 <path d="M4 20V9"/>
@@ -1707,6 +1949,95 @@ de_mirage · 13:11
 <main class="main">
 
 <div class="content">
+
+<form
+class="card upload-panel"
+id="demoUploadForm"
+>
+
+<div class="upload-copy">
+
+<div class="upload-title">
+Загрузить новый матч
+</div>
+
+<div class="upload-sub">
+Выбери файл CS2 .dem.
+Он будет отправлен в локальный анализатор.
+</div>
+
+</div>
+
+
+<div class="upload-actions">
+
+<input
+class="demo-file-input"
+id="demoFile"
+name="file"
+type="file"
+accept=".dem"
+required
+>
+
+<button
+class="demo-upload-button"
+id="demoUploadButton"
+type="submit"
+>
+АНАЛИЗИРОВАТЬ
+</button>
+
+</div>
+
+</form>
+
+
+<div
+class="upload-status"
+id="uploadStatus"
+aria-live="polite"
+>
+</div>
+
+
+<section
+class="card analysis-empty-state"
+id="analysisEmptyState"
+>
+
+<div class="analysis-empty-inner">
+
+<div class="analysis-empty-icon">
++
+</div>
+
+<div
+class="analysis-empty-title"
+id="analysisEmptyTitle"
+>
+Загрузите .dem для анализа
+</div>
+
+<div
+class="analysis-empty-text"
+id="analysisEmptyText"
+>
+После обработки здесь
+появятся реальные метрики,
+CT / T сравнение
+и подтверждённые findings.
+</div>
+
+</div>
+
+</section>
+
+
+<div
+class="analysis-view"
+id="analysisView"
+>
 
 
 <div class="breadcrumb">
@@ -2566,6 +2897,8 @@ id="playersToggle"
 </section>
 
 
+</div><!-- analysisView -->
+
 </div>
 
 </main>
@@ -2575,6 +2908,1269 @@ id="playersToggle"
 
 
 <script>
+
+
+
+/* Analysis screen state */
+
+const analysisView =
+    document.getElementById(
+        "analysisView"
+    );
+
+const analysisEmptyState =
+    document.getElementById(
+        "analysisEmptyState"
+    );
+
+const analysisEmptyTitle =
+    document.getElementById(
+        "analysisEmptyTitle"
+    );
+
+const analysisEmptyText =
+    document.getElementById(
+        "analysisEmptyText"
+    );
+
+
+function setSidebarPending(
+    playerText,
+    matchText
+) {
+    const playerSelect =
+        document.querySelector(
+            ".player-select"
+        );
+
+    const currentMatch =
+        document.querySelector(
+            ".current-match"
+        );
+
+    playerSelect.replaceChildren();
+
+    const option =
+        document.createElement(
+            "option"
+        );
+
+    option.value = "";
+    option.textContent =
+        playerText;
+
+    playerSelect.appendChild(
+        option
+    );
+
+    playerSelect.disabled =
+        true;
+
+    currentMatch.textContent =
+        matchText;
+}
+
+
+function showIdleState() {
+    analysisView.hidden =
+        true;
+
+    analysisEmptyState.hidden =
+        false;
+
+    setSidebarPending(
+        "\u041c\u0430\u0442\u0447 \u043d\u0435 \u0437\u0430\u0433\u0440\u0443\u0436\u0435\u043d",
+        "\u041d\u0435\u0442 \u0437\u0430\u0433\u0440\u0443\u0436\u0435\u043d\u043d\u043e\u0433\u043e \u043c\u0430\u0442\u0447\u0430"
+    );
+
+    analysisEmptyTitle.textContent =
+        "\u0417\u0430\u0433\u0440\u0443\u0437\u0438\u0442\u0435 .dem "
+        + "\u0434\u043b\u044f \u0430\u043d\u0430\u043b\u0438\u0437\u0430";
+
+    analysisEmptyText.textContent =
+        "\u041f\u043e\u0441\u043b\u0435 \u043e\u0431\u0440\u0430\u0431\u043e\u0442\u043a\u0438 "
+        + "\u0437\u0434\u0435\u0441\u044c \u043f\u043e\u044f\u0432\u044f\u0442\u0441\u044f "
+        + "\u0440\u0435\u0430\u043b\u044c\u043d\u044b\u0435 \u043c\u0435\u0442\u0440\u0438\u043a\u0438, "
+        + "CT / T \u0441\u0440\u0430\u0432\u043d\u0435\u043d\u0438\u0435 "
+        + "\u0438 \u043f\u043e\u0434\u0442\u0432\u0435\u0440\u0436\u0434\u0451\u043d\u043d\u044b\u0435 findings.";
+}
+
+
+function showLoadingState(
+    filename
+) {
+    analysisView.hidden =
+        true;
+
+    analysisEmptyState.hidden =
+        false;
+
+    setSidebarPending(
+        "\u0410\u043d\u0430\u043b\u0438\u0437\u0438\u0440\u0443\u0435\u043c\u2026",
+        "\u041e\u0431\u0440\u0430\u0431\u043e\u0442\u043a\u0430 .dem\u2026"
+    );
+
+    analysisEmptyTitle.textContent =
+        "\u0410\u043d\u0430\u043b\u0438\u0437\u0438\u0440\u0443\u0435\u043c \u043c\u0430\u0442\u0447\u2026";
+
+    analysisEmptyText.textContent =
+        `${filename} \u043f\u0440\u043e\u0445\u043e\u0434\u0438\u0442 `
+        + "\u043f\u0430\u0440\u0441\u0438\u043d\u0433, "
+        + "\u043f\u0440\u043e\u0432\u0435\u0440\u043a\u0443 \u043c\u0435\u0442\u0440\u0438\u043a "
+        + "\u0438 findings.";
+}
+
+
+function showAnalysisState() {
+    analysisEmptyState.hidden =
+        true;
+
+    analysisView.hidden =
+        false;
+}
+
+
+showIdleState();
+
+
+/* Demo upload */
+
+const demoUploadForm =
+    document.getElementById(
+        "demoUploadForm"
+    );
+
+const demoFile =
+    document.getElementById(
+        "demoFile"
+    );
+
+const demoUploadButton =
+    document.getElementById(
+        "demoUploadButton"
+    );
+
+const uploadStatus =
+    document.getElementById(
+        "uploadStatus"
+    );
+
+
+function setUploadStatus(
+    message,
+    state = "working"
+) {
+    uploadStatus.textContent =
+        message;
+
+    uploadStatus.dataset.state =
+        state;
+
+    uploadStatus.classList.add(
+        "visible"
+    );
+}
+
+
+function sleep(ms) {
+    return new Promise(
+        resolve =>
+            setTimeout(
+                resolve,
+                ms
+            )
+    );
+}
+
+
+async function readApiError(
+    response
+) {
+    try {
+        const body =
+            await response.json();
+
+        return (
+            body.detail
+            || body.error
+            || JSON.stringify(body)
+        );
+    } catch {
+        return (
+            response.statusText
+            || "Unknown API error"
+        );
+    }
+}
+
+
+async function pollAnalysisJob(
+    jobId
+) {
+    while (true) {
+        const response =
+            await fetch(
+                `/analysis-jobs/${jobId}`
+            );
+
+        if (!response.ok) {
+            throw new Error(
+                await readApiError(
+                    response
+                )
+            );
+        }
+
+        const job =
+            await response.json();
+
+        if (job.status === "queued") {
+            setUploadStatus(
+                "Демо загружена. "
+                + "Ожидает обработки…"
+            );
+        }
+
+        if (
+            job.status
+            === "processing"
+        ) {
+            setUploadStatus(
+                "Анализируем матч… "
+                + "Parser и verified metrics "
+                + "уже работают."
+            );
+        }
+
+        if (job.status === "failed") {
+            throw new Error(
+                job.error
+                || "Анализ матча "
+                + "завершился ошибкой."
+            );
+        }
+
+        if (
+            job.status
+            === "completed"
+        ) {
+            if (!job.match_id) {
+                throw new Error(
+                    "Job completed "
+                    + "without match_id"
+                );
+            }
+
+            return job;
+        }
+
+        await sleep(2000);
+    }
+}
+
+
+async function loadMatchAnalysis(
+    matchId
+) {
+    const response =
+        await fetch(
+            `/matches/${matchId}`
+        );
+
+    if (!response.ok) {
+        throw new Error(
+            await readApiError(
+                response
+            )
+        );
+    }
+
+    return response.json();
+}
+
+
+
+/* =========================================================
+   MATCH RENDERING
+   ========================================================= */
+
+function formatNumber(
+    value,
+    digits = 1
+) {
+    const number =
+        Number(value ?? 0);
+
+    return number.toFixed(
+        digits
+    );
+}
+
+
+function renderSide(
+    selector,
+    stats
+) {
+    const side =
+        document.querySelector(
+            selector
+        );
+
+    if (!side || !stats) {
+        return;
+    }
+
+    const rounds =
+        side.querySelector(
+            ".rounds"
+        );
+
+    const values =
+        side.querySelectorAll(
+            ".stat-value"
+        );
+
+    rounds.textContent =
+        `${stats.rounds_played} `
+        + "\u0440\u0430\u0443\u043d\u0434\u043e\u0432";
+
+    values[0].textContent =
+        `${stats.kills} / ${stats.deaths}`;
+
+    values[1].textContent =
+        formatNumber(
+            stats.adr
+        );
+
+    values[2].textContent =
+        `${formatNumber(
+            stats.kast_pct
+        )}%`;
+
+    values[3].textContent =
+        `${formatNumber(
+            stats.survival_pct
+        )}%`;
+
+    values[4].textContent =
+        `${stats.entry_kills} / `
+        + `${stats.entry_deaths}`;
+}
+
+
+function setChip(
+    container,
+    label,
+    value
+) {
+    const chip =
+        document.createElement(
+            "div"
+        );
+
+    chip.className =
+        "chip";
+
+    chip.textContent =
+        `${label} ${value}`;
+
+    container.appendChild(
+        chip
+    );
+}
+
+
+function renderFinding(
+    player
+) {
+    const findings =
+        [...player.findings];
+
+    const severityRank = {
+        high: 3,
+        medium: 2,
+        low: 1,
+    };
+
+    findings.sort(
+        (a, b) => {
+            const kindA =
+                a.kind === "weakness"
+                    ? 2
+                    : 1;
+
+            const kindB =
+                b.kind === "weakness"
+                    ? 2
+                    : 1;
+
+            return (
+                kindB - kindA
+                || severityRank[b.severity]
+                - severityRank[a.severity]
+            );
+        }
+    );
+
+    const finding =
+        findings[0];
+
+    const eyebrow =
+        document.querySelector(
+            "#insight .eyebrow"
+        );
+
+    const title =
+        document.querySelector(
+            "#insight .finding-title"
+        );
+
+    const sub =
+        document.querySelector(
+            "#insight .finding-sub"
+        );
+
+    const chips =
+        document.querySelector(
+            "#insight .chips"
+        );
+
+    const next =
+        document.querySelector(
+            "#insight .next-text"
+        );
+
+    const details =
+        document.querySelector(
+            "#insight .insight-details"
+        );
+
+    chips.replaceChildren();
+
+    if (!finding) {
+        eyebrow.textContent =
+            "\u0410\u041d\u0410\u041b\u0418\u0417";
+
+        title.textContent =
+            "\u0421\u0438\u043b\u044c\u043d\u044b\u0445 "
+            + "\u0441\u0438\u0433\u043d\u0430\u043b\u043e\u0432 "
+            + "\u043f\u043e \u0442\u0435\u043a\u0443\u0449\u0435\u0439 "
+            + "\u0432\u0435\u0440\u0441\u0438\u0438 "
+            + "\u0430\u043d\u0430\u043b\u0438\u0437\u0430 "
+            + "\u043d\u0435 \u043d\u0430\u0439\u0434\u0435\u043d\u043e";
+
+        sub.textContent =
+            "\u0414\u043e\u0441\u0442\u0443\u043f\u043d\u044b\u0435 "
+            + "\u043c\u0435\u0442\u0440\u0438\u043a\u0438 "
+            + "\u043d\u0435 \u043f\u0435\u0440\u0435\u0441\u0435\u043a\u043b\u0438 "
+            + "\u043f\u043e\u0440\u043e\u0433\u0438 "
+            + "\u0441\u0443\u0449\u0435\u0441\u0442\u0432\u0443\u044e\u0449\u0438\u0445 "
+            + "\u043f\u0440\u0430\u0432\u0438\u043b.";
+
+        next.textContent =
+            "\u041d\u0435\u0442 "
+            + "\u0434\u043e\u0441\u0442\u0430\u0442\u043e\u0447\u043d\u043e "
+            + "\u0441\u0438\u043b\u044c\u043d\u043e\u0433\u043e "
+            + "\u043f\u043e\u0434\u0442\u0432\u0435\u0440\u0436\u0434\u0451\u043d\u043d\u043e\u0433\u043e "
+            + "\u0441\u0438\u0433\u043d\u0430\u043b\u0430, "
+            + "\u0447\u0442\u043e\u0431\u044b "
+            + "\u0434\u0430\u0432\u0430\u0442\u044c "
+            + "\u043a\u043e\u043d\u043a\u0440\u0435\u0442\u043d\u0443\u044e "
+            + "\u0440\u0435\u043a\u043e\u043c\u0435\u043d\u0434\u0430\u0446\u0438\u044e.";
+
+        details.textContent =
+            "\u042d\u0442\u043e \u043d\u0435 "
+            + "\u043e\u0437\u043d\u0430\u0447\u0430\u0435\u0442 "
+            + "\u043e\u0442\u0441\u0443\u0442\u0441\u0442\u0432\u0438\u0435 "
+            + "\u043e\u0448\u0438\u0431\u043e\u043a. "
+            + "\u0422\u0435\u043a\u0443\u0449\u0430\u044f "
+            + "\u0432\u0435\u0440\u0441\u0438\u044f "
+            + "\u0430\u043d\u0430\u043b\u0438\u0437\u0430 "
+            + "\u043f\u043e\u043a\u0430 "
+            + "\u043f\u0440\u043e\u0432\u0435\u0440\u044f\u0435\u0442 "
+            + "\u043e\u0433\u0440\u0430\u043d\u0438\u0447\u0435\u043d\u043d\u044b\u0439 "
+            + "\u043d\u0430\u0431\u043e\u0440 "
+            + "\u0438\u0433\u0440\u043e\u0432\u044b\u0445 "
+            + "\u043f\u0430\u0442\u0442\u0435\u0440\u043d\u043e\u0432.";
+
+        return;
+    }
+
+    const e =
+        finding.evidence;
+
+    if (
+        finding.kind
+        === "strength"
+    ) {
+        eyebrow.textContent =
+            "\u0421\u0418\u041b\u042c\u041d\u0410\u042f "
+            + "\u0421\u0422\u041e\u0420\u041e\u041d\u0410";
+    } else {
+        eyebrow.textContent =
+            "\u041a\u041b\u042e\u0427\u0415\u0412\u041e\u0419 "
+            + "\u0412\u042b\u0412\u041e\u0414";
+    }
+
+    if (
+        finding.code
+        === "SIDE_PERFORMANCE_GAP"
+    ) {
+        const weakAdr =
+            finding.side === "CT"
+                ? e.ct_adr
+                : e.t_adr;
+
+        const strongAdr =
+            finding.side === "CT"
+                ? e.t_adr
+                : e.ct_adr;
+
+        const weakKast =
+            finding.side === "CT"
+                ? e.ct_kast_pct
+                : e.t_kast_pct;
+
+        const strongKast =
+            finding.side === "CT"
+                ? e.t_kast_pct
+                : e.ct_kast_pct;
+
+        title.textContent =
+            `${finding.side}-`
+            + "\u0441\u0442\u043e\u0440\u043e\u043d\u0430 "
+            + "\u0437\u0430\u043c\u0435\u0442\u043d\u043e "
+            + "\u0441\u043b\u0430\u0431\u0435\u0435 "
+            + "\u043f\u043e \u0432\u043b\u0438\u044f\u043d\u0438\u044e "
+            + "\u0438 \u0441\u0442\u0430\u0431\u0438\u043b\u044c\u043d\u043e\u0441\u0442\u0438";
+
+        sub.textContent =
+            `\u041d\u0430 ${finding.side} `
+            + "\u043d\u0438\u0436\u0435 ADR \u0438 KAST.";
+
+        setChip(
+            chips,
+            "ADR",
+            `${weakAdr} vs ${strongAdr}`
+        );
+
+        setChip(
+            chips,
+            "KAST",
+            `${weakKast}% vs ${strongKast}%`
+        );
+
+        next.textContent =
+            `\u0420\u0430\u0437\u0431\u0435\u0440\u0438 ${finding.side}-`
+            + "\u0440\u0430\u0443\u043d\u0434\u044b: "
+            + "\u043f\u0435\u0440\u0432\u044b\u0435 \u043a\u043e\u043d\u0442\u0430\u043a\u0442\u044b, "
+            + "\u0440\u0430\u0437\u043c\u0435\u043d\u044b, utility "
+            + "\u0438 \u0432\u044b\u0436\u0438\u0432\u0430\u043d\u0438\u0435.";
+
+        details.textContent =
+            "\u0421 \u0447\u0435\u0433\u043e \u043d\u0430\u0447\u0430\u0442\u044c: "
+            + `\u043f\u0435\u0440\u0435\u0441\u043c\u043e\u0442\u0440\u0438 ${finding.side}-`
+            + "\u0440\u0430\u0443\u043d\u0434\u044b, "
+            + "\u0433\u0434\u0435 ADR \u0438 KAST "
+            + "\u043f\u0440\u043e\u0441\u0435\u0434\u0430\u044e\u0442 "
+            + "\u043e\u0434\u043d\u043e\u0432\u0440\u0435\u043c\u0435\u043d\u043d\u043e. "
+            + "\u041e\u0442\u0434\u0435\u043b\u044c\u043d\u043e "
+            + "\u043f\u0440\u043e\u0432\u0435\u0440\u044c "
+            + "\u043f\u0435\u0440\u0432\u044b\u0435 "
+            + "\u043a\u043e\u043d\u0442\u0430\u043a\u0442\u044b, "
+            + "\u0440\u0430\u0437\u043c\u0435\u043d\u044b "
+            + "\u0438 \u0440\u0430\u043d\u043d\u0438\u0435 "
+            + "\u0441\u043c\u0435\u0440\u0442\u0438.";
+
+        return;
+    }
+
+    if (
+        finding.code
+        === "FREQUENT_OPENING_DEATHS"
+    ) {
+        title.textContent =
+            "\u0427\u0430\u0441\u0442\u044b\u0435 "
+            + "\u043f\u0435\u0440\u0432\u044b\u0435 "
+            + `\u0441\u043c\u0435\u0440\u0442\u0438 \u043d\u0430 ${finding.side}`;
+
+        sub.textContent =
+            "\u041f\u0435\u0440\u0432\u044b\u0435 "
+            + "\u0441\u043c\u0435\u0440\u0442\u0438 "
+            + "\u0437\u0430\u043c\u0435\u0442\u043d\u043e "
+            + "\u043f\u0435\u0440\u0435\u0432\u0435\u0448\u0438\u0432\u0430\u044e\u0442 "
+            + "\u043f\u0435\u0440\u0432\u044b\u0435 \u043a\u0438\u043b\u043b\u044b.";
+
+        setChip(
+            chips,
+            "Opening K",
+            e.entry_kills
+        );
+
+        setChip(
+            chips,
+            "Opening D",
+            e.entry_deaths
+        );
+
+        setChip(
+            chips,
+            "Rate",
+            `${e.entry_death_rate_pct}%`
+        );
+
+        next.textContent =
+            "\u041d\u0430\u0447\u043d\u0438 \u0441 "
+            + "\u043f\u0435\u0440\u0432\u044b\u0445 \u043a\u043e\u043d\u0442\u0430\u043a\u0442\u043e\u0432: "
+            + "\u043f\u043e\u0437\u0438\u0446\u0438\u044f, "
+            + "\u0442\u0430\u0439\u043c\u0438\u043d\u0433, utility "
+            + "\u0438 \u0432\u043e\u0437\u043c\u043e\u0436\u043d\u043e\u0441\u0442\u044c "
+            + "\u0440\u0430\u0437\u043c\u0435\u043d\u0430.";
+
+        details.textContent =
+            "\u0421 \u0447\u0435\u0433\u043e \u043d\u0430\u0447\u0430\u0442\u044c: "
+            + "\u043f\u0435\u0440\u0435\u0441\u043c\u043e\u0442\u0440\u0438 "
+            + "\u0440\u0430\u0443\u043d\u0434\u044b, "
+            + "\u0433\u0434\u0435 \u0438\u0433\u0440\u043e\u043a "
+            + "\u0443\u043c\u0438\u0440\u0430\u0435\u0442 "
+            + "\u043f\u0435\u0440\u0432\u044b\u043c. "
+            + "\u041f\u0440\u043e\u0432\u0435\u0440\u044c "
+            + "\u043f\u043e\u0437\u0438\u0446\u0438\u044e "
+            + "\u0434\u043e \u043a\u043e\u043d\u0442\u0430\u043a\u0442\u0430, "
+            + "\u043d\u0430\u043b\u0438\u0447\u0438\u0435 "
+            + "\u043f\u043e\u0434\u0434\u0435\u0440\u0436\u043a\u0438 "
+            + "\u0438 \u0432\u043e\u0437\u043c\u043e\u0436\u043d\u043e\u0441\u0442\u044c "
+            + "\u0431\u044b\u0441\u0442\u0440\u043e\u0433\u043e "
+            + "\u0440\u0430\u0437\u043c\u0435\u043d\u0430.";
+
+        return;
+    }
+
+    if (
+        finding.code
+        === "STRONG_OPENING_IMPACT"
+    ) {
+        title.textContent =
+            "\u0421\u0438\u043b\u044c\u043d\u044b\u0435 "
+            + "\u043f\u0435\u0440\u0432\u044b\u0435 "
+            + `\u043a\u043e\u043d\u0442\u0430\u043a\u0442\u044b \u043d\u0430 ${finding.side}`;
+
+        sub.textContent =
+            "Opening kills "
+            + "\u0437\u0430\u043c\u0435\u0442\u043d\u043e "
+            + "\u043f\u0435\u0440\u0435\u0432\u0435\u0448\u0438\u0432\u0430\u044e\u0442 "
+            + "opening deaths.";
+
+        setChip(
+            chips,
+            "Opening K",
+            e.entry_kills
+        );
+
+        setChip(
+            chips,
+            "Opening D",
+            e.entry_deaths
+        );
+
+        setChip(
+            chips,
+            "Rate",
+            `${e.entry_kill_rate_pct}%`
+        );
+
+        next.textContent =
+            "\u0418\u0441\u043f\u043e\u043b\u044c\u0437\u0443\u0439 "
+            + "\u0441\u0438\u043b\u044c\u043d\u044b\u0435 "
+            + "opening duels "
+            + "\u043a\u0430\u043a \u043e\u043f\u043e\u0440\u0443, "
+            + "\u043d\u0435 \u043f\u043e\u0432\u044b\u0448\u0430\u044f "
+            + "\u0440\u0438\u0441\u043a \u0431\u0435\u0437 "
+            + "\u043d\u0435\u043e\u0431\u0445\u043e\u0434\u0438\u043c\u043e\u0441\u0442\u0438.";
+
+        details.textContent =
+            "\u0421\u0438\u043b\u044c\u043d\u044b\u0439 "
+            + "\u043f\u0430\u0442\u0442\u0435\u0440\u043d: "
+            + "\u0438\u0433\u0440\u043e\u043a "
+            + "\u0441\u0442\u0430\u0431\u0438\u043b\u044c\u043d\u043e "
+            + "\u0434\u0430\u0451\u0442 "
+            + "\u043a\u043e\u043c\u0430\u043d\u0434\u0435 "
+            + "\u043f\u0435\u0440\u0432\u043e\u0435 "
+            + "\u043f\u0440\u0435\u0438\u043c\u0443\u0449\u0435\u0441\u0442\u0432\u043e. "
+            + "\u041f\u0440\u0438 "
+            + "\u043f\u0435\u0440\u0435\u0441\u043c\u043e\u0442\u0440\u0435 "
+            + "\u0441\u0442\u043e\u0438\u0442 "
+            + "\u0437\u0430\u043c\u0435\u0442\u0438\u0442\u044c, "
+            + "\u043a\u0430\u043a\u0438\u0435 "
+            + "\u043f\u043e\u0437\u0438\u0446\u0438\u0438 "
+            + "\u0438 \u0442\u0430\u0439\u043c\u0438\u043d\u0433\u0438 "
+            + "\u0434\u0430\u044e\u0442 "
+            + "\u044d\u0442\u043e\u0442 "
+            + "\u0440\u0435\u0437\u0443\u043b\u044c\u0442\u0430\u0442.";
+
+        return;
+    }
+
+    title.textContent =
+        finding.code;
+
+    sub.textContent =
+        `${finding.kind} / `
+        + `${finding.severity}`;
+
+    next.textContent =
+        "";
+
+    details.textContent =
+        "";
+}
+
+
+function renderPlayer(
+    player,
+    analysis
+) {
+    const stats =
+        player.stats;
+
+    const avatar =
+        document.querySelector(
+            ".avatar"
+        );
+
+    avatar.textContent =
+        player.name
+            .slice(0, 1)
+            .toUpperCase();
+
+    const playerName =
+        document.querySelector(
+            ".player-name"
+        );
+
+    playerName.replaceChildren();
+
+    playerName.appendChild(
+        document.createTextNode(
+            `${player.name} `
+        )
+    );
+
+    const verify =
+        document.createElement(
+            "span"
+        );
+
+    verify.className =
+        "verify-icon";
+
+    verify.textContent =
+        "\u2713";
+
+    playerName.appendChild(
+        verify
+    );
+
+    document.querySelector(
+        ".steam"
+    ).textContent =
+        `Steam ID: ${player.steam_id}`;
+
+    const metricValues =
+        document.querySelectorAll(
+            ".metrics .metric-value"
+        );
+
+    metricValues[0].textContent =
+        formatNumber(
+            stats.kd,
+            2
+        );
+
+    metricValues[1].textContent =
+        formatNumber(
+            stats.adr
+        );
+
+    metricValues[2].textContent =
+        `${formatNumber(
+            stats.kast_pct
+        )}%`;
+
+    metricValues[3].textContent =
+        `${formatNumber(
+            stats.headshot_pct
+        )}%`;
+
+    renderSide(
+        ".side.ct",
+        player.sides.CT
+    );
+
+    renderSide(
+        ".side.t",
+        player.sides.T
+    );
+
+    const lowerCards =
+        document.querySelectorAll(
+            ".lower-card"
+        );
+
+    const impact =
+        lowerCards[0]
+            .querySelectorAll(
+                ".small-value"
+            );
+
+    impact[0].textContent =
+        `${stats.entry_kills} / `
+        + `${stats.entry_deaths}`;
+
+    impact[1].textContent =
+        stats.clutches_won;
+
+    impact[2].textContent =
+        stats.trade_kills;
+
+    impact[3].textContent =
+        stats.traded_deaths;
+
+    impact[4].textContent =
+        `${formatNumber(
+            stats.survival_pct
+        )}%`;
+
+    const utility =
+        lowerCards[1]
+            .querySelectorAll(
+                ".small-value"
+            );
+
+    utility[0].textContent =
+        formatNumber(
+            stats.he_damage
+        );
+
+    utility[1].textContent =
+        formatNumber(
+            stats.inferno_damage
+        );
+
+    utility[2].textContent =
+        stats.enemies_flashed;
+
+    utility[3].textContent =
+        `${formatNumber(
+            stats.flash_duration
+        )} c`;
+
+    const multi =
+        lowerCards[2]
+            .querySelectorAll(
+                ".small-value"
+            );
+
+    multi[0].textContent =
+        stats.two_k_rounds;
+
+    multi[1].textContent =
+        stats.three_k_rounds;
+
+    multi[2].textContent =
+        stats.four_k_rounds;
+
+    multi[3].textContent =
+        stats.five_k_rounds;
+
+    const breadcrumb =
+        document.querySelector(
+            ".breadcrumb span:first-child"
+        );
+
+    breadcrumb.textContent =
+        `\u2302  \u203a  `
+        + `\u0410\u043d\u0430\u043b\u0438\u0437 \u043c\u0430\u0442\u0447\u0430`
+        + `  \u203a  ${analysis.map_name}`
+        + `  \u203a  ${player.name}`;
+
+    renderFinding(
+        player
+    );
+
+    document
+        .querySelectorAll(
+            "#players tbody tr"
+        )
+        .forEach(
+            row => {
+                row.classList.toggle(
+                    "selected",
+                    row.dataset.steamId
+                    === player.steam_id
+                );
+            }
+        );
+}
+
+
+function renderPlayersTable(
+    analysis
+) {
+    const tbody =
+        document.querySelector(
+            "#players tbody"
+        );
+
+    tbody.replaceChildren();
+
+    analysis.players.forEach(
+        player => {
+            const row =
+                document.createElement(
+                    "tr"
+                );
+
+            row.dataset.steamId =
+                player.steam_id;
+
+            const values = [
+                player.name,
+                player.stats.kills,
+                player.stats.deaths,
+                formatNumber(
+                    player.stats.kd,
+                    2
+                ),
+                formatNumber(
+                    player.stats.adr
+                ),
+                `${formatNumber(
+                    player.stats.kast_pct
+                )}%`,
+                `${formatNumber(
+                    player.stats.headshot_pct
+                )}%`,
+                player.findings.length,
+            ];
+
+            values.forEach(
+                value => {
+                    const cell =
+                        document.createElement(
+                            "td"
+                        );
+
+                    cell.textContent =
+                        value;
+
+                    row.appendChild(
+                        cell
+                    );
+                }
+            );
+
+            row.addEventListener(
+                "click",
+                () => {
+                    const select =
+                        document.querySelector(
+                            ".player-select"
+                        );
+
+                    select.value =
+                        player.steam_id;
+
+                    renderPlayer(
+                        player,
+                        analysis
+                    );
+                }
+            );
+
+            tbody.appendChild(
+                row
+            );
+        }
+    );
+}
+
+
+function renderMatchAnalysis(
+    analysis
+) {
+    window.latestMatchAnalysis =
+        analysis;
+
+    const mapInfo =
+        document.querySelector(
+            ".map-info"
+        );
+
+    mapInfo.querySelector(
+        "strong"
+    ).textContent =
+        analysis.map_name;
+
+    const mapSpans =
+        mapInfo.querySelectorAll(
+            "span"
+        );
+
+    mapSpans[0].textContent =
+        `\u0421\u0447\u0451\u0442: `
+        + `${analysis.score_ct} : `
+        + `${analysis.score_t}`;
+
+    mapSpans[1].textContent =
+        `\u0412\u0441\u0435\u0433\u043e `
+        + `\u0440\u0430\u0443\u043d\u0434\u043e\u0432: `
+        + `${analysis.rounds_played}`;
+
+    const currentMatch =
+        document.querySelector(
+            ".current-match"
+        );
+
+    currentMatch.replaceChildren(
+        document.createTextNode(
+            `${analysis.map_name} \u00b7 `
+            + `${analysis.score_ct}:`
+            + `${analysis.score_t}`
+        ),
+        document.createElement(
+            "br"
+        ),
+        document.createTextNode(
+            `${analysis.rounds_played} `
+            + "\u0440\u0430\u0443\u043d\u0434\u0430"
+        )
+    );
+
+    const sectionNote =
+        document.querySelector(
+            ".section-title small"
+        );
+
+    sectionNote.textContent =
+        "\u0421\u0440\u0430\u0432\u043d\u0435\u043d\u0438\u0435 "
+        + "\u043d\u0430 \u043e\u0441\u043d\u043e\u0432\u0435 "
+        + `${analysis.rounds_played} `
+        + "\u043f\u043e\u0434\u0442\u0432\u0435\u0440\u0436\u0434\u0451\u043d\u043d\u044b\u0445 "
+        + "\u0440\u0430\u0443\u043d\u0434\u043e\u0432";
+
+    renderPlayersTable(
+        analysis
+    );
+
+    const playerSelect =
+        document.querySelector(
+            ".player-select"
+        );
+
+    playerSelect.disabled =
+        false;
+
+    const oldName =
+        playerSelect.options[
+            playerSelect.selectedIndex
+        ]?.textContent?.trim();
+
+    playerSelect.replaceChildren();
+
+    analysis.players.forEach(
+        player => {
+            const option =
+                document.createElement(
+                    "option"
+                );
+
+            option.value =
+                player.steam_id;
+
+            option.textContent =
+                player.name;
+
+            playerSelect.appendChild(
+                option
+            );
+        }
+    );
+
+    const selectedPlayer =
+        analysis.players.find(
+            player =>
+                player.name === oldName
+        )
+        || analysis.players[0];
+
+    if (!selectedPlayer) {
+        return;
+    }
+
+    playerSelect.value =
+        selectedPlayer.steam_id;
+
+    playerSelect.onchange =
+        () => {
+            const player =
+                analysis.players.find(
+                    item =>
+                        item.steam_id
+                        === playerSelect.value
+                );
+
+            if (player) {
+                renderPlayer(
+                    player,
+                    analysis
+                );
+            }
+        };
+
+    renderPlayer(
+        selectedPlayer,
+        analysis
+    );
+}
+
+
+demoUploadForm.addEventListener(
+    "submit",
+    async event => {
+        event.preventDefault();
+
+        const file =
+            demoFile.files[0];
+
+        if (!file) {
+            setUploadStatus(
+                "Сначала выбери .dem файл.",
+                "error"
+            );
+
+            return;
+        }
+
+        if (
+            !file.name
+                .toLowerCase()
+                .endsWith(".dem")
+        ) {
+            setUploadStatus(
+                "Нужен файл "
+                + "с расширением .dem.",
+                "error"
+            );
+
+            return;
+        }
+
+        demoUploadButton.disabled =
+            true;
+
+        demoUploadButton.textContent =
+            "\u0410\u041d\u0410\u041b\u0418\u0417\u0418\u0420\u0423\u0415\u041c\u2026";
+
+        showLoadingState(
+            file.name
+        );
+
+        setUploadStatus(
+            `Загружаем ${file.name}…`
+        );
+
+        try {
+            const formData =
+                new FormData();
+
+            formData.append(
+                "file",
+                file
+            );
+
+            const response =
+                await fetch(
+                    "/analysis-jobs",
+                    {
+                        method: "POST",
+                        body: formData,
+                    }
+                );
+
+            if (!response.ok) {
+                throw new Error(
+                    await readApiError(
+                        response
+                    )
+                );
+            }
+
+            const createdJob =
+                await response.json();
+
+            setUploadStatus(
+                "Демо принята. "
+                + "Job создан, "
+                + "ждём worker…"
+            );
+
+            const completedJob =
+                await pollAnalysisJob(
+                    createdJob.id
+                );
+
+            const analysis =
+                await loadMatchAnalysis(
+                    completedJob.match_id
+                );
+
+            renderMatchAnalysis(
+                analysis
+            );
+
+            showAnalysisState();
+
+            const playerCount =
+                analysis.players.length;
+
+            setUploadStatus(
+                `Готово: `
+                + `${analysis.map_name} · `
+                + `${analysis.score_ct}:`
+                + `${analysis.score_t} · `
+                + `${analysis.rounds_played} `
+                + `раундов · `
+                + `${playerCount} `
+                + `игроков. `
+                + `Реальные данные `
+                + `матча получены.`,
+                "success"
+            );
+
+            console.log(
+                "Match analysis:",
+                analysis
+            );
+
+        } catch (error) {
+            console.error(error);
+
+            setUploadStatus(
+                `Ошибка: ${error.message}`,
+                "error"
+            );
+
+        } finally {
+            demoUploadButton.disabled =
+                false;
+
+            demoUploadButton.textContent =
+                "\u0410\u041d\u0410\u041b\u0418\u0417\u0418\u0420\u041e\u0412\u0410\u0422\u042c";
+        }
+    }
+);
+
 
 /* Players table */
 
