@@ -77,7 +77,7 @@ body {
     display: grid;
 
     grid-template-columns:
-        220px
+        250px
         minmax(0, 1fr);
 }
 
@@ -123,7 +123,7 @@ body {
 
     gap: 10px;
 
-    margin-bottom: 30px;
+    margin-bottom: 12px;
 }
 
 
@@ -156,9 +156,24 @@ body {
 
 
 .brand-title {
-    font-size: 14px;
+    font-size: 15px;
 
-    font-weight: 800;
+    font-weight: 850;
+
+    white-space: nowrap;
+
+    letter-spacing:
+        -0.02em;
+
+    color:
+        #f4faff;
+
+    text-shadow:
+        0 0 8px
+        rgba(73,168,255,0.20),
+
+        0 0 18px
+        rgba(73,168,255,0.10);
 }
 
 
@@ -298,33 +313,62 @@ body {
 
 
 .slogan {
-    margin-top: auto;
+    margin:
+        0
+        7px
+        20px;
 
     padding:
-        17px
-        7px
-        0;
+        11px
+        12px;
 
-    border-top:
+    border:
         1px solid
-        rgba(255,255,255,0.06);
+        rgba(73,168,255,0.15);
 
-    color: #70879a;
+    border-left:
+        2px solid
+        rgba(73,168,255,0.55);
 
-    font-size: 10px;
+    border-radius:
+        10px;
 
-    line-height: 1.55;
+    color:
+        #8ba4b8;
+
+    background:
+        linear-gradient(
+            135deg,
+            rgba(73,168,255,0.075),
+            rgba(73,168,255,0.015)
+        );
+
+    font-size:
+        10.5px;
+
+    line-height:
+        1.5;
 }
 
 
 .slogan strong {
     display: block;
 
-    margin-bottom: 4px;
+    margin-bottom:
+        5px;
 
-    color: #d6e0e9;
+    color:
+        #e5f2fc;
 
-    font-weight: 650;
+    font-size:
+        11.5px;
+
+    font-weight:
+        720;
+
+    text-shadow:
+        0 0 10px
+        rgba(73,168,255,0.10);
 }
 
 
@@ -669,7 +713,8 @@ body {
     background:
         #0d1b29;
 
-    font-size: 8px;
+    font-size: 10px;
+    line-height: 1.35;
 
     white-space: nowrap;
 
@@ -688,44 +733,466 @@ body {
 
 
 /* =========================================================
-   MIRAGE ART
+   DYNAMIC MAP ART
    ========================================================= */
 
 .map-art {
+    --map-bg-1: #263746;
+    --map-bg-2: #091722;
+    --map-accent: #5ca9e6;
+    --map-accent-2: #d3a34d;
+
     position: relative;
 
     overflow: hidden;
+    isolation: isolate;
+
+    min-height: 250px;
 
     background:
-        linear-gradient(
-            90deg,
-            rgba(7,18,29,0.40),
-            rgba(7,18,29,0.05) 35%,
-            rgba(7,18,29,0.02)
+        radial-gradient(
+            520px 290px
+            at 75% 12%,
+            color-mix(
+                in srgb,
+                var(--map-accent) 24%,
+                transparent
+            ),
+            transparent 70%
         ),
-
+        radial-gradient(
+            380px 240px
+            at 16% 92%,
+            color-mix(
+                in srgb,
+                var(--map-accent-2) 10%,
+                transparent
+            ),
+            transparent 72%
+        ),
         linear-gradient(
-            165deg,
-            #162938 0%,
-            #30414a 27%,
-            #856c48 28%,
-            #756044 44%,
-            #263b45 45%,
-            #102431 70%,
-            #081721 100%
+            145deg,
+            var(--map-bg-1),
+            var(--map-bg-2)
         );
 }
 
 
-.map-art svg {
+.map-art::before {
+    content: "";
+
     position: absolute;
+    inset: -30% -10%;
+
+    z-index: 0;
+
+    opacity: 0.26;
+
+    background:
+        linear-gradient(
+            90deg,
+            transparent 49%,
+            rgba(255,255,255,0.055) 50%,
+            transparent 51%
+        ),
+        linear-gradient(
+            0deg,
+            transparent 49%,
+            rgba(255,255,255,0.055) 50%,
+            transparent 51%
+        );
+
+    background-size:
+        42px 42px;
+
+    transform:
+        perspective(430px)
+        rotateX(58deg)
+        scale(1.34);
+
+    transform-origin:
+        center bottom;
+}
+
+
+.map-art::after {
+    content: "";
+
+    position: absolute;
+
+    z-index: 1;
+
+    width: 360px;
+    height: 310px;
+
+    left: 46%;
+    top: 52%;
+
+    transform:
+        translate(-50%, -50%)
+        rotate(-13deg);
+
+    border:
+        38px solid
+        color-mix(
+            in srgb,
+            var(--map-accent) 10%,
+            transparent
+        );
+
+    border-radius:
+        42% 58% 54% 46%;
+
+    box-shadow:
+        0 0 70px
+        color-mix(
+            in srgb,
+            var(--map-accent) 10%,
+            transparent
+        );
+}
+
+
+.map-visual {
+    position: absolute;
+
+    z-index: 2;
 
     inset: 0;
 
-    width: 100%;
-    height: 100%;
+    overflow: hidden;
 
-    opacity: 0.72;
+    pointer-events: none;
+}
+
+
+.map-route {
+    position: absolute;
+
+    height: 18px;
+
+    border-radius: 999px;
+
+    opacity: 0.70;
+
+    background:
+        linear-gradient(
+            90deg,
+            transparent,
+            color-mix(
+                in srgb,
+                var(--map-accent) 46%,
+                transparent
+            ),
+            transparent
+        );
+}
+
+
+.map-route.one {
+    width: 62%;
+
+    left: 6%;
+    top: 30%;
+
+    transform:
+        rotate(-11deg);
+}
+
+
+.map-route.two {
+    width: 52%;
+
+    left: 30%;
+    top: 62%;
+
+    transform:
+        rotate(17deg);
+}
+
+
+.map-route.three {
+    width: 43%;
+
+    left: 21%;
+    top: 48%;
+
+    transform:
+        rotate(88deg);
+}
+
+
+.map-block {
+    position: absolute;
+
+    border:
+        1px solid
+        rgba(255,255,255,0.08);
+
+    border-radius: 10px;
+
+    background:
+        rgba(255,255,255,0.055);
+
+    box-shadow:
+        inset 0 0 24px
+        rgba(255,255,255,0.015);
+}
+
+
+.map-block.one {
+    width: 120px;
+    height: 76px;
+
+    left: 13%;
+    top: 20%;
+
+    transform:
+        rotate(-8deg);
+}
+
+
+.map-block.two {
+    width: 155px;
+    height: 92px;
+
+    left: 36%;
+    top: 48%;
+
+    transform:
+        rotate(8deg);
+}
+
+
+.map-block.three {
+    width: 112px;
+    height: 132px;
+
+    right: 18%;
+    top: 20%;
+
+    transform:
+        rotate(-5deg);
+}
+
+
+.map-site {
+    position: absolute;
+
+    z-index: 4;
+
+    width: 58px;
+    height: 58px;
+
+    display: grid;
+    place-items: center;
+
+    border:
+        1px solid
+        color-mix(
+            in srgb,
+            var(--map-accent-2) 52%,
+            transparent
+        );
+
+    border-radius: 50%;
+
+    color:
+        color-mix(
+            in srgb,
+            var(--map-accent-2) 88%,
+            white
+        );
+
+    background:
+        color-mix(
+            in srgb,
+            var(--map-accent-2) 11%,
+            transparent
+        );
+
+    font-size: 25px;
+    font-weight: 900;
+
+    box-shadow:
+        0 0 35px
+        color-mix(
+            in srgb,
+            var(--map-accent-2) 13%,
+            transparent
+        );
+}
+
+
+.map-site.a {
+    left: 22%;
+    bottom: 18%;
+}
+
+
+.map-site.b {
+    right: 25%;
+    top: 18%;
+}
+
+
+.map-watermark {
+    position: absolute;
+
+    z-index: 2;
+
+    left: 22px;
+    bottom: 17px;
+
+    max-width: 65%;
+
+    overflow: hidden;
+
+    color:
+        rgba(255,255,255,0.055);
+
+    font-size: clamp(
+        40px,
+        5vw,
+        66px
+    );
+
+    font-weight: 950;
+
+    letter-spacing:
+        -0.055em;
+
+    line-height: 0.82;
+
+    text-transform:
+        uppercase;
+
+    white-space: nowrap;
+
+    user-select: none;
+}
+
+
+/* MIRAGE */
+
+.map-art.map-mirage {
+    --map-bg-1: #3d4b4f;
+    --map-bg-2: #102431;
+    --map-accent: #d39b4c;
+    --map-accent-2: #df604a;
+}
+
+
+/* ANCIENT */
+
+.map-art.map-ancient {
+    --map-bg-1: #31463a;
+    --map-bg-2: #0c211b;
+    --map-accent: #72a470;
+    --map-accent-2: #d3aa5f;
+}
+
+.map-art.map-ancient .map-block {
+    border-radius: 4px;
+}
+
+.map-art.map-ancient::after {
+    transform:
+        translate(-50%, -50%)
+        rotate(17deg);
+}
+
+
+/* NUKE */
+
+.map-art.map-nuke {
+    --map-bg-1: #253f52;
+    --map-bg-2: #091722;
+    --map-accent: #61b9e9;
+    --map-accent-2: #dfce55;
+}
+
+.map-art.map-nuke .map-block {
+    border-radius: 2px;
+}
+
+.map-art.map-nuke::after {
+    border-radius: 20%;
+}
+
+
+/* DUST II */
+
+.map-art.map-dust2 {
+    --map-bg-1: #624b32;
+    --map-bg-2: #211811;
+    --map-accent: #d6a45e;
+    --map-accent-2: #d76c48;
+}
+
+.map-art.map-dust2::after {
+    transform:
+        translate(-50%, -50%)
+        rotate(-23deg);
+}
+
+
+/* ANUBIS */
+
+.map-art.map-anubis {
+    --map-bg-1: #294b4d;
+    --map-bg-2: #0a2025;
+    --map-accent: #5caaa7;
+    --map-accent-2: #dbb05e;
+}
+
+.map-art.map-anubis::after {
+    border-radius:
+        52% 48% 63% 37%;
+}
+
+
+/* INFERNO */
+
+.map-art.map-inferno {
+    --map-bg-1: #553b32;
+    --map-bg-2: #1d1716;
+    --map-accent: #ae7056;
+    --map-accent-2: #dda650;
+}
+
+.map-art.map-inferno .map-route.one {
+    transform:
+        rotate(-19deg);
+}
+
+
+/* CACHE */
+
+.map-art.map-cache {
+    --map-bg-1: #35464a;
+    --map-bg-2: #101d21;
+    --map-accent: #7e9e8c;
+    --map-accent-2: #d29a55;
+}
+
+.map-art.map-cache::after {
+    border-radius:
+        24% 42% 31% 49%;
+}
+
+.map-art.map-cache .map-block {
+    border-radius: 3px;
+}
+
+
+/* FALLBACK */
+
+.map-art.map-generic {
+    --map-bg-1: #263746;
+    --map-bg-2: #091722;
+    --map-accent: #5ca9e6;
+    --map-accent-2: #d3a34d;
 }
 
 
@@ -1073,9 +1540,9 @@ body {
 
 
 .section-title small {
-    color: #72879b;
+    color: #8297a9;
 
-    font-size: 8px;
+    font-size: 9.5px;
 
     font-weight: 500;
 }
@@ -1279,9 +1746,10 @@ body {
 
 
 .stat-label {
-    color: #788fa3;
+    color: #8ca1b3;
 
-    font-size: 8px;
+    font-size: 9.5px;
+    line-height: 1.3;
 }
 
 
@@ -1378,11 +1846,12 @@ body {
 
 
 .small-label {
-    min-height: 22px;
+    min-height: 24px;
 
-    color: #71879b;
+    color: #8398aa;
 
-    font-size: 7.8px;
+    font-size: 9.5px;
+    line-height: 1.3;
 }
 
 
@@ -1453,15 +1922,15 @@ table {
     border-collapse:
         collapse;
 
-    font-size: 9px;
+    font-size: 12px;
 }
 
 
 th,
 td {
     padding:
-        8px
-        11px;
+        10px
+        12px;
 
     text-align: right;
 
@@ -1478,9 +1947,11 @@ td:first-child {
 
 
 th {
-    color: #70869a;
+    color: #829bb0;
 
-    font-size: 7.5px;
+    font-size: 9.5px;
+
+    font-weight: 650;
 }
 
 
@@ -1809,6 +2280,1381 @@ tr.selected td {
     border-color: transparent;
 }
 
+
+/* SIDEBAR BRAND */
+
+/* Slightly wider sidebar */
+.app {
+    grid-template-columns:
+        285px
+        minmax(0, 1fr);
+}
+
+
+/* Brand */
+.brand {
+    gap: 12px;
+
+    margin-bottom:
+        14px;
+}
+
+
+.brand-logo {
+    width: 38px;
+    height: 38px;
+
+    flex: 0 0 38px;
+
+    border-radius:
+        11px;
+
+    font-size:
+        12px;
+
+    background:
+        linear-gradient(
+            145deg,
+            #ffd05a,
+            #f2a128
+        );
+
+    box-shadow:
+        0 0 0 1px
+        rgba(255,205,91,0.12),
+
+        0 8px 24px
+        rgba(235,157,37,0.20);
+}
+
+
+.brand-title {
+    font-size:
+        15.5px;
+
+    font-weight:
+        850;
+
+    line-height:
+        1.05;
+
+    white-space:
+        nowrap;
+
+    letter-spacing:
+        -0.025em;
+
+    color:
+        #f7fbff;
+
+    text-shadow:
+        0 0 8px
+        rgba(73,168,255,0.22),
+
+        0 0 18px
+        rgba(73,168,255,0.10);
+}
+
+
+.brand-sub {
+    margin-top:
+        4px;
+
+    color:
+        #8197aa;
+
+    font-size:
+        9.5px;
+}
+
+
+/* Product message */
+.slogan {
+    margin:
+        0
+        7px
+        20px;
+
+    padding:
+        12px
+        13px;
+
+    border:
+        1px solid
+        rgba(73,168,255,0.18);
+
+    border-left:
+        2px solid
+        rgba(73,168,255,0.72);
+
+    border-radius:
+        11px;
+
+    color:
+        #8da5b9;
+
+    background:
+        linear-gradient(
+            135deg,
+            rgba(73,168,255,0.09),
+            rgba(73,168,255,0.025)
+        );
+
+    box-shadow:
+        inset 0 1px 0
+        rgba(255,255,255,0.018);
+}
+
+
+.slogan strong {
+    display:
+        block;
+
+    margin-bottom:
+        6px;
+
+    color:
+        #edf7ff;
+
+    font-size:
+        11.5px;
+
+    font-weight:
+        760;
+
+    line-height:
+        1.3;
+
+    white-space:
+        nowrap;
+
+    text-shadow:
+        0 0 9px
+        rgba(73,168,255,0.12);
+}
+
+
+/* END SIDEBAR BRAND */
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/* PRODUCT UI */
+
+
+/* ---------------------------------------------------------
+   REMOVE TECH STATUS STRIP
+   --------------------------------------------------------- */
+
+.upload-status {
+    display:
+        none !important;
+}
+
+
+/* ---------------------------------------------------------
+   LOADING STATE
+   --------------------------------------------------------- */
+
+.analysis-empty-state.is-loading
+.analysis-empty-icon {
+    display:
+        none !important;
+}
+
+
+.analysis-empty-state.is-loading
+.analysis-empty-title {
+    margin-top:
+        0 !important;
+}
+
+
+/* ---------------------------------------------------------
+   METRIC ICONS ? STRICT HUD STYLE
+   --------------------------------------------------------- */
+
+.metrics
+.metric > .metric-icon {
+    display:
+        none !important;
+}
+
+
+.metrics .metric {
+    position:
+        relative;
+}
+
+
+.metrics .metric::before {
+    content: "";
+
+    position:
+        absolute;
+
+    left:
+        14px;
+
+    top:
+        50%;
+
+    width:
+        21px;
+
+    height:
+        21px;
+
+    transform:
+        translateY(-50%);
+
+    background:
+        #62b5f7;
+
+    opacity:
+        0.90;
+
+    mask-repeat:
+        no-repeat;
+
+    mask-position:
+        center;
+
+    mask-size:
+        contain;
+
+    -webkit-mask-repeat:
+        no-repeat;
+
+    -webkit-mask-position:
+        center;
+
+    -webkit-mask-size:
+        contain;
+}
+
+
+/* K/D */
+
+.metrics
+.metric:nth-child(1)::before {
+    mask-image:
+        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cg fill='none' stroke='black' stroke-width='1.35' stroke-linecap='round'%3E%3Cpath d='M8 4H4v4M16 4h4v4M4 16v4h4M20 16v4h-4'/%3E%3Ccircle cx='12' cy='12' r='2'/%3E%3C/g%3E%3C/svg%3E");
+
+    -webkit-mask-image:
+        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cg fill='none' stroke='black' stroke-width='1.35' stroke-linecap='round'%3E%3Cpath d='M8 4H4v4M16 4h4v4M4 16v4h4M20 16v4h-4'/%3E%3Ccircle cx='12' cy='12' r='2'/%3E%3C/g%3E%3C/svg%3E");
+}
+
+
+/* ADR */
+
+.metrics
+.metric:nth-child(2)::before {
+    mask-image:
+        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cg fill='none' stroke='black' stroke-width='1.45' stroke-linecap='round'%3E%3Cpath d='M5 19V14M12 19V6M19 19V10'/%3E%3C/g%3E%3C/svg%3E");
+
+    -webkit-mask-image:
+        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cg fill='none' stroke='black' stroke-width='1.45' stroke-linecap='round'%3E%3Cpath d='M5 19V14M12 19V6M19 19V10'/%3E%3C/g%3E%3C/svg%3E");
+}
+
+
+/* KAST */
+
+.metrics
+.metric:nth-child(3)::before {
+    mask-image:
+        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cg fill='none' stroke='black' stroke-width='1.35' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='4' y='4' width='16' height='16' rx='2.5'/%3E%3Cpath d='M8 12.2l2.6 2.6L16.5 9'/%3E%3C/g%3E%3C/svg%3E");
+
+    -webkit-mask-image:
+        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cg fill='none' stroke='black' stroke-width='1.35' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='4' y='4' width='16' height='16' rx='2.5'/%3E%3Cpath d='M8 12.2l2.6 2.6L16.5 9'/%3E%3C/g%3E%3C/svg%3E");
+}
+
+
+/* HS */
+
+.metrics
+.metric:nth-child(4)::before {
+    mask-image:
+        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cg fill='none' stroke='black' stroke-width='1.3' stroke-linecap='round'%3E%3Ccircle cx='12' cy='12' r='6'/%3E%3Ccircle cx='12' cy='12' r='1.5'/%3E%3Cpath d='M12 3v3M12 18v3M3 12h3M18 12h3'/%3E%3C/g%3E%3C/svg%3E");
+
+    -webkit-mask-image:
+        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cg fill='none' stroke='black' stroke-width='1.3' stroke-linecap='round'%3E%3Ccircle cx='12' cy='12' r='6'/%3E%3Ccircle cx='12' cy='12' r='1.5'/%3E%3Cpath d='M12 3v3M12 18v3M3 12h3M18 12h3'/%3E%3C/g%3E%3C/svg%3E");
+}
+
+
+/* ---------------------------------------------------------
+   METRIC EXPLANATIONS
+   --------------------------------------------------------- */
+
+.metric-note {
+    margin-top:
+        5px;
+
+    max-width:
+        150px;
+
+    color:
+        #7f96aa;
+
+    font-size:
+        8.8px;
+
+    font-weight:
+        500;
+
+    line-height:
+        1.3;
+}
+
+
+/* ---------------------------------------------------------
+   REAL CS2 MAP SHOWCASE
+   --------------------------------------------------------- */
+
+.map-art {
+    position:
+        relative !important;
+
+    overflow:
+        hidden !important;
+
+    background-color:
+        #07131d !important;
+
+    background-repeat:
+        no-repeat !important;
+
+    background-position:
+        center !important;
+
+    background-size:
+        cover !important;
+}
+
+
+/* Old fake map drawing */
+
+.map-art
+.map-visual {
+    display:
+        none !important;
+}
+
+
+.map-art > svg {
+    display:
+        none !important;
+}
+
+
+/* Old score box */
+
+.map-info {
+    display:
+        none !important;
+}
+
+
+/* Dark overlay */
+
+.map-art::before {
+    content:
+        "";
+
+    display:
+        block !important;
+
+    position:
+        absolute;
+
+    z-index:
+        2;
+
+    inset:
+        0;
+
+    background:
+        linear-gradient(
+            180deg,
+            rgba(3,10,17,0.12),
+            rgba(3,10,17,0.62)
+        ),
+
+        linear-gradient(
+            90deg,
+            rgba(3,10,17,0.35),
+            rgba(3,10,17,0.04),
+            rgba(3,10,17,0.30)
+        );
+
+    pointer-events:
+        none;
+}
+
+
+.map-art::after {
+    display:
+        none !important;
+}
+
+
+.map-showcase-content {
+    position:
+        absolute !important;
+
+    z-index:
+        5 !important;
+
+    inset:
+        0;
+
+    display:
+        flex;
+
+    flex-direction:
+        column;
+
+    align-items:
+        center;
+
+    justify-content:
+        center;
+
+    gap:
+        8px;
+
+    padding:
+        20px;
+
+    text-align:
+        center;
+
+    pointer-events:
+        none;
+}
+
+
+.map-showcase-emblem {
+    width:
+        78px;
+
+    height:
+        78px;
+
+    object-fit:
+        contain;
+
+    filter:
+        drop-shadow(
+            0 8px 18px
+            rgba(0,0,0,0.48)
+        );
+}
+
+
+.map-showcase-name {
+    color:
+        #f7fafc;
+
+    font-size:
+        21px;
+
+    font-weight:
+        820;
+
+    line-height:
+        1;
+
+    letter-spacing:
+        -0.025em;
+
+    text-shadow:
+        0 3px 16px
+        rgba(0,0,0,0.70);
+}
+
+
+/* END PRODUCT UI */
+
+
+
+/* METRIC HELP */
+
+
+/* ---------------------------------------------------------
+   REMOVE OLD INLINE EXPLANATIONS
+   --------------------------------------------------------- */
+
+.metric-note {
+    display:
+        none !important;
+}
+
+
+/* Disable old full-card tooltip */
+
+.metrics
+.metric > .tooltip {
+    display:
+        none !important;
+}
+
+
+/* ---------------------------------------------------------
+   FIX METRIC CONTENT POSITION
+   --------------------------------------------------------- */
+
+.metrics .metric {
+    position:
+        relative;
+}
+
+
+/*
+Original SVG is hidden by the current HUD icon system.
+Force the actual label/value content into column 2 so it
+does not slide underneath the replacement icon.
+*/
+
+.metrics
+.metric > div:not(.tooltip):not(.metric-help) {
+    grid-column:
+        2;
+
+    min-width:
+        0;
+}
+
+
+/* ---------------------------------------------------------
+   QUESTION MARK
+   --------------------------------------------------------- */
+
+.metric-help {
+    position:
+        absolute;
+
+    z-index:
+        30;
+
+    top:
+        10px;
+
+    right:
+        10px;
+
+    width:
+        17px;
+
+    height:
+        17px;
+
+    display:
+        grid;
+
+    place-items:
+        center;
+
+    padding:
+        0;
+
+    border:
+        1px solid
+        rgba(118,171,215,0.28);
+
+    border-radius:
+        50%;
+
+    color:
+        #8fa9bf;
+
+    background:
+        rgba(7,20,31,0.86);
+
+    font-family:
+        inherit;
+
+    font-size:
+        10px;
+
+    font-weight:
+        750;
+
+    line-height:
+        1;
+
+    cursor:
+        help;
+
+    transition:
+        color 140ms ease,
+        border-color 140ms ease,
+        background 140ms ease;
+}
+
+
+.metric-help:hover,
+.metric-help:focus-visible {
+    color:
+        #d9eeff;
+
+    border-color:
+        rgba(90,178,255,0.62);
+
+    background:
+        rgba(21,54,79,0.96);
+
+    outline:
+        none;
+}
+
+
+/* ---------------------------------------------------------
+   HELP POPOVER
+   --------------------------------------------------------- */
+
+.metric-help-tooltip {
+    position:
+        absolute;
+
+    z-index:
+        40;
+
+    top:
+        24px;
+
+    right:
+        0;
+
+    width:
+        220px;
+
+    padding:
+        10px
+        11px;
+
+    opacity:
+        0;
+
+    visibility:
+        hidden;
+
+    transform:
+        translateY(-3px);
+
+    border:
+        1px solid
+        rgba(91,151,201,0.24);
+
+    border-radius:
+        9px;
+
+    color:
+        #c5d5e2;
+
+    background:
+        rgba(7,20,31,0.98);
+
+    box-shadow:
+        0 12px 28px
+        rgba(0,0,0,0.30);
+
+    font-size:
+        10px;
+
+    font-weight:
+        500;
+
+    line-height:
+        1.45;
+
+    text-align:
+        left;
+
+    pointer-events:
+        none;
+
+    transition:
+        opacity 140ms ease,
+        visibility 140ms ease,
+        transform 140ms ease;
+}
+
+
+.metric-help:hover
+.metric-help-tooltip,
+
+.metric-help:focus-visible
+.metric-help-tooltip {
+    opacity:
+        1;
+
+    visibility:
+        visible;
+
+    transform:
+        translateY(0);
+}
+
+
+/* END METRIC HELP */
+
+
+
+
+
+
+
+/* ANALYSIS RADAR */
+
+/* loader */
+.analysis-radar-loading {
+    min-height: 430px;
+    display: none;
+    place-items: center;
+    padding: 50px 20px;
+}
+
+.analysis-radar-loading.visible {
+    display: grid;
+}
+
+.analysis-radar-card {
+    width: min(470px, 100%);
+    padding: 30px 34px 28px;
+    text-align: center;
+    border: 1px solid rgba(73,168,255,0.16);
+    border-radius: 18px;
+    background:
+        radial-gradient(circle at 50% 5%, rgba(42,116,175,0.10), transparent 52%),
+        linear-gradient(145deg, rgba(10,26,40,0.92), rgba(6,17,27,0.96));
+    box-shadow: 0 24px 70px rgba(0,0,0,0.20);
+}
+
+.analysis-radar {
+    position: relative;
+    width: 132px;
+    height: 132px;
+    margin: 0 auto 24px;
+    overflow: hidden;
+    border: 1px solid rgba(76,174,255,0.38);
+    border-radius: 50%;
+    background:
+        radial-gradient(circle,
+            rgba(74,172,255,0.07) 0 4%,
+            transparent 5% 27%,
+            rgba(74,172,255,0.08) 28% 29%,
+            transparent 30% 57%,
+            rgba(74,172,255,0.07) 58% 59%,
+            transparent 60%);
+    box-shadow:
+        inset 0 0 40px rgba(52,147,225,0.05),
+        0 0 32px rgba(52,147,225,0.06);
+}
+
+.analysis-radar::before {
+    content: "";
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 50%;
+    height: 50%;
+    transform-origin: left top;
+    background: linear-gradient(35deg, rgba(79,182,255,0.24), rgba(79,182,255,0.02) 72%);
+    clip-path: polygon(0 0, 100% 0, 0 100%);
+    animation: radar-sweep 2.2s linear infinite;
+}
+
+.analysis-radar::after {
+    content: "";
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 5px;
+    height: 5px;
+    transform: translate(-50%, -50%);
+    border-radius: 50%;
+    background: #6ac2ff;
+    box-shadow: 0 0 14px rgba(106,194,255,0.75);
+}
+
+.analysis-radar-cross-x,
+.analysis-radar-cross-y {
+    position: absolute;
+    z-index: 1;
+    background: rgba(99,182,246,0.11);
+}
+
+.analysis-radar-cross-x {
+    left: 12px;
+    right: 12px;
+    top: 50%;
+    height: 1px;
+}
+
+.analysis-radar-cross-y {
+    top: 12px;
+    bottom: 12px;
+    left: 50%;
+    width: 1px;
+}
+
+.analysis-radar-dot {
+    position: absolute;
+    z-index: 3;
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: #f1aa38;
+    box-shadow: 0 0 12px rgba(241,170,56,0.70);
+    animation: radar-dot 1.7s ease-in-out infinite;
+}
+
+.analysis-radar-dot.one { left: 37px; top: 40px; }
+.analysis-radar-dot.two { right: 29px; bottom: 38px; animation-delay: 0.55s; }
+.analysis-radar-dot.three { left: 57px; bottom: 24px; animation-delay: 1.05s; }
+
+@keyframes radar-sweep {
+    from { transform: rotate(0deg); }
+    to   { transform: rotate(360deg); }
+}
+
+@keyframes radar-dot {
+    0%, 100% { opacity: 0.25; }
+    45%      { opacity: 1; }
+}
+
+.analysis-radar-title {
+    color: #f2f7fb;
+    font-size: 21px;
+    font-weight: 820;
+    letter-spacing: -0.025em;
+}
+
+.analysis-radar-sub {
+    margin-top: 7px;
+    color: #8299ac;
+    font-size: 11px;
+    line-height: 1.5;
+}
+
+.analysis-radar-steps {
+    margin-top: 22px;
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.analysis-radar-step {
+    padding: 7px 10px;
+    border: 1px solid rgba(98,181,247,0.12);
+    border-radius: 999px;
+    color: #849caf;
+    background: rgba(255,255,255,0.018);
+    font-size: 9.5px;
+    animation: radar-step 2.4s ease-in-out infinite;
+}
+
+.analysis-radar-step:nth-child(2) { animation-delay: 0.4s; }
+.analysis-radar-step:nth-child(3) { animation-delay: 0.8s; }
+
+@keyframes radar-step {
+    0%, 100% {
+        color: #849caf;
+        border-color: rgba(98,181,247,0.12);
+    }
+    50% {
+        color: #d7ecfb;
+        border-color: rgba(98,181,247,0.40);
+    }
+}
+
+.analysis-radar-motto {
+    margin-top: 18px;
+    color: #60788c;
+    font-size: 9px;
+}
+
+/* tooltip fix */
+.hero,
+.hero-left,
+.metrics,
+.metric {
+    overflow: visible !important;
+}
+
+.metric {
+    position: relative;
+    z-index: 1;
+}
+
+.metric-help {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    z-index: 20;
+}
+
+.metric-help-tooltip {
+    position: absolute;
+    left: 50%;
+    bottom: calc(100% + 10px);
+    transform: translateX(-50%);
+    width: 220px;
+    padding: 10px 12px;
+    border-radius: 12px;
+    border: 1px solid rgba(80,160,220,0.35);
+    background: rgba(7,18,28,0.97);
+    color: #d6e7f5;
+    font-size: 12px;
+    line-height: 1.45;
+    white-space: normal;
+    overflow-wrap: break-word;
+    box-shadow: 0 12px 32px rgba(0,0,0,0.35);
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transition: opacity 0.16s ease, transform 0.16s ease, visibility 0.16s ease;
+}
+
+.metric-help:hover .metric-help-tooltip,
+.metric-help:focus-within .metric-help-tooltip {
+    opacity: 1;
+    visibility: visible;
+    transform: translateX(-50%) translateY(-2px);
+}
+
+.metrics .metric:first-child .metric-help-tooltip,
+.metrics .metric:nth-child(2) .metric-help-tooltip,
+.metrics .metric:nth-child(3) .metric-help-tooltip,
+.metrics .metric:nth-child(4) .metric-help-tooltip {
+    left: 50%;
+    right: auto;
+}
+
+/* END ANALYSIS RADAR */
+
+
+
+/* FLOATING METRIC HELP */
+
+
+
+.metric-help
+.metric-help-tooltip {
+    display:
+        none !important;
+}
+
+
+
+.metric-help-floating {
+    position:
+        fixed;
+
+    z-index:
+        99999;
+
+    width:
+        235px;
+
+    padding:
+        11px
+        13px;
+
+    opacity:
+        0;
+
+    visibility:
+        hidden;
+
+    pointer-events:
+        none;
+
+    border:
+        1px solid
+        rgba(88,170,232,0.30);
+
+    border-radius:
+        11px;
+
+    color:
+        #d9e8f4;
+
+    background:
+        rgba(5,17,27,0.985);
+
+    box-shadow:
+        0 14px 38px
+        rgba(0,0,0,0.42);
+
+    font-size:
+        11px;
+
+    font-weight:
+        520;
+
+    line-height:
+        1.5;
+
+    text-align:
+        left;
+
+    white-space:
+        normal;
+
+    overflow-wrap:
+        break-word;
+
+    transform:
+        translateY(3px);
+
+    transition:
+        opacity 120ms ease,
+        transform 120ms ease,
+        visibility 120ms ease;
+}
+
+
+.metric-help-floating.visible {
+    opacity:
+        1;
+
+    visibility:
+        visible;
+
+    transform:
+        translateY(0);
+}
+
+
+.metric-help-floating::after {
+    content:
+        "";
+
+    position:
+        absolute;
+
+    left:
+        var(--arrow-left, 50%);
+
+    width:
+        8px;
+
+    height:
+        8px;
+
+    background:
+        rgba(5,17,27,0.985);
+
+    transform:
+        translateX(-50%)
+        rotate(45deg);
+}
+
+
+.metric-help-floating[data-position="top"]::after {
+    bottom:
+        -5px;
+
+    border-right:
+        1px solid
+        rgba(88,170,232,0.30);
+
+    border-bottom:
+        1px solid
+        rgba(88,170,232,0.30);
+}
+
+
+.metric-help-floating[data-position="bottom"]::after {
+    top:
+        -5px;
+
+    border-left:
+        1px solid
+        rgba(88,170,232,0.30);
+
+    border-top:
+        1px solid
+        rgba(88,170,232,0.30);
+}
+
+
+/* END FLOATING METRIC HELP */
+
+
+
+
+
+
+
+/* NAV SECTIONS */
+
+
+/* ---------------------------------------------------------
+   CLEAN FILE PICKER
+   --------------------------------------------------------- */
+
+.demo-file-input {
+    position:
+        absolute !important;
+
+    width:
+        1px !important;
+
+    height:
+        1px !important;
+
+    padding:
+        0 !important;
+
+    margin:
+        -1px !important;
+
+    overflow:
+        hidden !important;
+
+    clip:
+        rect(0, 0, 0, 0) !important;
+
+    white-space:
+        nowrap !important;
+
+    border:
+        0 !important;
+
+    opacity:
+        0 !important;
+}
+
+
+.demo-file-picker {
+    min-height:
+        34px;
+
+    padding:
+        8px
+        13px;
+
+    display:
+        inline-flex;
+
+    align-items:
+        center;
+
+    justify-content:
+        center;
+
+    border:
+        1px solid
+        rgba(78,157,226,0.34);
+
+    border-radius:
+        8px;
+
+    color:
+        #d8ebfb;
+
+    background:
+        rgba(15,44,67,0.58);
+
+    font-size:
+        10px;
+
+    font-weight:
+        650;
+
+    white-space:
+        nowrap;
+
+    cursor:
+        pointer;
+
+    transition:
+        border-color 140ms ease,
+        background 140ms ease,
+        color 140ms ease;
+}
+
+
+.demo-file-picker:hover {
+    color:
+        #ffffff;
+
+    border-color:
+        rgba(91,178,255,0.62);
+
+    background:
+        rgba(21,59,87,0.78);
+}
+
+
+.demo-file-picker.file-selected {
+    color:
+        #a9d7f8;
+
+    border-color:
+        rgba(78,157,226,0.28);
+}
+
+
+/* ---------------------------------------------------------
+   NAV
+   --------------------------------------------------------- */
+
+.nav-button:not(.active) {
+    cursor:
+        pointer;
+}
+
+
+.nav-button:disabled {
+    opacity:
+        1 !important;
+
+    cursor:
+        pointer !important;
+}
+
+
+/* ---------------------------------------------------------
+   PLACEHOLDER PAGE
+   --------------------------------------------------------- */
+
+.section-placeholder {
+    min-height:
+        430px;
+
+    margin-top:
+        16px;
+
+    padding:
+        50px
+        44px;
+
+    display:
+        flex;
+
+    flex-direction:
+        column;
+
+    align-items:
+        center;
+
+    justify-content:
+        center;
+
+    text-align:
+        center;
+
+    border:
+        1px solid
+        rgba(72,148,211,0.16);
+
+    border-radius:
+        16px;
+
+    background:
+        radial-gradient(
+            circle at 15% 20%,
+            rgba(56,135,198,0.08),
+            transparent 40%
+        ),
+        rgba(7,20,31,0.54);
+}
+
+
+.section-placeholder[hidden] {
+    display:
+        none !important;
+}
+
+
+.section-placeholder-eyebrow {
+    margin-bottom:
+        8px;
+
+    color:
+        #5faef0;
+
+    font-size:
+        9px;
+
+    font-weight:
+        800;
+
+    letter-spacing:
+        0.15em;
+
+    text-transform:
+        uppercase;
+}
+
+
+.section-placeholder-title {
+    color:
+        #f1f7fb;
+
+    font-size:
+        24px;
+
+    font-weight:
+        820;
+
+    letter-spacing:
+        -0.025em;
+}
+
+
+.section-placeholder-text {
+    max-width:
+        630px;
+
+    margin:
+        10px
+        auto
+        0;
+
+    color:
+        #8299ac;
+
+    font-size:
+        12px;
+
+    line-height:
+        1.6;
+}
+
+
+.nav-page-hidden {
+    display:
+        none !important;
+}
+
+
+/* END NAV SECTIONS */
+
 </style>
 </head>
 
@@ -1843,6 +3689,11 @@ CS2 Performance Lab
 </div>
 
 
+<div class="slogan">
+<strong>Анализируем данные, а не гадаем.</strong>
+</div>
+
+
 <div class="nav" id="nav">
 
 
@@ -1872,7 +3723,7 @@ CS2 Performance Lab
 </button>
 
 
-<button class="nav-button" disabled>
+<button class="nav-button">
 
 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
 <path d="M3 6l6-3 6 3 6-3v15l-6 3-6-3-6 3z"/>
@@ -1885,7 +3736,7 @@ CS2 Performance Lab
 </button>
 
 
-<button class="nav-button" disabled>
+<button class="nav-button">
 
 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
 <path d="M4 20V9"/>
@@ -1928,19 +3779,7 @@ de_mirage · 13:11
 </div>
 
 
-<div class="slogan">
 
-<strong>
-Анализируем данные,
-<br>
-а не гадаем.
-</strong>
-
-Проверенные метрики →
-<br>
-выводы → разбор.
-
-</div>
 
 
 </aside>
@@ -1980,6 +3819,14 @@ accept=".dem"
 required
 >
 
+<label
+class="demo-file-picker"
+id="demoFilePicker"
+for="demoFile"
+>
+Выберите файл
+</label>
+
 <button
 class="demo-upload-button"
 id="demoUploadButton"
@@ -1991,6 +3838,33 @@ type="submit"
 </div>
 
 </form>
+
+
+<!-- NAV SECTIONS V2 -->
+
+<section
+class="section-placeholder"
+id="sectionPlaceholder"
+hidden
+>
+    <div
+    class="section-placeholder-eyebrow"
+    id="sectionPlaceholderEyebrow"
+    ></div>
+
+    <div
+    class="section-placeholder-title"
+    id="sectionPlaceholderTitle"
+    ></div>
+
+    <div
+    class="section-placeholder-text"
+    id="sectionPlaceholderText"
+    ></div>
+</section>
+
+<!-- END NAV SECTIONS V2 -->
+
 
 
 <div
@@ -2038,6 +3912,10 @@ CT / T сравнение
 class="analysis-view"
 id="analysisView"
 >
+
+
+
+
 
 
 <div class="breadcrumb">
@@ -2185,98 +4063,59 @@ Kill / Assist / Survive / Trade
 </div>
 
 
-<div class="map-art">
-
-
-<svg
-viewBox="0 0 600 300"
-preserveAspectRatio="none"
+<div
+class="map-art map-generic"
+id="mapArt"
 >
 
-
-<rect
-x="70"
-y="74"
-width="180"
-height="190"
-fill="#a88e69"
-opacity=".42"
-/>
-
-
-<rect
-x="110"
-y="40"
-width="75"
-height="220"
-fill="#b79d73"
-opacity=".35"
-/>
-
-
-<rect
-x="320"
-y="92"
-width="180"
-height="180"
-fill="#8f7659"
-opacity=".36"
-/>
-
-
-<rect
-x="390"
-y="55"
-width="85"
-height="215"
-fill="#a58c68"
-opacity=".32"
-/>
-
-
-<path
-d="M145 0v62M420 0v88"
-stroke="#202b29"
-stroke-width="10"
-/>
-
-
-<path
-d="M145 25
-c-45-45-70-8-65 5
-c25-8 43 0 65 18
-c22-18 40-26 65-18
-c5-13-20-50-65-5z"
-fill="#192c29"
-opacity=".8"
-/>
-
-
-<path
-d="M420 30
-c-48-45-72-8-67 5
-c26-9 45 0 67 19
-c23-19 43-28 69-19
-c4-13-21-50-69-5z"
-fill="#162b28"
-opacity=".8"
-/>
-
-
-<text
-x="360"
-y="215"
-font-size="120"
-font-family="Arial Black"
-fill="#8e3228"
-opacity=".60"
-transform="rotate(-7 360 215)"
+<div
+class="map-showcase-content"
+id="mapShowcaseContent"
 >
+
+<img
+class="map-showcase-emblem"
+id="mapShowcaseEmblem"
+alt=""
+>
+
+<div
+class="map-showcase-name"
+id="mapShowcaseName"
+>
+MAP
+</div>
+
+</div>
+
+
+
+<div class="map-visual">
+
+<div class="map-route one"></div>
+<div class="map-route two"></div>
+<div class="map-route three"></div>
+
+<div class="map-block one"></div>
+<div class="map-block two"></div>
+<div class="map-block three"></div>
+
+<div class="map-site a">
 A
-</text>
+</div>
 
+<div class="map-site b">
+B
+</div>
 
-</svg>
+<div
+class="map-watermark"
+id="mapWatermark"
+>
+MAP
+</div>
+
+</div>
 
 
 <div class="map-info">
@@ -2669,7 +4508,7 @@ CT / T сравнение
 <path d="M10 3v5l-5 8a4 4 0 0 0 3.5 6h7a4 4 0 0 0 3.5-6l-5-8V3"/>
 </svg>
 
-Утилиты
+Гранаты
 
 </div>
 
@@ -3003,7 +4842,7 @@ function showLoadingState(
         true;
 
     analysisEmptyState.hidden =
-        false;
+        true;
 
     setSidebarPending(
         "\u0410\u043d\u0430\u043b\u0438\u0437\u0438\u0440\u0443\u0435\u043c\u2026",
@@ -3896,11 +5735,217 @@ function renderPlayersTable(
 }
 
 
+function renderMapArt(
+    mapName
+) {
+    const mapArt =
+        document.getElementById(
+            "mapArt"
+        );
+
+    const watermark =
+        document.getElementById(
+            "mapWatermark"
+        );
+
+    if (!mapArt || !watermark) {
+        return;
+    }
+
+    const normalized =
+        String(mapName || "")
+            .trim()
+            .toLowerCase();
+
+    const mapStyles = {
+        de_mirage: {
+            className:
+                "map-mirage",
+            label:
+                "MIRAGE",
+        },
+
+        de_ancient: {
+            className:
+                "map-ancient",
+            label:
+                "ANCIENT",
+        },
+
+        de_nuke: {
+            className:
+                "map-nuke",
+            label:
+                "NUKE",
+        },
+
+        de_dust2: {
+            className:
+                "map-dust2",
+            label:
+                "DUST II",
+        },
+
+        de_anubis: {
+            className:
+                "map-anubis",
+            label:
+                "ANUBIS",
+        },
+
+        de_inferno: {
+            className:
+                "map-inferno",
+            label:
+                "INFERNO",
+        },
+
+        de_cache: {
+            className:
+                "map-cache",
+            label:
+                "CACHE",
+        },
+    };
+
+    const fallbackLabel =
+        normalized
+            .replace(
+                /^de_/,
+                ""
+            )
+            .replace(
+                /_/g,
+                " "
+            )
+            .toUpperCase()
+        || "MAP";
+
+    const style =
+        mapStyles[normalized]
+        || {
+            className:
+                "map-generic",
+            label:
+                fallbackLabel,
+        };
+
+    mapArt.className =
+        `map-art ${style.className}`;
+
+    watermark.textContent =
+        style.label;
+}
+
+
+
+
+
+
+
+function renderMapShowcase(
+    mapName
+) {
+    const mapArt =
+        document.getElementById(
+            "mapArt"
+        )
+        || document.querySelector(
+            ".map-art"
+        );
+
+    const emblem =
+        document.getElementById(
+            "mapShowcaseEmblem"
+        );
+
+    const name =
+        document.getElementById(
+            "mapShowcaseName"
+        );
+
+    if (
+        !mapArt
+        || !emblem
+        || !name
+    ) {
+        return;
+    }
+
+    const normalized =
+        String(
+            mapName || ""
+        )
+        .trim()
+        .toLowerCase();
+
+    const maps = {
+        de_mirage: "Mirage",
+        de_ancient: "Ancient",
+        de_nuke: "Nuke",
+        de_dust2: "Dust II",
+        de_anubis: "Anubis",
+        de_inferno: "Inferno",
+        de_cache: "Cache",
+    };
+
+    const title =
+        maps[normalized]
+        || normalized
+            .replace(
+                /^de_/,
+                ""
+            )
+            .replace(
+                /_/g,
+                " "
+            )
+        || "Map";
+
+    const background =
+        `/assets/maps/backgrounds/`
+        + `${normalized}.png`;
+
+    const emblemPath =
+        `/assets/maps/emblems/`
+        + `${normalized}.png`;
+
+    mapArt.style.backgroundImage =
+        `url("${background}")`;
+
+    mapArt.style.backgroundPosition =
+        "center";
+
+    mapArt.style.backgroundSize =
+        "cover";
+
+    emblem.src =
+        emblemPath;
+
+    emblem.alt =
+        `${title} emblem`;
+
+    name.textContent =
+        title;
+}
+
+
+
+
+
 function renderMatchAnalysis(
     analysis
 ) {
     window.latestMatchAnalysis =
         analysis;
+
+
+    renderMapShowcase(
+        analysis.map_name
+    );
+renderMapArt(
+        analysis.map_name
+    );
 
     const mapInfo =
         document.querySelector(
@@ -4265,6 +6310,890 @@ document
 
 </script>
 
+
+
+
+
+
+
+
+
+
+
+
+<script>
+(function () {
+
+    /* ---------------------------------------------
+       Hide plus only while analysing
+       --------------------------------------------- */
+
+    const emptyState =
+        document.getElementById(
+            "analysisEmptyState"
+        );
+
+    const emptyTitle =
+        document.getElementById(
+            "analysisEmptyTitle"
+        );
+
+    function syncLoadingState() {
+        if (
+            !emptyState
+            || !emptyTitle
+        ) {
+            return;
+        }
+
+        const title =
+            String(
+                emptyTitle.textContent
+                || ""
+            )
+            .trim()
+            .toLowerCase();
+
+        const loading =
+            title.includes(
+                "\u0430\u043d\u0430\u043b\u0438\u0437\u0438\u0440\u0443\u0435\u043c"
+            );
+
+        emptyState.classList.toggle(
+            "is-loading",
+            loading
+        );
+    }
+
+    if (
+        emptyState
+        && emptyTitle
+    ) {
+        new MutationObserver(
+            syncLoadingState
+        ).observe(
+            emptyTitle,
+            {
+                childList: true,
+                subtree: true,
+                characterData: true,
+            }
+        );
+
+        syncLoadingState();
+    }
+
+
+    /* ---------------------------------------------
+       Short human-readable metric explanations
+       --------------------------------------------- */
+
+    const notes = [
+        "\u0411\u0430\u043b\u0430\u043d\u0441 \u0443\u0431\u0438\u0439\u0441\u0442\u0432 \u0438 \u0441\u043c\u0435\u0440\u0442\u0435\u0439",
+        "\u0422\u0432\u043e\u0439 \u0441\u0440\u0435\u0434\u043d\u0438\u0439 \u0443\u0440\u043e\u043d \u0437\u0430 \u0440\u0430\u0443\u043d\u0434",
+        "\u041a\u0430\u043a \u0447\u0430\u0441\u0442\u043e \u0442\u044b \u043f\u043e\u043b\u0435\u0437\u0435\u043d \u0432 \u0440\u0430\u0443\u043d\u0434\u0435",
+        "\u0414\u043e\u043b\u044f \u0442\u0432\u043e\u0438\u0445 \u0443\u0431\u0438\u0439\u0441\u0442\u0432 \u0432 \u0433\u043e\u043b\u043e\u0432\u0443",
+    ];
+
+    document
+        .querySelectorAll(
+            ".metrics .metric"
+        )
+        .forEach(
+            (metric, index) => {
+
+                if (
+                    metric.querySelector(
+                        ".metric-note"
+                    )
+                ) {
+                    return;
+                }
+
+                const value =
+                    metric.querySelector(
+                        ".metric-value"
+                    );
+
+                if (
+                    !value
+                    || !value.parentElement
+                    || !notes[index]
+                ) {
+                    return;
+                }
+
+                const note =
+                    document.createElement(
+                        "div"
+                    );
+
+                note.className =
+                    "metric-note";
+
+                note.textContent =
+                    notes[index];
+
+                value.parentElement
+                    .appendChild(
+                        note
+                    );
+            }
+        );
+
+})();
+</script>
+
+
+
+<!-- METRIC HELP JS -->
+
+<script>
+(function () {
+
+    const helpTexts = [
+        "\u041a\u0430\u043a \u0447\u0430\u0441\u0442\u043e \u0442\u044b \u0437\u0430\u0431\u0438\u0440\u0430\u0435\u0448\u044c \u0441\u043e\u043f\u0435\u0440\u043d\u0438\u043a\u043e\u0432 \u043e\u0442\u043d\u043e\u0441\u0438\u0442\u0435\u043b\u044c\u043d\u043e \u0441\u0432\u043e\u0438\u0445 \u0441\u043c\u0435\u0440\u0442\u0435\u0439.",
+
+        "\u0421\u043a\u043e\u043b\u044c\u043a\u043e \u0443\u0440\u043e\u043d\u0430 \u0442\u044b \u0432 \u0441\u0440\u0435\u0434\u043d\u0435\u043c \u0441\u043e\u0437\u0434\u0430\u0451\u0448\u044c \u0437\u0430 \u0440\u0430\u0443\u043d\u0434. \u041f\u043e\u043a\u0430\u0437\u044b\u0432\u0430\u0435\u0442 \u0442\u0432\u043e\u0451 \u043e\u0431\u0449\u0435\u0435 \u0434\u0430\u0432\u043b\u0435\u043d\u0438\u0435 \u043d\u0430 \u0441\u043e\u043f\u0435\u0440\u043d\u0438\u043a\u0430.",
+
+        "\u041a\u0430\u043a \u0447\u0430\u0441\u0442\u043e \u0442\u044b \u043f\u0440\u0438\u043d\u043e\u0441\u0438\u0448\u044c \u043f\u043e\u043b\u044c\u0437\u0443 \u0432 \u0440\u0430\u0443\u043d\u0434\u0435: \u043a\u0438\u043b\u043b, \u0430\u0441\u0441\u0438\u0441\u0442, \u0432\u044b\u0436\u0438\u0432\u0430\u043d\u0438\u0435 \u0438\u043b\u0438 \u0440\u0430\u0437\u043c\u0435\u043d.",
+
+        "\u041a\u0430\u043a\u0430\u044f \u0434\u043e\u043b\u044f \u0442\u0432\u043e\u0438\u0445 \u0443\u0431\u0438\u0439\u0441\u0442\u0432 \u0441\u0434\u0435\u043b\u0430\u043d\u0430 \u0432 \u0433\u043e\u043b\u043e\u0432\u0443. \u041f\u043e\u043a\u0430\u0437\u044b\u0432\u0430\u0435\u0442 \u0442\u043e\u0447\u043d\u043e\u0441\u0442\u044c, \u043d\u043e \u043d\u0435 \u0437\u0430\u043c\u0435\u043d\u044f\u0435\u0442 \u043e\u0431\u0449\u0443\u044e \u044d\u0444\u0444\u0435\u043a\u0442\u0438\u0432\u043d\u043e\u0441\u0442\u044c."
+    ];
+
+
+    document
+        .querySelectorAll(
+            ".metrics .metric"
+        )
+        .forEach(
+            (metric, index) => {
+
+                if (
+                    metric.querySelector(
+                        ".metric-help"
+                    )
+                ) {
+                    return;
+                }
+
+
+                const help =
+                    document.createElement(
+                        "button"
+                    );
+
+                help.type =
+                    "button";
+
+                help.className =
+                    "metric-help";
+
+                help.setAttribute(
+                    "aria-label",
+                    "\u0427\u0442\u043e \u043e\u0437\u043d\u0430\u0447\u0430\u0435\u0442 \u044d\u0442\u043e\u0442 \u043f\u043e\u043a\u0430\u0437\u0430\u0442\u0435\u043b\u044c"
+                );
+
+                help.textContent =
+                    "?";
+
+
+                const tooltip =
+                    document.createElement(
+                        "span"
+                    );
+
+                tooltip.className =
+                    "metric-help-tooltip";
+
+                tooltip.textContent =
+                    helpTexts[index]
+                    || "";
+
+
+                help.appendChild(
+                    tooltip
+                );
+
+                metric.appendChild(
+                    help
+                );
+            }
+        );
+
+})();
+</script>
+
+<!-- END METRIC HELP JS -->
+
+
+
+
+
+
+
+<!-- ANALYSIS RADAR JS -->
+<script>
+(function () {
+    const form = document.getElementById("demoUploadForm");
+    const button = document.getElementById("demoUploadButton");
+    const emptyState = document.getElementById("analysisEmptyState");
+    const analysisView = document.getElementById("analysisView");
+
+    if (!form || !button) {
+        return;
+    }
+
+    const radar = document.createElement("section");
+    radar.className = "analysis-radar-loading";
+    radar.id = "analysisRadarLoading";
+
+    radar.innerHTML = `
+        <div class="analysis-radar-card">
+            <div class="analysis-radar">
+                <span class="analysis-radar-cross-x"></span>
+                <span class="analysis-radar-cross-y"></span>
+                <span class="analysis-radar-dot one"></span>
+                <span class="analysis-radar-dot two"></span>
+                <span class="analysis-radar-dot three"></span>
+            </div>
+
+            <div class="analysis-radar-title">
+                \u0410\u043d\u0430\u043b\u0438\u0437\u0438\u0440\u0443\u0435\u043c \u043c\u0430\u0442\u0447
+            </div>
+
+            <div class="analysis-radar-sub">
+                \u0421\u043e\u0431\u0438\u0440\u0430\u0435\u043c \u0441\u043e\u0431\u044b\u0442\u0438\u044f \u0438 \u043f\u0440\u043e\u0432\u0435\u0440\u044f\u0435\u043c \u0438\u0433\u0440\u043e\u0432\u044b\u0435 \u043c\u0435\u0442\u0440\u0438\u043a\u0438
+            </div>
+
+            <div class="analysis-radar-steps">
+                <span class="analysis-radar-step">\u0414\u0435\u043c\u043e</span>
+                <span class="analysis-radar-step">\u0421\u043e\u0431\u044b\u0442\u0438\u044f</span>
+                <span class="analysis-radar-step">\u041c\u0435\u0442\u0440\u0438\u043a\u0438</span>
+            </div>
+
+            <div class="analysis-radar-motto">
+                \u041f\u0440\u043e\u0432\u0435\u0440\u044f\u0435\u043c \u0434\u0430\u043d\u043d\u044b\u0435, \u0430 \u043d\u0435 \u0433\u0430\u0434\u0430\u0435\u043c
+            </div>
+        </div>
+    `;
+
+    const uploadStatus = document.getElementById("uploadStatus");
+
+    if (uploadStatus) {
+        uploadStatus.insertAdjacentElement("afterend", radar);
+    } else {
+        form.insertAdjacentElement("afterend", radar);
+    }
+
+    function setRadarVisible(visible) {
+        radar.classList.toggle("visible", visible);
+
+        if (emptyState && visible) {
+            emptyState.hidden = true;
+        }
+    }
+
+    function sync() {
+        const text = String(button.textContent || "")
+            .replace(/\s+/g, " ")
+            .trim()
+            .toLowerCase();
+
+        const analysing =
+            button.disabled ||
+            text.includes("\u0430\u043d\u0430\u043b\u0438\u0437\u0438\u0440\u0443\u0435\u043c");
+
+        const analysisVisible =
+            analysisView && !analysisView.hidden;
+
+        setRadarVisible(analysing && !analysisVisible);
+    }
+
+    new MutationObserver(sync).observe(button, {
+        childList: true,
+        subtree: true,
+        characterData: true,
+        attributes: true,
+    });
+
+    if (analysisView) {
+        new MutationObserver(sync).observe(analysisView, {
+            attributes: true,
+            attributeFilter: ["hidden"],
+        });
+    }
+
+    form.addEventListener("submit", function () {
+        setRadarVisible(true);
+    });
+
+    sync();
+})();
+</script>
+<!-- END ANALYSIS RADAR JS -->
+
+
+
+<!-- FLOATING METRIC HELP JS -->
+
+<script>
+(function () {
+
+    const popup =
+        document.createElement(
+            "div"
+        );
+
+    popup.className =
+        "metric-help-floating";
+
+    popup.setAttribute(
+        "role",
+        "tooltip"
+    );
+
+    document.body.appendChild(
+        popup
+    );
+
+
+    let activeButton =
+        null;
+
+
+    function positionPopup(
+        button
+    ) {
+        if (!button) {
+            return;
+        }
+
+
+        const rect =
+            button.getBoundingClientRect();
+
+        const popupRect =
+            popup.getBoundingClientRect();
+
+
+        const margin =
+            12;
+
+        const viewportPadding =
+            10;
+
+
+        const enoughSpaceAbove =
+            rect.top
+            > popupRect.height
+            + margin
+            + viewportPadding;
+
+
+        const position =
+            enoughSpaceAbove
+                ? "top"
+                : "bottom";
+
+
+        let top;
+
+
+        if (position === "top") {
+            top =
+                rect.top
+                - popupRect.height
+                - margin;
+        } else {
+            top =
+                rect.bottom
+                + margin;
+        }
+
+
+        let left =
+            rect.left
+            + rect.width / 2
+            - popupRect.width / 2;
+
+
+        left =
+            Math.max(
+                viewportPadding,
+                Math.min(
+                    left,
+                    window.innerWidth
+                    - popupRect.width
+                    - viewportPadding
+                )
+            );
+
+
+        const buttonCenter =
+            rect.left
+            + rect.width / 2;
+
+
+        const arrowLeft =
+            buttonCenter
+            - left;
+
+
+        popup.style.left =
+            `${left}px`;
+
+        popup.style.top =
+            `${top}px`;
+
+        popup.style.setProperty(
+            "--arrow-left",
+            `${arrowLeft}px`
+        );
+
+        popup.dataset.position =
+            position;
+    }
+
+
+    function showPopup(
+        button
+    ) {
+        const source =
+            button.querySelector(
+                ".metric-help-tooltip"
+            );
+
+        if (!source) {
+            return;
+        }
+
+
+        const text =
+            String(
+                source.textContent
+                || ""
+            )
+            .replace(
+                /\s+/g,
+                " "
+            )
+            .trim();
+
+
+        if (!text) {
+            return;
+        }
+
+
+        activeButton =
+            button;
+
+        popup.textContent =
+            text;
+
+
+        popup.classList.add(
+            "visible"
+        );
+
+
+        requestAnimationFrame(
+            () => {
+                positionPopup(
+                    button
+                );
+            }
+        );
+    }
+
+
+    function hidePopup() {
+        popup.classList.remove(
+            "visible"
+        );
+
+        activeButton =
+            null;
+    }
+
+
+    document
+        .querySelectorAll(
+            ".metric-help"
+        )
+        .forEach(
+            button => {
+
+                button.addEventListener(
+                    "mouseenter",
+                    () => {
+                        showPopup(
+                            button
+                        );
+                    }
+                );
+
+
+                button.addEventListener(
+                    "mouseleave",
+                    hidePopup
+                );
+
+
+                button.addEventListener(
+                    "focus",
+                    () => {
+                        showPopup(
+                            button
+                        );
+                    }
+                );
+
+
+                button.addEventListener(
+                    "blur",
+                    hidePopup
+                );
+            }
+        );
+
+
+    window.addEventListener(
+        "resize",
+        () => {
+            if (activeButton) {
+                positionPopup(
+                    activeButton
+                );
+            }
+        }
+    );
+
+
+    window.addEventListener(
+        "scroll",
+        () => {
+            if (activeButton) {
+                positionPopup(
+                    activeButton
+                );
+            }
+        },
+        true
+    );
+
+})();
+</script>
+
+<!-- END FLOATING METRIC HELP JS -->
+
+
+
+
+
+
+
+<!-- NAV SECTIONS JS -->
+
+<script>
+(function () {
+
+    const navButtons =
+        Array.from(
+            document.querySelectorAll(
+                ".nav-button"
+            )
+        );
+
+
+    function textOf(element) {
+        return String(
+            element?.textContent || ""
+        )
+        .replace(
+            /\s+/g,
+            " "
+        )
+        .trim()
+        .toLowerCase();
+    }
+
+
+    function findNav(label) {
+        const wanted =
+            label.toLowerCase();
+
+        return navButtons.find(
+            button =>
+                textOf(button)
+                === wanted
+        );
+    }
+
+
+    const analysisNav =
+        findNav(
+            "\u0410\u043d\u0430\u043b\u0438\u0437 \u043c\u0430\u0442\u0447\u0430"
+        );
+
+    const playersNav =
+        findNav(
+            "\u0418\u0433\u0440\u043e\u043a\u0438"
+        );
+
+    const mapsNav =
+        findNav(
+            "\u041a\u0430\u0440\u0442\u044b"
+        );
+
+    const statsNav =
+        findNav(
+            "\u0421\u0442\u0430\u0442\u0438\u0441\u0442\u0438\u043a\u0430"
+        );
+
+
+    const placeholder =
+        document.getElementById(
+            "sectionPlaceholder"
+        );
+
+    const eyebrow =
+        document.getElementById(
+            "sectionPlaceholderEyebrow"
+        );
+
+    const title =
+        document.getElementById(
+            "sectionPlaceholderTitle"
+        );
+
+    const description =
+        document.getElementById(
+            "sectionPlaceholderText"
+        );
+
+
+    const analysisElements = [
+        document.getElementById(
+            "demoUploadForm"
+        ),
+
+        document.getElementById(
+            "uploadStatus"
+        ),
+
+        document.getElementById(
+            "analysisEmptyState"
+        ),
+
+        document.getElementById(
+            "analysisView"
+        ),
+
+        document.getElementById(
+            "analysisRadarLoading"
+        ),
+    ].filter(Boolean);
+
+
+    function setActive(
+        activeButton
+    ) {
+        navButtons.forEach(
+            button => {
+                button.classList.remove(
+                    "active"
+                );
+            }
+        );
+
+        if (activeButton) {
+            activeButton.classList.add(
+                "active"
+            );
+        }
+    }
+
+
+    function hideAnalysisPage() {
+        analysisElements.forEach(
+            element => {
+                element.classList.add(
+                    "nav-page-hidden"
+                );
+            }
+        );
+    }
+
+
+    function restoreAnalysisPage() {
+        analysisElements.forEach(
+            element => {
+                element.classList.remove(
+                    "nav-page-hidden"
+                );
+            }
+        );
+    }
+
+
+    function openPlaceholder(
+        activeButton,
+        eyebrowText,
+        titleText,
+        bodyText
+    ) {
+        hideAnalysisPage();
+
+        placeholder.hidden =
+            false;
+
+        eyebrow.textContent =
+            eyebrowText;
+
+        title.textContent =
+            titleText;
+
+        description.textContent =
+            bodyText;
+
+        setActive(
+            activeButton
+        );
+    }
+
+
+    function openAnalysis() {
+        placeholder.hidden =
+            true;
+
+        restoreAnalysisPage();
+
+        setActive(
+            analysisNav
+        );
+    }
+
+
+    function bind(
+        button,
+        callback
+    ) {
+        if (!button) {
+            return;
+        }
+
+        button.disabled =
+            false;
+
+        button.addEventListener(
+            "click",
+            event => {
+                event.preventDefault();
+                callback();
+            }
+        );
+    }
+
+
+    bind(
+        analysisNav,
+        openAnalysis
+    );
+
+
+    bind(
+        playersNav,
+        () => {
+            openPlaceholder(
+                playersNav,
+
+                "\u0418\u0433\u0440\u043e\u043a\u0438",
+
+                "\u041f\u0440\u043e\u0444\u0438\u043b\u0438 \u0438\u0433\u0440\u043e\u043a\u043e\u0432",
+
+                "\u0417\u0434\u0435\u0441\u044c \u0431\u0443\u0434\u0443\u0442 \u043b\u0438\u0447\u043d\u044b\u0435 \u043c\u0435\u0442\u0440\u0438\u043a\u0438, \u0438\u0441\u0442\u043e\u0440\u0438\u044f \u043c\u0430\u0442\u0447\u0435\u0439 \u0438 \u043a\u043b\u044e\u0447\u0435\u0432\u044b\u0435 findings."
+            );
+        }
+    );
+
+
+    bind(
+        mapsNav,
+        () => {
+            openPlaceholder(
+                mapsNav,
+
+                "\u041a\u0430\u0440\u0442\u044b",
+
+                "\u0422\u0432\u043e\u0438 \u043a\u0430\u0440\u0442\u044b",
+
+                "\u0417\u0434\u0435\u0441\u044c \u043f\u043e\u044f\u0432\u0438\u0442\u0441\u044f \u0441\u0440\u0430\u0432\u043d\u0435\u043d\u0438\u0435 \u0438\u0433\u0440\u044b \u043f\u043e \u043a\u0430\u0440\u0442\u0430\u043c, CT/T \u0438 \u043f\u043e\u0432\u0442\u043e\u0440\u044f\u044e\u0449\u0438\u0435\u0441\u044f \u043f\u0430\u0442\u0442\u0435\u0440\u043d\u044b."
+            );
+        }
+    );
+
+
+    bind(
+        statsNav,
+        () => {
+            openPlaceholder(
+                statsNav,
+
+                "\u0421\u0442\u0430\u0442\u0438\u0441\u0442\u0438\u043a\u0430",
+
+                "\u0414\u0438\u043d\u0430\u043c\u0438\u043a\u0430 \u0438\u0433\u0440\u044b",
+
+                "\u0417\u0434\u0435\u0441\u044c \u0431\u0443\u0434\u0443\u0442 \u0442\u0440\u0435\u043d\u0434\u044b, \u0441\u0440\u0435\u0434\u043d\u0438\u0435 \u043f\u043e\u043a\u0430\u0437\u0430\u0442\u0435\u043b\u0438 \u0438 \u043f\u0440\u043e\u0433\u0440\u0435\u0441\u0441 \u043c\u0435\u0436\u0434\u0443 \u043c\u0430\u0442\u0447\u0430\u043c\u0438."
+            );
+        }
+    );
+
+
+    /* ---------------------------------------------
+       Clean file picker
+       --------------------------------------------- */
+
+    const fileInput =
+        document.getElementById(
+            "demoFile"
+        );
+
+    const picker =
+        document.getElementById(
+            "demoFilePicker"
+        );
+
+
+    if (
+        fileInput
+        && picker
+    ) {
+        fileInput.addEventListener(
+            "change",
+            () => {
+                const selected =
+                    fileInput.files
+                    && fileInput.files.length > 0;
+
+                picker.textContent =
+                    selected
+                    ? "\u0424\u0430\u0439\u043b \u0432\u044b\u0431\u0440\u0430\u043d"
+                    : "\u0412\u044b\u0431\u0435\u0440\u0438\u0442\u0435 \u0444\u0430\u0439\u043b";
+
+                picker.classList.toggle(
+                    "file-selected",
+                    selected
+                );
+            }
+        );
+    }
+
+})();
+</script>
+
+<!-- END NAV SECTIONS JS -->
 
 </body>
 </html>
