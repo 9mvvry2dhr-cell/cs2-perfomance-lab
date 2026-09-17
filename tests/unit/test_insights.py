@@ -293,6 +293,76 @@ class TestEntryFindings(unittest.TestCase):
             [],
         )
 
+    def test_detects_strong_opening_impact_on_ct(self):
+        stats = {
+            "CT": {
+                "rounds_played": 12,
+                "entry_kills": 4,
+                "entry_deaths": 1,
+            },
+            "T": {
+                "rounds_played": 12,
+                "entry_kills": 0,
+                "entry_deaths": 0,
+            },
+        }
+
+        findings = generate_entry_findings(
+            stats
+        )
+
+        self.assertEqual(
+            len(findings),
+            1,
+        )
+
+        self.assertEqual(
+            findings[0].code,
+            "STRONG_OPENING_IMPACT",
+        )
+
+        self.assertEqual(
+            findings[0].kind,
+            "strength",
+        )
+
+        self.assertEqual(
+            findings[0].severity,
+            "medium",
+        )
+
+        self.assertEqual(
+            findings[0].side,
+            "CT",
+        )
+
+        self.assertEqual(
+            findings[0].evidence[
+                "entry_kill_rate_pct"
+            ],
+            33.3,
+        )
+
+    def test_small_positive_opening_gap_is_not_strength(self):
+        stats = {
+            "CT": {
+                "rounds_played": 12,
+                "entry_kills": 3,
+                "entry_deaths": 2,
+            },
+            "T": {
+                "rounds_played": 12,
+                "entry_kills": 0,
+                "entry_deaths": 0,
+            },
+        }
+
+        self.assertEqual(
+            generate_entry_findings(stats),
+            [],
+        )
+
+
 
 
 

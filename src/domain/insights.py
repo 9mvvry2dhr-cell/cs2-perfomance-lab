@@ -7,9 +7,14 @@ MIN_ADR_GAP = 20.0
 MIN_KAST_GAP_PCT = 15.0
 
 MIN_ENTRY_SIDE_ROUNDS = 6
+
 MIN_ENTRY_DEATHS = 3
 MIN_ENTRY_DEATH_RATE_PCT = 25.0
 MIN_ENTRY_DEATH_GAP = 2
+
+MIN_ENTRY_KILLS = 3
+MIN_ENTRY_KILL_RATE_PCT = 25.0
+MIN_ENTRY_KILL_GAP = 2
 
 
 @dataclass(frozen=True)
@@ -148,12 +153,19 @@ def generate_entry_findings(
     ],
 ) -> List[Finding]:
     """
-    Detect frequent opening deaths on a specific side.
+    Detect meaningful opening-duel patterns on a specific side.
 
-    A finding is emitted only when:
-    - enough verified rounds were played on that side;
-    - the player has at least three opening deaths;
+    Weakness:
+    - enough verified rounds;
+    - at least three opening deaths;
+    - at least two more opening deaths than kills;
     - opening-death rate is at least 25%.
+
+    Strength:
+    - enough verified rounds;
+    - at least three opening kills;
+    - at least two more opening kills than deaths;
+    - opening-kill rate is at least 25%.
     """
 
     findings = []
@@ -188,18 +200,17 @@ def generate_entry_findings(
         if rounds < MIN_ENTRY_SIDE_ROUNDS:
             continue
 
-        if entry_deaths < MIN_ENTRY_DEATHS:
-            continue
-
         entry_death_gap = (
             entry_deaths
             - entry_kills
         )
 
-        if entry_death_gap < MIN_ENTRY_DEATH_GAP:
-            continue
+        entry_kill_gap = (
+            entry_kills
+            - entry_deaths
+        )
 
-        rate = round(
+        entry_death_rate = round(
             (
                 entry_deaths
                 / rounds
@@ -208,27 +219,73 @@ def generate_entry_findings(
             1,
         )
 
-        if rate < MIN_ENTRY_DEATH_RATE_PCT:
-            continue
-
-        findings.append(
-            Finding(
-                code="FREQUENT_OPENING_DEATHS",
-                category="entry",
-                kind="weakness",
-                severity="medium",
-                side=side,
-                evidence={
-                    "rounds_played": float(rounds),
-                    "entry_kills": float(entry_kills),
-                    "entry_deaths": float(entry_deaths),
-                    "entry_death_gap": float(entry_death_gap),
-                    "entry_death_rate_pct": rate,
-                },
+        entry_kill_rate = round(
+            (
+                entry_kills
+                / rounds
             )
+            * 100,
+            1,
         )
 
+        if (
+            entry_deaths >= MIN_ENTRY_DEATHS
+            and entry_death_gap
+            >= MIN_ENTRY_DEATH_GAP
+            and entry_death_rate
+            >= MIN_ENTRY_DEATH_RATE_PCT
+        ):
+            findings.append(
+                Finding(
+                    code="FREQUENT_OPENING_DEATHS",
+                    category="entry",
+                    kind="weakness",
+                    severity="medium",
+                    side=side,
+                    evidence={
+                        "rounds_played": float(rounds),
+                        "entry_kills": float(entry_kills),
+                        "entry_deaths": float(entry_deaths),
+                        "entry_death_gap": float(
+                            entry_death_gap
+                        ),
+                        "entry_death_rate_pct": (
+                            entry_death_rate
+                        ),
+                    },
+                )
+            )
+
+        if (
+            entry_kills >= MIN_ENTRY_KILLS
+            and entry_kill_gap
+            >= MIN_ENTRY_KILL_GAP
+            and entry_kill_rate
+            >= MIN_ENTRY_KILL_RATE_PCT
+        ):
+            findings.append(
+                Finding(
+                    code="STRONG_OPENING_IMPACT",
+                    category="entry",
+                    kind="strength",
+                    severity="medium",
+                    side=side,
+                    evidence={
+                        "rounds_played": float(rounds),
+                        "entry_kills": float(entry_kills),
+                        "entry_deaths": float(entry_deaths),
+                        "entry_kill_gap": float(
+                            entry_kill_gap
+                        ),
+                        "entry_kill_rate_pct": (
+                            entry_kill_rate
+                        ),
+                    },
+                )
+            )
+
     return findings
+
 
 def generate_player_findings(
     split_stats: Mapping[
