@@ -12,6 +12,10 @@ class ApiModel(BaseModel):
     )
 
 
+class CurrentUserResponse(ApiModel):
+    steam_id: str
+
+
 class HealthResponse(ApiModel):
     status: Literal["ok"]
 

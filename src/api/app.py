@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from contextlib import asynccontextmanager
+from dataclasses import replace
 from pathlib import Path
 from typing import Annotated
 
@@ -24,11 +25,13 @@ from src.api.dependencies import (
     dispose_database_resources,
     get_analysis_job_repository,
     get_analysis_repository,
+    get_current_user,
     get_database_session,
     get_demo_ingestion_service,
 )
 from src.api.schemas import (
     AnalysisJobResponse,
+    CurrentUserResponse,
     HealthResponse,
     MatchAnalysisResponse,
     PlayerHistorySummaryResponse,
@@ -37,6 +40,7 @@ from src.api.schemas import (
 )
 from src.database.job_repository import AnalysisJobRepository
 from src.database.repository import AnalysisRepository
+from src.domain.identity import CurrentUser
 from src.ingestion.service import DemoIngestionService
 from src.ingestion.storage import (
     DemoTooLargeError,
@@ -104,6 +108,37 @@ def ready(
 
     return ReadyResponse(
         status="ready"
+    )
+
+
+def require_owned_steam_id(
+    requested_steam_id: str,
+    current_user: CurrentUser,
+) -> None:
+    if (
+        requested_steam_id
+        != current_user.steam_id
+    ):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=(
+                "Access to another player is forbidden"
+            ),
+        )
+
+
+@app.get(
+    "/me",
+    response_model=CurrentUserResponse,
+)
+def get_me(
+    current_user: Annotated[
+        CurrentUser,
+        Depends(get_current_user),
+    ],
+) -> CurrentUserResponse:
+    return CurrentUserResponse(
+        steam_id=current_user.steam_id
     )
 
 
@@ -185,6 +220,10 @@ def get_match_analysis(
         AnalysisRepository,
         Depends(get_analysis_repository),
     ],
+    current_user: Annotated[
+        CurrentUser,
+        Depends(get_current_user),
+    ],
 ) -> MatchAnalysisResponse:
     analysis = repository.get_analysis(
         match_id
@@ -196,8 +235,32 @@ def get_match_analysis(
             detail="Match not found",
         )
 
+    player = next(
+        (
+            item
+            for item in analysis.players
+            if item.steam_id
+            == current_user.steam_id
+        ),
+        None,
+    )
+
+    if player is None:
+        # Do not reveal whether another user's match exists.
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Match not found",
+        )
+
+    owned_analysis = replace(
+        analysis,
+        players=[
+            player
+        ],
+    )
+
     return MatchAnalysisResponse.model_validate(
-        analysis
+        owned_analysis
     )
 
 @app.get(
@@ -212,6 +275,10 @@ def get_player_match_history(
         AnalysisRepository,
         Depends(get_analysis_repository),
     ],
+    current_user: Annotated[
+        CurrentUser,
+        Depends(get_current_user),
+    ],
     limit: Annotated[
         int,
         Query(
@@ -220,6 +287,11 @@ def get_player_match_history(
         ),
     ] = 20,
 ) -> list[PlayerMatchHistoryResponse]:
+    require_owned_steam_id(
+        steam_id,
+        current_user,
+    )
+
     history = (
         repository
         .get_player_match_history(
@@ -245,6 +317,10 @@ def get_player_history_summary(
         AnalysisRepository,
         Depends(get_analysis_repository),
     ],
+    current_user: Annotated[
+        CurrentUser,
+        Depends(get_current_user),
+    ],
     limit: Annotated[
         int,
         Query(
@@ -253,12 +329,90 @@ def get_player_history_summary(
         ),
     ] = 10,
 ) -> PlayerHistorySummaryResponse:
+    require_owned_steam_id(
+        steam_id,
+        current_user,
+    )
+
     summary = (
         repository
         .get_player_history_summary(
             steam_id,
             limit=limit,
         )
+    )
+
+    if summary is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Player history not found",
+        )
+
+    return (
+        PlayerHistorySummaryResponse
+        .model_validate(summary)
+    )
+
+
+@app.get(
+    "/me/matches",
+    response_model=list[
+        PlayerMatchHistoryResponse
+    ],
+)
+def get_my_match_history(
+    repository: Annotated[
+        AnalysisRepository,
+        Depends(get_analysis_repository),
+    ],
+    current_user: Annotated[
+        CurrentUser,
+        Depends(get_current_user),
+    ],
+    limit: Annotated[
+        int,
+        Query(
+            ge=1,
+            le=100,
+        ),
+    ] = 20,
+) -> list[PlayerMatchHistoryResponse]:
+    history = repository.get_player_match_history(
+        current_user.steam_id,
+        limit=limit,
+    )
+
+    return [
+        PlayerMatchHistoryResponse
+        .model_validate(item)
+        for item in history
+    ]
+
+
+@app.get(
+    "/me/summary",
+    response_model=PlayerHistorySummaryResponse,
+)
+def get_my_history_summary(
+    repository: Annotated[
+        AnalysisRepository,
+        Depends(get_analysis_repository),
+    ],
+    current_user: Annotated[
+        CurrentUser,
+        Depends(get_current_user),
+    ],
+    limit: Annotated[
+        int,
+        Query(
+            ge=1,
+            le=100,
+        ),
+    ] = 10,
+) -> PlayerHistorySummaryResponse:
+    summary = repository.get_player_history_summary(
+        current_user.steam_id,
+        limit=limit,
     )
 
     if summary is None:

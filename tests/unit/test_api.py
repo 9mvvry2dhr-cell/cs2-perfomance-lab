@@ -1,4 +1,5 @@
 import unittest
+from dataclasses import replace
 from datetime import datetime, timezone
 
 from fastapi.testclient import TestClient
@@ -7,6 +8,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from src.api.app import app
 from src.api.dependencies import (
     get_analysis_repository,
+    get_current_user,
     get_database_session,
 )
 from src.api.schemas import (
@@ -14,6 +16,7 @@ from src.api.schemas import (
     PlayerHistorySummaryResponse,
     PlayerMatchHistoryResponse,
 )
+from src.domain.identity import CurrentUser
 from src.domain.history import (
     PlayerMatchHistoryItem,
     build_player_history_summary,
@@ -82,6 +85,15 @@ class StubSession:
 
 
 class ApiTest(unittest.TestCase):
+    def setUp(self):
+        app.dependency_overrides[
+            get_current_user
+        ] = lambda: CurrentUser(
+            steam_id=(
+                "76561198055629469"
+            )
+        )
+
     def tearDown(self):
         app.dependency_overrides.clear()
 
@@ -269,7 +281,7 @@ class ApiTest(unittest.TestCase):
         )
 
 
-    def test_get_player_matches_returns_empty_for_unknown_player(self):
+    def test_get_player_matches_rejects_other_player(self):
         repository = StubAnalysisRepository(
             history=[]
         )
@@ -281,17 +293,22 @@ class ApiTest(unittest.TestCase):
         client = TestClient(app)
 
         response = client.get(
-            "/players/missing-player/matches"
+            "/players/other-player/matches"
         )
 
         self.assertEqual(
             response.status_code,
-            200,
+            403,
         )
 
         self.assertEqual(
             response.json(),
-            [],
+            {
+                "detail": (
+                    "Access to another player "
+                    "is forbidden"
+                ),
+            },
         )
 
 
@@ -348,7 +365,7 @@ class ApiTest(unittest.TestCase):
         client = TestClient(app)
 
         response = client.get(
-            "/players/missing-player/summary"
+            "/players/76561198055629469/summary"
         )
 
         self.assertEqual(
@@ -399,6 +416,182 @@ class ApiTest(unittest.TestCase):
                         response.status_code,
                         422,
                     )
+
+
+    def test_get_me_returns_authenticated_identity(self):
+        client = TestClient(app)
+
+        response = client.get(
+            "/me"
+        )
+
+        self.assertEqual(
+            response.status_code,
+            200,
+        )
+
+        self.assertEqual(
+            response.json(),
+            {
+                "steam_id": (
+                    "76561198055629469"
+                ),
+            },
+        )
+
+
+    def test_match_response_exposes_only_current_user(self):
+        expected = make_analysis()
+
+        friend = replace(
+            expected.players[0],
+            steam_id="99999999999999999",
+            name="friend",
+        )
+
+        analysis = replace(
+            expected,
+            players=[
+                friend,
+                expected.players[0],
+            ],
+        )
+
+        repository = StubAnalysisRepository(
+            analysis=analysis
+        )
+
+        app.dependency_overrides[
+            get_analysis_repository
+        ] = lambda: repository
+
+        client = TestClient(app)
+
+        response = client.get(
+            f"/matches/{analysis.match_id}"
+        )
+
+        self.assertEqual(
+            response.status_code,
+            200,
+        )
+
+        players = response.json()[
+            "players"
+        ]
+
+        self.assertEqual(
+            len(players),
+            1,
+        )
+
+        self.assertEqual(
+            players[0]["steam_id"],
+            "76561198055629469",
+        )
+
+
+    def test_match_is_hidden_when_current_user_did_not_play(self):
+        expected = make_analysis()
+
+        friend = replace(
+            expected.players[0],
+            steam_id="99999999999999999",
+            name="friend",
+        )
+
+        analysis = replace(
+            expected,
+            players=[
+                friend
+            ],
+        )
+
+        repository = StubAnalysisRepository(
+            analysis=analysis
+        )
+
+        app.dependency_overrides[
+            get_analysis_repository
+        ] = lambda: repository
+
+        client = TestClient(app)
+
+        response = client.get(
+            f"/matches/{analysis.match_id}"
+        )
+
+        self.assertEqual(
+            response.status_code,
+            404,
+        )
+
+
+    def test_get_my_matches_uses_authenticated_player(self):
+        item = self._history_item()
+
+        repository = StubAnalysisRepository(
+            history=[
+                item
+            ]
+        )
+
+        app.dependency_overrides[
+            get_analysis_repository
+        ] = lambda: repository
+
+        client = TestClient(app)
+
+        response = client.get(
+            "/me/matches"
+        )
+
+        self.assertEqual(
+            response.status_code,
+            200,
+        )
+
+        self.assertEqual(
+            len(response.json()),
+            1,
+        )
+
+
+    def test_get_my_summary_uses_authenticated_player(self):
+        item = self._history_item()
+
+        summary = build_player_history_summary(
+            "76561198055629469",
+            [
+                item
+            ],
+        )
+
+        repository = StubAnalysisRepository(
+            summary=summary
+        )
+
+        app.dependency_overrides[
+            get_analysis_repository
+        ] = lambda: repository
+
+        client = TestClient(app)
+
+        response = client.get(
+            "/me/summary"
+        )
+
+        self.assertEqual(
+            response.status_code,
+            200,
+        )
+
+        self.assertEqual(
+            response.json()[
+                "steam_id"
+            ],
+            "76561198055629469",
+        )
 
 
 if __name__ == "__main__":

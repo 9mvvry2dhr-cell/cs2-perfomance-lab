@@ -38,6 +38,10 @@ services:
     environment:
       DATABASE_URL: postgresql+psycopg://cs2_user:cs2_dev_password@db:5432/cs2_performance_lab
       DEMO_STORAGE_DIR: /app/data/uploads
+
+      # Temporary local identity.
+      # Steam session authentication will replace this.
+      CURRENT_USER_STEAM_ID: "76561198055629469"
     ports:
       - "8000:8000"
     volumes:

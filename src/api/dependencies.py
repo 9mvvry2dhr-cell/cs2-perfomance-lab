@@ -6,7 +6,11 @@ from functools import lru_cache
 from pathlib import Path
 from typing import Annotated
 
-from fastapi import Depends
+from fastapi import (
+    Depends,
+    HTTPException,
+    status,
+)
 from sqlalchemy import Engine
 from sqlalchemy.orm import Session, sessionmaker
 
@@ -18,6 +22,7 @@ from src.database.job_repository import AnalysisJobRepository
 from src.database.repository import AnalysisRepository
 from src.ingestion.service import DemoIngestionService
 from src.ingestion.storage import LocalDemoStorage
+from src.domain.identity import CurrentUser
 
 
 @lru_cache(maxsize=1)
@@ -90,6 +95,37 @@ def get_demo_ingestion_service(
     return DemoIngestionService(
         storage=storage,
         job_repository=repository,
+    )
+
+
+def get_current_user() -> CurrentUser:
+    """
+    Resolve the authenticated product user.
+
+    This is intentionally environment-backed for the local
+    prototype. Steam login/session authentication will replace
+    this implementation without changing protected API routes.
+    """
+    steam_id = (
+        os.environ.get(
+            "CURRENT_USER_STEAM_ID",
+            "",
+        )
+        .strip()
+    )
+
+    if not steam_id:
+        raise HTTPException(
+            status_code=(
+                status.HTTP_503_SERVICE_UNAVAILABLE
+            ),
+            detail=(
+                "Current user identity is not configured"
+            ),
+        )
+
+    return CurrentUser(
+        steam_id=steam_id
     )
 
 
