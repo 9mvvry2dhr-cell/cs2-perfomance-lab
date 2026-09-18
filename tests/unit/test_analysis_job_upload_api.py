@@ -12,6 +12,7 @@ from src.ingestion.service import (
     AnalysisQueueFullError,
 )
 from src.ingestion.storage import (
+    DemoStorageFullError,
     DemoTooLargeError,
     InvalidDemoFileError,
 )
@@ -220,6 +221,46 @@ class AnalysisJobUploadApiTest(
             {
                 "detail": (
                     "Only .dem files are supported"
+                )
+            },
+        )
+
+    def test_upload_rejects_when_demo_storage_is_full(
+        self,
+    ):
+        service = StubIngestionService(
+            error=DemoStorageFullError(
+                "Demo storage is full"
+            )
+        )
+
+        app.dependency_overrides[
+            get_demo_ingestion_service
+        ] = lambda: service
+
+        client = TestClient(app)
+
+        response = client.post(
+            "/analysis-jobs",
+            files={
+                "file": (
+                    "match.dem",
+                    b"content",
+                    "application/octet-stream",
+                )
+            },
+        )
+
+        self.assertEqual(
+            response.status_code,
+            507,
+        )
+
+        self.assertEqual(
+            response.json(),
+            {
+                "detail": (
+                    "Demo storage is full"
                 )
             },
         )

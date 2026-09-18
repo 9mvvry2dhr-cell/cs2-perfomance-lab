@@ -46,6 +46,7 @@ from src.ingestion.service import (
     DemoIngestionService,
 )
 from src.ingestion.storage import (
+    DemoStorageFullError,
     DemoTooLargeError,
     InvalidDemoFileError,
 )
@@ -177,6 +178,12 @@ def create_analysis_job(
             headers={
                 "Retry-After": "30",
             },
+        ) from exc
+
+    except DemoStorageFullError as exc:
+        raise HTTPException(
+            status_code=507,
+            detail=str(exc),
         ) from exc
 
     except DemoTooLargeError as exc:

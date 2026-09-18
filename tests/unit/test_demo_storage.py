@@ -1,10 +1,11 @@
-﻿import unittest
+import unittest
 from hashlib import sha256
 from io import BytesIO
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
 from src.ingestion.storage import (
+    DemoStorageFullError,
     DemoTooLargeError,
     InvalidDemoFileError,
     LocalDemoStorage,
@@ -152,6 +153,90 @@ class LocalDemoStorageTest(
                 self.root.iterdir()
             ),
             [],
+        )
+
+    def test_rejects_when_total_storage_limit_is_reached(
+        self,
+    ):
+        existing = self.root / "existing.dem"
+        existing.write_bytes(
+            b"1234"
+        )
+
+        storage = LocalDemoStorage(
+            self.root,
+            max_total_bytes=5,
+        )
+
+        with self.assertRaises(
+            DemoStorageFullError
+        ):
+            storage.store(
+                original_filename=(
+                    "match.dem"
+                ),
+                source=BytesIO(
+                    b"12"
+                ),
+            )
+
+        self.assertEqual(
+            existing.read_bytes(),
+            b"1234",
+        )
+
+        self.assertEqual(
+            sorted(
+                path.name
+                for path in self.root.iterdir()
+            ),
+            [
+                "existing.dem",
+            ],
+        )
+
+    def test_stale_part_counts_toward_storage_limit(
+        self,
+    ):
+        stale_part = (
+            self.root
+            / ".stale.part"
+        )
+
+        stale_part.write_bytes(
+            b"12345"
+        )
+
+        storage = LocalDemoStorage(
+            self.root,
+            max_total_bytes=5,
+        )
+
+        with self.assertRaises(
+            DemoStorageFullError
+        ):
+            storage.store(
+                original_filename=(
+                    "match.dem"
+                ),
+                source=BytesIO(
+                    b"1"
+                ),
+            )
+
+        self.assertEqual(
+            stale_part.read_bytes(),
+            b"12345",
+        )
+
+        self.assertEqual(
+            sorted(
+                path.name
+                for path in self.root.iterdir()
+            ),
+            [
+                ".stale.part",
+            ],
         )
 
     def test_delete_removes_stored_demo(

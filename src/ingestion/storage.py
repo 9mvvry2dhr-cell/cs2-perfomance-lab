@@ -11,6 +11,10 @@ DEFAULT_MAX_DEMO_BYTES = (
     512 * 1024 * 1024
 )
 
+DEFAULT_MAX_STORAGE_BYTES = (
+    2 * 1024 * 1024 * 1024
+)
+
 CHUNK_SIZE = 1024 * 1024
 
 
@@ -25,6 +29,12 @@ class InvalidDemoFileError(
 
 
 class DemoTooLargeError(
+    DemoStorageError
+):
+    pass
+
+
+class DemoStorageFullError(
     DemoStorageError
 ):
     pass
@@ -69,14 +79,25 @@ class LocalDemoStorage:
         max_bytes: int = (
             DEFAULT_MAX_DEMO_BYTES
         ),
+        max_total_bytes: int = (
+            DEFAULT_MAX_STORAGE_BYTES
+        ),
     ):
         if max_bytes <= 0:
             raise ValueError(
                 "max_bytes must be positive"
             )
 
+        if max_total_bytes <= 0:
+            raise ValueError(
+                "max_total_bytes must be positive"
+            )
+
         self.root = Path(root)
         self.max_bytes = max_bytes
+        self.max_total_bytes = (
+            max_total_bytes
+        )
 
     def store(
         self,
@@ -110,6 +131,18 @@ class LocalDemoStorage:
             / f".{file_id}.part"
         )
 
+        existing_size_bytes = (
+            self._current_size_bytes()
+        )
+
+        if (
+            existing_size_bytes
+            >= self.max_total_bytes
+        ):
+            raise DemoStorageFullError(
+                "Demo storage is full"
+            )
+
         digest = sha256()
         size_bytes = 0
 
@@ -135,6 +168,15 @@ class LocalDemoStorage:
                     ):
                         raise DemoTooLargeError(
                             "Demo file is too large"
+                        )
+
+                    if (
+                        existing_size_bytes
+                        + size_bytes
+                        > self.max_total_bytes
+                    ):
+                        raise DemoStorageFullError(
+                            "Demo storage is full"
                         )
 
                     digest.update(
@@ -173,6 +215,26 @@ class LocalDemoStorage:
             )
 
             raise
+
+    def _current_size_bytes(
+        self,
+    ) -> int:
+        if not self.root.exists():
+            return 0
+
+        total = 0
+
+        for path in self.root.iterdir():
+            if (
+                path.is_file()
+                and (
+                    path.name.endswith(".dem")
+                    or path.name.endswith(".part")
+                )
+            ):
+                total += path.stat().st_size
+
+        return total
 
     def path_for(
         self,

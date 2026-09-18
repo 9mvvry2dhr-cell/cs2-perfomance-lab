@@ -24,7 +24,11 @@ from src.ingestion.service import (
     DEFAULT_MAX_ACTIVE_JOBS,
     DemoIngestionService,
 )
-from src.ingestion.storage import LocalDemoStorage
+from src.ingestion.storage import (
+    DEFAULT_MAX_DEMO_BYTES,
+    DEFAULT_MAX_STORAGE_BYTES,
+    LocalDemoStorage,
+)
 from src.domain.identity import CurrentUser
 
 
@@ -80,8 +84,24 @@ def get_demo_storage() -> LocalDemoStorage:
         )
     )
 
+    max_bytes = int(
+        os.environ.get(
+            "DEMO_MAX_BYTES",
+            str(DEFAULT_MAX_DEMO_BYTES),
+        )
+    )
+
+    max_total_bytes = int(
+        os.environ.get(
+            "DEMO_STORAGE_MAX_BYTES",
+            str(DEFAULT_MAX_STORAGE_BYTES),
+        )
+    )
+
     return LocalDemoStorage(
-        root
+        root,
+        max_bytes=max_bytes,
+        max_total_bytes=max_total_bytes,
     )
 
 
