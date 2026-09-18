@@ -72,6 +72,8 @@ class DatabaseModelsTest(unittest.TestCase):
                 "match_players",
                 "player_side_stats",
                 "findings",
+                "users",
+                "auth_sessions",
             },
         )
 
