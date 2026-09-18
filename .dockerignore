@@ -24,3 +24,6 @@ docs
 
 .vscode
 .idea
+
+# Deployment secrets
+deploy/staging.env

@@ -1,4 +1,4 @@
-﻿# Virtual Environment
+# Virtual Environment
 .venv/
 venv/
 ENV/
@@ -33,3 +33,6 @@ __pycache__/
 # OS Specific
 .DS_Store
 Thumbs.db
+
+# Deployment secrets
+/deploy/staging.env

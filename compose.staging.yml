@@ -1,0 +1,233 @@
+name: cs2-performance-lab-staging
+
+services:
+  db:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:?POSTGRES_DB is required}
+      POSTGRES_USER: ${POSTGRES_USER:?POSTGRES_USER is required}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - backend
+    mem_limit: ${DB_MEMORY_LIMIT:-2g}
+    cpus: ${DB_CPU_LIMIT:-1.0}
+    pids_limit: 256
+    shm_size: 256m
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - pg_isready -U "$$POSTGRES_USER" -d "$$POSTGRES_DB"
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+
+  volume-init:
+    image: alpine:3.22
+    restart: "no"
+    user: "0:0"
+    network_mode: "none"
+    command:
+      - sh
+      - -ec
+      - chown 10001:10001 /data && chmod 0750 /data
+    volumes:
+      - demo_uploads:/data
+    read_only: true
+    cap_drop:
+      - ALL
+    cap_add:
+      - CHOWN
+      - FOWNER
+    security_opt:
+      - no-new-privileges:true
+    pids_limit: 32
+    mem_limit: 64m
+    cpus: 0.25
+    logging:
+      driver: json-file
+      options:
+        max-size: "1m"
+        max-file: "2"
+
+  migrate:
+    build:
+      context: .
+      dockerfile: Dockerfile.staging
+    restart: "no"
+    user: "10001:10001"
+    command:
+      - alembic
+      - upgrade
+      - head
+    environment:
+      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
+    networks:
+      - backend
+    depends_on:
+      db:
+        condition: service_healthy
+    read_only: true
+    tmpfs:
+      - /tmp:size=64m,mode=1777
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    mem_limit: ${MIGRATE_MEMORY_LIMIT:-512m}
+    cpus: ${MIGRATE_CPU_LIMIT:-0.5}
+    pids_limit: 128
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile.staging
+    restart: unless-stopped
+    user: "10001:10001"
+    init: true
+    command:
+      - uvicorn
+      - src.api.app:app
+      - --host
+      - 0.0.0.0
+      - --port
+      - "8000"
+      - --proxy-headers
+      - --forwarded-allow-ips=*
+    environment:
+      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
+      DEMO_STORAGE_DIR: /app/data/uploads
+      CURRENT_USER_STEAM_ID: ${CURRENT_USER_STEAM_ID:?CURRENT_USER_STEAM_ID is required}
+    expose:
+      - "8000"
+    volumes:
+      - demo_uploads:/app/data/uploads
+    networks:
+      - proxy
+      - backend
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      volume-init:
+        condition: service_completed_successfully
+    read_only: true
+    tmpfs:
+      - /tmp:size=128m,mode=1777
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    mem_limit: ${API_MEMORY_LIMIT:-1g}
+    cpus: ${API_CPU_LIMIT:-1.0}
+    pids_limit: 256
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/ready', timeout=3).read()
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 15s
+
+  worker:
+    build:
+      context: .
+      dockerfile: Dockerfile.staging
+    restart: unless-stopped
+    user: "10001:10001"
+    init: true
+    command:
+      - python
+      - -m
+      - src.workers.runner
+    environment:
+      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
+      DEMO_STORAGE_DIR: /app/data/uploads
+      ANALYSIS_WORKER_POLL_SECONDS: "2.0"
+      ANALYSIS_JOB_STALE_SECONDS: "3600"
+    volumes:
+      - demo_uploads:/app/data/uploads
+    networks:
+      - backend
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      volume-init:
+        condition: service_completed_successfully
+    read_only: true
+    tmpfs:
+      - /tmp:size=256m,mode=1777
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    mem_limit: ${WORKER_MEMORY_LIMIT:-4g}
+    cpus: ${WORKER_CPU_LIMIT:-2.0}
+    pids_limit: 512
+    logging:
+      driver: json-file
+      options:
+        max-size: "20m"
+        max-file: "5"
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    environment:
+      APP_DOMAIN: ${APP_DOMAIN:?APP_DOMAIN is required}
+      STAGING_BASIC_AUTH_USER: ${STAGING_BASIC_AUTH_USER:?STAGING_BASIC_AUTH_USER is required}
+      STAGING_BASIC_AUTH_HASH: ${STAGING_BASIC_AUTH_HASH:?STAGING_BASIC_AUTH_HASH is required}
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    volumes:
+      - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    networks:
+      - proxy
+    depends_on:
+      api:
+        condition: service_healthy
+    security_opt:
+      - no-new-privileges:true
+    mem_limit: ${CADDY_MEMORY_LIMIT:-512m}
+    cpus: ${CADDY_CPU_LIMIT:-0.5}
+    pids_limit: 128
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"
+
+volumes:
+  postgres_data:
+  demo_uploads:
+  caddy_data:
+  caddy_config:
+
+networks:
+  proxy:
+  backend:
+    internal: true
