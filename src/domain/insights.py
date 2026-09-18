@@ -16,6 +16,17 @@ MIN_ENTRY_KILLS = 3
 MIN_ENTRY_KILL_RATE_PCT = 25.0
 MIN_ENTRY_KILL_GAP = 2
 
+MIN_SUPPORT_ROUNDS = 12
+
+LOW_GRENADE_DAMAGE_PER_ROUND = 1.0
+STRONG_GRENADE_DAMAGE_PER_ROUND = 8.0
+
+LOW_ENEMIES_FLASHED_PER_ROUND = 0.10
+LOW_FLASH_SECONDS_PER_ROUND = 0.15
+
+STRONG_ENEMIES_FLASHED_PER_ROUND = 0.75
+STRONG_FLASH_SECONDS_PER_ROUND = 1.80
+
 
 @dataclass(frozen=True)
 class Finding:
@@ -287,11 +298,214 @@ def generate_entry_findings(
     return findings
 
 
+def generate_grenade_findings(
+    overall_stats: Mapping[str, float],
+) -> List[Finding]:
+    """
+    Detect unusually low or high verified HE + inferno damage.
+
+    This rule intentionally describes damage impact only.
+    It does not claim that overall grenade usage is good or bad,
+    because smoke and flash value are different signals.
+    """
+
+    required = {
+        "rounds_played",
+        "he_damage",
+        "inferno_damage",
+    }
+
+    if not required.issubset(
+        overall_stats
+    ):
+        return []
+
+    rounds = int(
+        overall_stats["rounds_played"]
+    )
+
+    if rounds < MIN_SUPPORT_ROUNDS:
+        return []
+
+    he_damage = float(
+        overall_stats["he_damage"]
+    )
+
+    inferno_damage = float(
+        overall_stats["inferno_damage"]
+    )
+
+    grenade_damage = (
+        he_damage
+        + inferno_damage
+    )
+
+    damage_per_round = round(
+        grenade_damage / rounds,
+        2,
+    )
+
+    evidence = {
+        "rounds_played": float(rounds),
+        "he_damage": round(
+            he_damage,
+            1,
+        ),
+        "inferno_damage": round(
+            inferno_damage,
+            1,
+        ),
+        "grenade_damage": round(
+            grenade_damage,
+            1,
+        ),
+        "grenade_damage_per_round": (
+            damage_per_round
+        ),
+    }
+
+    if (
+        damage_per_round
+        <= LOW_GRENADE_DAMAGE_PER_ROUND
+    ):
+        return [
+            Finding(
+                code="LOW_GRENADE_DAMAGE_IMPACT",
+                category="grenades",
+                kind="weakness",
+                severity="low",
+                side="MATCH",
+                evidence=evidence,
+            )
+        ]
+
+    if (
+        damage_per_round
+        >= STRONG_GRENADE_DAMAGE_PER_ROUND
+    ):
+        return [
+            Finding(
+                code="STRONG_GRENADE_DAMAGE_IMPACT",
+                category="grenades",
+                kind="strength",
+                severity="medium",
+                side="MATCH",
+                evidence=evidence,
+            )
+        ]
+
+    return []
+
+
+def generate_flash_findings(
+    overall_stats: Mapping[str, float],
+) -> List[Finding]:
+    """
+    Detect clearly low or clearly strong verified flash support.
+
+    Both enemy-count rate and blind-time rate must point in the
+    same direction. Mixed signals deliberately produce no finding.
+    """
+
+    required = {
+        "rounds_played",
+        "enemies_flashed",
+        "flash_duration",
+    }
+
+    if not required.issubset(
+        overall_stats
+    ):
+        return []
+
+    rounds = int(
+        overall_stats["rounds_played"]
+    )
+
+    if rounds < MIN_SUPPORT_ROUNDS:
+        return []
+
+    enemies_flashed = int(
+        overall_stats["enemies_flashed"]
+    )
+
+    flash_duration = float(
+        overall_stats["flash_duration"]
+    )
+
+    flashed_per_round = round(
+        enemies_flashed / rounds,
+        2,
+    )
+
+    seconds_per_round = round(
+        flash_duration / rounds,
+        2,
+    )
+
+    evidence = {
+        "rounds_played": float(rounds),
+        "enemies_flashed": float(
+            enemies_flashed
+        ),
+        "flash_duration": round(
+            flash_duration,
+            1,
+        ),
+        "enemies_flashed_per_round": (
+            flashed_per_round
+        ),
+        "flash_seconds_per_round": (
+            seconds_per_round
+        ),
+    }
+
+    if (
+        flashed_per_round
+        <= LOW_ENEMIES_FLASHED_PER_ROUND
+        and seconds_per_round
+        <= LOW_FLASH_SECONDS_PER_ROUND
+    ):
+        return [
+            Finding(
+                code="LOW_FLASH_IMPACT",
+                category="flash",
+                kind="weakness",
+                severity="low",
+                side="MATCH",
+                evidence=evidence,
+            )
+        ]
+
+    if (
+        flashed_per_round
+        >= STRONG_ENEMIES_FLASHED_PER_ROUND
+        and seconds_per_round
+        >= STRONG_FLASH_SECONDS_PER_ROUND
+    ):
+        return [
+            Finding(
+                code="STRONG_FLASH_IMPACT",
+                category="flash",
+                kind="strength",
+                severity="medium",
+                side="MATCH",
+                evidence=evidence,
+            )
+        ]
+
+    return []
+
+
 def generate_player_findings(
     split_stats: Mapping[
         str,
         Mapping[str, float],
     ],
+    overall_stats: Mapping[
+        str,
+        float,
+    ] | None = None,
 ) -> List[Finding]:
     """
     Generate all verified findings for one player.
@@ -311,5 +525,17 @@ def generate_player_findings(
         )
     )
 
-    return findings
+    if overall_stats is not None:
+        findings.extend(
+            generate_grenade_findings(
+                overall_stats
+            )
+        )
 
+        findings.extend(
+            generate_flash_findings(
+                overall_stats
+            )
+        )
+
+    return findings

@@ -2,6 +2,8 @@ import unittest
 
 from src.domain.insights import (
     generate_entry_findings,
+    generate_flash_findings,
+    generate_grenade_findings,
     generate_player_findings,
     generate_side_findings,
 )
@@ -364,6 +366,179 @@ class TestEntryFindings(unittest.TestCase):
 
 
 
+
+
+class TestGrenadeFindings(unittest.TestCase):
+
+    def test_detects_low_grenade_damage_impact(self):
+        findings = generate_grenade_findings(
+            {
+                "rounds_played": 20,
+                "he_damage": 15.0,
+                "inferno_damage": 5.0,
+            }
+        )
+
+        self.assertEqual(
+            len(findings),
+            1,
+        )
+
+        self.assertEqual(
+            findings[0].code,
+            "LOW_GRENADE_DAMAGE_IMPACT",
+        )
+
+        self.assertEqual(
+            findings[0].kind,
+            "weakness",
+        )
+
+        self.assertEqual(
+            findings[0].severity,
+            "low",
+        )
+
+        self.assertEqual(
+            findings[0].evidence[
+                "grenade_damage_per_round"
+            ],
+            1.0,
+        )
+
+    def test_detects_strong_grenade_damage_impact(self):
+        findings = generate_grenade_findings(
+            {
+                "rounds_played": 20,
+                "he_damage": 120.0,
+                "inferno_damage": 40.0,
+            }
+        )
+
+        self.assertEqual(
+            len(findings),
+            1,
+        )
+
+        self.assertEqual(
+            findings[0].code,
+            "STRONG_GRENADE_DAMAGE_IMPACT",
+        )
+
+        self.assertEqual(
+            findings[0].kind,
+            "strength",
+        )
+
+        self.assertEqual(
+            findings[0].evidence[
+                "grenade_damage_per_round"
+            ],
+            8.0,
+        )
+
+    def test_grenade_finding_requires_enough_rounds(self):
+        self.assertEqual(
+            generate_grenade_findings(
+                {
+                    "rounds_played": 11,
+                    "he_damage": 0.0,
+                    "inferno_damage": 0.0,
+                }
+            ),
+            [],
+        )
+
+
+class TestFlashFindings(unittest.TestCase):
+
+    def test_detects_low_flash_impact(self):
+        findings = generate_flash_findings(
+            {
+                "rounds_played": 20,
+                "enemies_flashed": 2,
+                "flash_duration": 3.0,
+            }
+        )
+
+        self.assertEqual(
+            len(findings),
+            1,
+        )
+
+        self.assertEqual(
+            findings[0].code,
+            "LOW_FLASH_IMPACT",
+        )
+
+        self.assertEqual(
+            findings[0].kind,
+            "weakness",
+        )
+
+        self.assertEqual(
+            findings[0].evidence[
+                "enemies_flashed_per_round"
+            ],
+            0.1,
+        )
+
+        self.assertEqual(
+            findings[0].evidence[
+                "flash_seconds_per_round"
+            ],
+            0.15,
+        )
+
+    def test_detects_strong_flash_impact(self):
+        findings = generate_flash_findings(
+            {
+                "rounds_played": 20,
+                "enemies_flashed": 15,
+                "flash_duration": 36.0,
+            }
+        )
+
+        self.assertEqual(
+            len(findings),
+            1,
+        )
+
+        self.assertEqual(
+            findings[0].code,
+            "STRONG_FLASH_IMPACT",
+        )
+
+        self.assertEqual(
+            findings[0].kind,
+            "strength",
+        )
+
+        self.assertEqual(
+            findings[0].evidence[
+                "enemies_flashed_per_round"
+            ],
+            0.75,
+        )
+
+        self.assertEqual(
+            findings[0].evidence[
+                "flash_seconds_per_round"
+            ],
+            1.8,
+        )
+
+    def test_mixed_flash_signal_is_not_flagged(self):
+        self.assertEqual(
+            generate_flash_findings(
+                {
+                    "rounds_played": 20,
+                    "enemies_flashed": 16,
+                    "flash_duration": 2.0,
+                }
+            ),
+            [],
+        )
 
 
 class TestPlayerFindings(unittest.TestCase):

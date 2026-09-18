@@ -269,7 +269,26 @@ def build_player_analysis(
         stats=stats,
         sides=sides,
         findings=generate_player_findings(
-            split_stats
+            split_stats,
+            overall_stats=(
+                {
+                    "rounds_played": float(
+                        stats.rounds_played
+                    ),
+                    "he_damage": stats.he_damage,
+                    "inferno_damage": (
+                        stats.inferno_damage
+                    ),
+                    "enemies_flashed": float(
+                        stats.enemies_flashed
+                    ),
+                    "flash_duration": (
+                        stats.flash_duration
+                    ),
+                }
+                if split_stats
+                else None
+            ),
         ),
     )
 
