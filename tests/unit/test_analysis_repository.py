@@ -1,10 +1,14 @@
 import unittest
 from dataclasses import replace
+from datetime import datetime, timezone
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
-from src.database.models import Base
+from src.database.models import (
+    Base,
+    MatchModel,
+)
 from src.database.repository import AnalysisRepository
 from src.domain.analysis import (
     MatchAnalysis,
@@ -12,7 +16,10 @@ from src.domain.analysis import (
     PlayerStats,
     SideStats,
 )
-from src.domain.insights import Finding
+from src.domain.insights import (
+    FINDINGS_VERSION,
+    Finding,
+)
 
 
 def make_analysis(
@@ -276,6 +283,332 @@ class AnalysisRepositoryTest(unittest.TestCase):
         self.assertEqual(
             actual,
             expected,
+        )
+
+
+    def _save_history_pair(self):
+        base = make_analysis()
+
+        first = replace(
+            base,
+            match_id="match-history-001",
+            map_name="de_mirage",
+        )
+
+        duplicate_finding = replace(
+            base.players[0].findings[0],
+            side="CT",
+        )
+
+        second_player = replace(
+            base.players[0],
+            findings=[
+                base.players[0].findings[0],
+                duplicate_finding,
+            ],
+        )
+
+        second = replace(
+            base,
+            match_id="match-history-002",
+            map_name="de_inferno",
+            players=[
+                second_player
+            ],
+        )
+
+        self.repository.save_analysis(
+            first
+        )
+
+        self.repository.save_analysis(
+            second
+        )
+
+        first_model = self.session.get(
+            MatchModel,
+            first.match_id,
+        )
+
+        second_model = self.session.get(
+            MatchModel,
+            second.match_id,
+        )
+
+        first_model.created_at = datetime(
+            2026,
+            9,
+            10,
+            12,
+            0,
+            tzinfo=timezone.utc,
+        )
+
+        second_model.created_at = datetime(
+            2026,
+            9,
+            11,
+            12,
+            0,
+            tzinfo=timezone.utc,
+        )
+
+        self.session.commit()
+
+        return first, second
+
+
+    def test_player_match_history_is_newest_first(self):
+        first, second = self._save_history_pair()
+
+        history = (
+            self.repository
+            .get_player_match_history(
+                "76561198055629469",
+                limit=20,
+            )
+        )
+
+        self.assertEqual(
+            [
+                item.match_id
+                for item in history
+            ],
+            [
+                second.match_id,
+                first.match_id,
+            ],
+        )
+
+        self.assertEqual(
+            history[0].map_name,
+            "de_inferno",
+        )
+
+        self.assertEqual(
+            history[0].stats.adr,
+            93.4,
+        )
+
+
+    def test_player_match_history_respects_limit(self):
+        _, second = self._save_history_pair()
+
+        history = (
+            self.repository
+            .get_player_match_history(
+                "76561198055629469",
+                limit=1,
+            )
+        )
+
+        self.assertEqual(
+            len(history),
+            1,
+        )
+
+        self.assertEqual(
+            history[0].match_id,
+            second.match_id,
+        )
+
+
+    def test_player_match_history_returns_empty_for_unknown_player(self):
+        history = (
+            self.repository
+            .get_player_match_history(
+                "missing-player",
+            )
+        )
+
+        self.assertEqual(
+            history,
+            [],
+        )
+
+
+    def test_player_history_summary_uses_weighted_totals(self):
+        self._save_history_pair()
+
+        summary = (
+            self.repository
+            .get_player_history_summary(
+                "76561198055629469",
+                limit=10,
+            )
+        )
+
+        self.assertIsNotNone(
+            summary
+        )
+
+        self.assertEqual(
+            summary.matches_analyzed,
+            2,
+        )
+
+        self.assertEqual(
+            summary.stats.rounds_played,
+            48,
+        )
+
+        self.assertEqual(
+            summary.stats.kills,
+            48,
+        )
+
+        self.assertEqual(
+            summary.stats.deaths,
+            32,
+        )
+
+        self.assertEqual(
+            summary.stats.kd,
+            1.5,
+        )
+
+        self.assertEqual(
+            summary.stats.adr,
+            93.4,
+        )
+
+        self.assertEqual(
+            summary.stats.kast_pct,
+            66.7,
+        )
+
+        self.assertEqual(
+            len(summary.finding_frequency),
+            1,
+        )
+
+        finding = (
+            summary.finding_frequency[0]
+        )
+
+        self.assertEqual(
+            finding.code,
+            "SIDE_PERFORMANCE_GAP",
+        )
+
+        # The second match has the same code on two sides.
+        # It still counts as one affected match.
+        self.assertEqual(
+            finding.matches,
+            2,
+        )
+
+        self.assertEqual(
+            finding.match_rate_pct,
+            100.0,
+        )
+
+
+    def test_player_history_rejects_invalid_limit(self):
+        for limit in (
+            0,
+            101,
+        ):
+            with self.subTest(
+                limit=limit
+            ):
+                with self.assertRaises(
+                    ValueError
+                ):
+                    (
+                        self.repository
+                        .get_player_match_history(
+                            "76561198055629469",
+                            limit=limit,
+                        )
+                    )
+
+
+    def test_refresh_findings_rebuilds_legacy_rows(self):
+        analysis = make_analysis()
+
+        self.repository.save_analysis(
+            analysis
+        )
+
+        match_model = self.session.get(
+            MatchModel,
+            analysis.match_id,
+        )
+
+        original_created_at = (
+            match_model.created_at
+        )
+
+        self.assertEqual(
+            match_model.findings_version,
+            FINDINGS_VERSION,
+        )
+
+        match_model.findings_version = (
+            "legacy"
+        )
+
+        self.session.commit()
+
+        updated = (
+            self.repository
+            .refresh_findings()
+        )
+
+        self.assertEqual(
+            updated,
+            1,
+        )
+
+        self.session.expire_all()
+
+        refreshed = self.session.get(
+            MatchModel,
+            analysis.match_id,
+        )
+
+        self.assertEqual(
+            refreshed.findings_version,
+            FINDINGS_VERSION,
+        )
+
+        # SQLite drops timezone metadata when DateTime values
+        # are read back. PostgreSQL preserves it. Compare the
+        # stored UTC wall-clock value without tzinfo here so this
+        # repository test remains backend-neutral.
+        self.assertEqual(
+            refreshed.created_at.replace(
+                tzinfo=None
+            ),
+            original_created_at.replace(
+                tzinfo=None
+            ),
+        )
+
+        player = refreshed.players[0]
+
+        self.assertEqual(
+            [
+                finding.code
+                for finding
+                in player.findings
+            ],
+            [
+                "SIDE_PERFORMANCE_GAP",
+                "STRONG_MULTIKILL_IMPACT",
+            ],
+        )
+
+        # Idempotent: current rows are not rewritten again.
+        updated_again = (
+            self.repository
+            .refresh_findings()
+        )
+
+        self.assertEqual(
+            updated_again,
+            0,
         )
 
 

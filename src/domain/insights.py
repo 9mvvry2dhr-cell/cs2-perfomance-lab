@@ -2,6 +2,9 @@ from dataclasses import dataclass
 from typing import Dict, List, Literal, Mapping
 
 
+FINDINGS_VERSION = "v2"
+
+
 MIN_SIDE_ROUNDS = 6
 MIN_ADR_GAP = 20.0
 MIN_KAST_GAP_PCT = 15.0

@@ -108,6 +108,43 @@ class PlayerAnalysisResponse(ApiModel):
     findings: list[FindingResponse]
 
 
+class PlayerMatchHistoryResponse(ApiModel):
+    match_id: str
+    analyzed_at: datetime
+
+    map_name: str
+    score_ct: int
+    score_t: int
+
+    player_name: str
+    stats: PlayerStatsResponse
+    findings: list[FindingResponse]
+
+
+class PlayerFindingFrequencyResponse(ApiModel):
+    code: str
+    category: str
+    kind: Literal[
+        "strength",
+        "weakness",
+    ]
+
+    matches: int
+    match_rate_pct: float
+
+
+class PlayerHistorySummaryResponse(ApiModel):
+    steam_id: str
+    player_name: str
+
+    matches_analyzed: int
+    stats: PlayerStatsResponse
+
+    finding_frequency: list[
+        PlayerFindingFrequencyResponse
+    ]
+
+
 class MatchAnalysisResponse(ApiModel):
     match_id: str
     map_name: str

@@ -75,6 +75,12 @@ class MatchModel(Base):
         default="v1",
     )
 
+    findings_version: Mapped[str] = mapped_column(
+        String(16),
+        nullable=False,
+        default="v2",
+    )
+
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         nullable=False,

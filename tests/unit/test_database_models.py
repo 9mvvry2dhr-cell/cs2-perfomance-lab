@@ -163,6 +163,10 @@ class DatabaseModelsTest(unittest.TestCase):
                 "v1",
             )
             self.assertEqual(
+                loaded.findings_version,
+                "v2",
+            )
+            self.assertEqual(
                 len(loaded.players),
                 1,
             )

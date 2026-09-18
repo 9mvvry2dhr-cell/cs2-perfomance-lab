@@ -9,6 +9,7 @@ from fastapi import (
     FastAPI,
     File,
     HTTPException,
+    Query,
     Request,
     UploadFile,
     status,
@@ -30,6 +31,8 @@ from src.api.schemas import (
     AnalysisJobResponse,
     HealthResponse,
     MatchAnalysisResponse,
+    PlayerHistorySummaryResponse,
+    PlayerMatchHistoryResponse,
     ReadyResponse,
 )
 from src.database.job_repository import AnalysisJobRepository
@@ -196,6 +199,79 @@ def get_match_analysis(
     return MatchAnalysisResponse.model_validate(
         analysis
     )
+
+@app.get(
+    "/players/{steam_id}/matches",
+    response_model=list[
+        PlayerMatchHistoryResponse
+    ],
+)
+def get_player_match_history(
+    steam_id: str,
+    repository: Annotated[
+        AnalysisRepository,
+        Depends(get_analysis_repository),
+    ],
+    limit: Annotated[
+        int,
+        Query(
+            ge=1,
+            le=100,
+        ),
+    ] = 20,
+) -> list[PlayerMatchHistoryResponse]:
+    history = (
+        repository
+        .get_player_match_history(
+            steam_id,
+            limit=limit,
+        )
+    )
+
+    return [
+        PlayerMatchHistoryResponse
+        .model_validate(item)
+        for item in history
+    ]
+
+
+@app.get(
+    "/players/{steam_id}/summary",
+    response_model=PlayerHistorySummaryResponse,
+)
+def get_player_history_summary(
+    steam_id: str,
+    repository: Annotated[
+        AnalysisRepository,
+        Depends(get_analysis_repository),
+    ],
+    limit: Annotated[
+        int,
+        Query(
+            ge=1,
+            le=100,
+        ),
+    ] = 10,
+) -> PlayerHistorySummaryResponse:
+    summary = (
+        repository
+        .get_player_history_summary(
+            steam_id,
+            limit=limit,
+        )
+    )
+
+    if summary is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Player history not found",
+        )
+
+    return (
+        PlayerHistorySummaryResponse
+        .model_validate(summary)
+    )
+
 
 # Frontend is mounted last so API routes keep priority.
 app.mount(
