@@ -4551,7 +4551,7 @@ CS2 Performance Lab
 <path d="M4 21c0-4 3.5-7 8-7s8 3 8 7"/>
 </svg>
 
-Игроки
+Профиль
 
 </button>
 
@@ -4587,14 +4587,38 @@ CS2 Performance Lab
 
 
 <div class="side-label">
-ИГРОК
+ТВОЙ ПРОФИЛЬ
 </div>
 
-<select class="player-select">
+<div
+class="current-user-card"
+id="currentUserCard"
+>
 
-<option>
-kbn_san
-</option>
+<div
+class="current-user-name"
+id="currentUserName"
+>
+Профиль игрока
+</div>
+
+<div
+class="current-user-steam"
+id="currentUserSteam"
+>
+Steam ID: —
+</div>
+
+</div>
+
+<select
+class="player-select"
+hidden
+aria-hidden="true"
+tabindex="-1"
+>
+
+<option value=""></option>
 
 </select>
 
@@ -4774,7 +4798,7 @@ id="analysisView"
 &nbsp;›&nbsp;
 de_mirage
 &nbsp;›&nbsp;
-kbn_san
+Игрок
 </span>
 
 <span class="verified">
@@ -4803,7 +4827,7 @@ K
 
 <div class="player-name">
 
-kbn_san
+Игрок
 
 <span class="verify-icon">
 ✓
@@ -4815,7 +4839,7 @@ kbn_san
 <div class="steam">
 
 Steam ID:
-76561198055629469
+—
 
 </div>
 
@@ -5444,144 +5468,7 @@ CT / T сравнение
 </section>
 
 
-<section
-class="card players"
-id="players"
->
 
-
-<button
-class="players-button"
-id="playersToggle"
->
-
-
-<span>
-Все игроки матча
-</span>
-
-
-<span id="playersToggleText">
-Показать ▾
-</span>
-
-
-</button>
-
-
-<div class="players-body">
-
-
-<table>
-
-
-<thead>
-
-<tr>
-<th>Игрок</th>
-<th>K</th>
-<th>D</th>
-<th>K/D</th>
-<th>ADR</th>
-<th>KAST</th>
-<th>HS</th>
-<th>Findings</th>
-</tr>
-
-</thead>
-
-
-<tbody>
-
-
-<tr>
-<td>Axello</td>
-<td>31</td>
-<td>15</td>
-<td>2.07</td>
-<td>131.3</td>
-<td>87.5%</td>
-<td>32.3%</td>
-<td>—</td>
-</tr>
-
-
-<tr>
-<td>p✝</td>
-<td>23</td>
-<td>16</td>
-<td>1.44</td>
-<td>97.2</td>
-<td>70.8%</td>
-<td>47.8%</td>
-<td>—</td>
-</tr>
-
-
-<tr class="selected">
-<td>kbn_san</td>
-<td>24</td>
-<td>16</td>
-<td>1.50</td>
-<td>93.4</td>
-<td>66.7%</td>
-<td>50.0%</td>
-
-<td>
-<span class="finding-badge">
-1
-</span>
-</td>
-
-</tr>
-
-
-<tr>
-<td>IONA</td>
-<td>22</td>
-<td>17</td>
-<td>1.29</td>
-<td>91.6</td>
-<td>79.2%</td>
-<td>45.5%</td>
-
-<td>
-<span class="finding-badge">
-1
-</span>
-</td>
-
-</tr>
-
-
-<tr>
-<td>Snobbish</td>
-<td>13</td>
-<td>21</td>
-<td>0.62</td>
-<td>71.1</td>
-<td>66.7%</td>
-<td>23.1%</td>
-
-<td>
-<span class="finding-badge">
-1
-</span>
-</td>
-
-</tr>
-
-
-</tbody>
-
-
-</table>
-
-
-</div>
-
-
-</section>
 
 
 </div><!-- analysisView -->
@@ -7792,9 +7679,7 @@ function renderPlayerHistory(
 }
 
 
-async function loadPlayerHistory(
-    steamId
-) {
+async function loadPlayerHistory() {
     const section =
         document.getElementById(
             "playerHistory"
@@ -7825,13 +7710,25 @@ async function loadPlayerHistory(
         ] = await Promise.all(
             [
                 fetch(
-                    `/players/${steamId}`
-                    + "/summary?limit=10"
+                    "/me/summary?limit=10",
+                    {
+                        credentials:
+                            "same-origin",
+
+                        cache:
+                            "no-store",
+                    }
                 ),
 
                 fetch(
-                    `/players/${steamId}`
-                    + "/matches?limit=10"
+                    "/me/matches?limit=10",
+                    {
+                        credentials:
+                            "same-origin",
+
+                        cache:
+                            "no-store",
+                    }
                 ),
             ]
         );
@@ -7884,6 +7781,17 @@ async function loadPlayerHistory(
 
         const matches =
             await matchesResponse.json();
+
+        if (
+            typeof window
+                .cs2SyncCurrentUserCard
+            === "function"
+        ) {
+            window.cs2SyncCurrentUserCard(
+                summary.player_name,
+                summary.steam_id
+            );
+        }
 
         if (
             requestId
@@ -7973,6 +7881,17 @@ function renderPlayer(
         ".steam"
     ).textContent =
         `Steam ID: ${player.steam_id}`;
+
+    if (
+        typeof window
+            .cs2SyncCurrentUserCard
+        === "function"
+    ) {
+        window.cs2SyncCurrentUserCard(
+            player.name,
+            player.steam_id
+        );
+    }
 
     const metricValues =
         document.querySelectorAll(
@@ -8096,15 +8015,6 @@ function renderPlayer(
         player
     );
 
-    try {
-        localStorage.setItem(
-            "cs2pl:lastPlayerSteamId",
-            player.steam_id
-        );
-    } catch {
-        // Local storage is optional.
-    }
-
     const historySection =
         document.getElementById(
             "playerHistory"
@@ -8114,9 +8024,7 @@ function renderPlayer(
         historySection
         && !historySection.hidden
     ) {
-        loadPlayerHistory(
-            player.steam_id
-        );
+        loadPlayerHistory();
     }
 
     document
@@ -8132,88 +8040,6 @@ function renderPlayer(
                 );
             }
         );
-}
-
-
-function renderPlayersTable(
-    analysis
-) {
-    const tbody =
-        document.querySelector(
-            "#players tbody"
-        );
-
-    tbody.replaceChildren();
-
-    analysis.players.forEach(
-        player => {
-            const row =
-                document.createElement(
-                    "tr"
-                );
-
-            row.dataset.steamId =
-                player.steam_id;
-
-            const values = [
-                player.name,
-                player.stats.kills,
-                player.stats.deaths,
-                formatNumber(
-                    player.stats.kd,
-                    2
-                ),
-                formatNumber(
-                    player.stats.adr
-                ),
-                `${formatNumber(
-                    player.stats.kast_pct
-                )}%`,
-                `${formatNumber(
-                    player.stats.headshot_pct
-                )}%`,
-                player.findings.length,
-            ];
-
-            values.forEach(
-                value => {
-                    const cell =
-                        document.createElement(
-                            "td"
-                        );
-
-                    cell.textContent =
-                        value;
-
-                    row.appendChild(
-                        cell
-                    );
-                }
-            );
-
-            row.addEventListener(
-                "click",
-                () => {
-                    const select =
-                        document.querySelector(
-                            ".player-select"
-                        );
-
-                    select.value =
-                        player.steam_id;
-
-                    renderPlayer(
-                        player,
-                        analysis
-                    );
-                }
-            );
-
-            tbody.appendChild(
-                row
-            );
-        }
-    );
 }
 
 
@@ -8486,74 +8312,51 @@ renderMapArt(
         + "\u043f\u043e\u0434\u0442\u0432\u0435\u0440\u0436\u0434\u0451\u043d\u043d\u044b\u0445 "
         + "\u0440\u0430\u0443\u043d\u0434\u043e\u0432";
 
-    renderPlayersTable(
-        analysis
-    );
+    const selectedPlayer =
+        analysis.players[0];
+
+    if (!selectedPlayer) {
+        throw new Error(
+            "Current user is not present "
+            + "in match response."
+        );
+    }
 
     const playerSelect =
         document.querySelector(
             ".player-select"
         );
 
-    playerSelect.disabled =
-        false;
+    if (playerSelect) {
+        playerSelect.replaceChildren();
 
-    const oldName =
-        playerSelect.options[
-            playerSelect.selectedIndex
-        ]?.textContent?.trim();
-
-    playerSelect.replaceChildren();
-
-    analysis.players.forEach(
-        player => {
-            const option =
-                document.createElement(
-                    "option"
-                );
-
-            option.value =
-                player.steam_id;
-
-            option.textContent =
-                player.name;
-
-            playerSelect.appendChild(
-                option
+        const option =
+            document.createElement(
+                "option"
             );
-        }
-    );
 
-    const selectedPlayer =
-        analysis.players.find(
-            player =>
-                player.name === oldName
-        )
-        || analysis.players[0];
+        option.value =
+            selectedPlayer.steam_id;
 
-    if (!selectedPlayer) {
-        return;
+        option.textContent =
+            selectedPlayer.name;
+
+        playerSelect.appendChild(
+            option
+        );
+
+        playerSelect.value =
+            selectedPlayer.steam_id;
+
+        playerSelect.disabled =
+            true;
+
+        playerSelect.hidden =
+            true;
+
+        playerSelect.onchange =
+            null;
     }
-
-    playerSelect.value =
-        selectedPlayer.steam_id;
-
-    playerSelect.onchange =
-        () => {
-            const player =
-                analysis.players.find(
-                    item =>
-                        item.steam_id
-                        === playerSelect.value
-                );
-
-            if (player) {
-                renderPlayer(
-                    player,
-                    analysis
-                );
-            }
-        };
 
     renderPlayer(
         selectedPlayer,
@@ -8695,42 +8498,6 @@ demoUploadForm.addEventListener(
             demoUploadButton.textContent =
                 "\u0410\u041d\u0410\u041b\u0418\u0417\u0418\u0420\u041e\u0412\u0410\u0422\u042c";
         }
-    }
-);
-
-
-/* Players table */
-
-const players =
-    document.getElementById(
-        "players"
-    );
-
-const playersToggle =
-    document.getElementById(
-        "playersToggle"
-    );
-
-const playersToggleText =
-    document.getElementById(
-        "playersToggleText"
-    );
-
-
-playersToggle.addEventListener(
-    "click",
-    () => {
-
-        players.classList.toggle(
-            "open"
-        );
-
-        playersToggleText.textContent =
-            players.classList.contains(
-                "open"
-            )
-            ? "Скрыть ▴"
-            : "Показать ▾";
     }
 );
 
@@ -9421,7 +9188,7 @@ document
 
     const playersNav =
         findNav(
-            "\u0418\u0433\u0440\u043e\u043a\u0438"
+            "\u041f\u0440\u043e\u0444\u0438\u043b\u044c"
         );
 
     const mapsNav =
@@ -9591,67 +9358,7 @@ document
             playersNav
         );
 
-
-        const playerSelect =
-            document.querySelector(
-                ".player-select"
-            );
-
-        let steamId =
-            String(
-                playerSelect?.value
-                || ""
-            ).trim();
-
-
-        if (!steamId) {
-            try {
-                steamId =
-                    String(
-                        localStorage.getItem(
-                            "cs2pl:lastPlayerSteamId"
-                        )
-                        || ""
-                    ).trim();
-            } catch {
-                steamId = "";
-            }
-        }
-
-
-        if (steamId) {
-            loadPlayerHistory(
-                steamId
-            );
-
-            return;
-        }
-
-
-        playerHistoryBody.replaceChildren();
-
-        const empty =
-            document.createElement(
-                "div"
-            );
-
-        empty.className =
-            "player-history-loading";
-
-        empty.textContent =
-            "Пока "
-            + "нет "
-            + "выбранного "
-            + "игрока. "
-            + "Сначала "
-            + "открой "
-            + "или "
-            + "проанализируй "
-            + "матч.";
-
-        playerHistoryBody.appendChild(
-            empty
-        );
+        loadPlayerHistory();
     }
 
 
@@ -9765,21 +9472,13 @@ document
 <!-- END NAV SECTIONS JS -->
 
 
+
+
+
 <!-- CURRENT USER UI GUARD START -->
 
 <style>
-/*
-Prototype product rule:
-one account -> one visible Steam profile.
-*/
-
 .player-select {
-    display:
-        none !important;
-}
-
-
-#players {
     display:
         none !important;
 }
@@ -9846,480 +9545,178 @@ one account -> one visible Steam profile.
 <script>
 (function () {
 
-    const CURRENT_STEAM_ID =
-        "76561198055629469";
+    const state = {
+        steamId:
+            "",
 
-    const CURRENT_NAME =
-        "kbn_san";
-
-
-    window.CS2_CURRENT_USER_STEAM_ID =
-        CURRENT_STEAM_ID;
+        name:
+            "",
+    };
 
 
-    function normalizeText(
-        element
+    window.CS2_CURRENT_USER =
+        state;
+
+
+    function syncCurrentUserCard(
+        name,
+        steamId
     ) {
-        return String(
-            element?.textContent
-            || ""
-        )
-        .replace(
-            /\s+/g,
-            " "
-        )
-        .trim();
-    }
+        const cleanName =
+            String(
+                name
+                || state.name
+                || ""
+            ).trim();
+
+        const cleanSteamId =
+            String(
+                steamId
+                || state.steamId
+                || ""
+            ).trim();
 
 
-    function enforceCurrentUserUi() {
-
-        /*
-        Hide the old infrastructure selector.
-        Keep it in DOM because old rendering code
-        still expects it to exist.
-        */
-        const select =
-            document.querySelector(
-                ".player-select"
-            );
-
-        if (select) {
-
-            let option =
-                Array.from(
-                    select.options
-                )
-                .find(
-                    item =>
-                        String(
-                            item.value
-                        )
-                        === CURRENT_STEAM_ID
-                        ||
-                        normalizeText(
-                            item
-                        )
-                        === CURRENT_NAME
-                );
-
-
-            if (!option) {
-
-                option =
-                    document.createElement(
-                        "option"
-                    );
-
-                option.value =
-                    CURRENT_STEAM_ID;
-
-                option.textContent =
-                    CURRENT_NAME;
-
-                select.appendChild(
-                    option
-                );
-            }
-
-
-            select.value =
-                option.value;
-
-            select.disabled =
-                true;
-
-            select.hidden =
-                true;
-
-            select.style.setProperty(
-                "display",
-                "none",
-                "important"
-            );
+        if (cleanName) {
+            state.name =
+                cleanName;
         }
 
 
-        /*
-        Hide detailed teammate statistics.
-        */
-        const players =
+        if (cleanSteamId) {
+            state.steamId =
+                cleanSteamId;
+        }
+
+
+        const nameElement =
             document.getElementById(
-                "players"
+                "currentUserName"
             );
 
-        if (players) {
-
-            players.hidden =
-                true;
-
-            players.style.setProperty(
-                "display",
-                "none",
-                "important"
+        const steamElement =
+            document.getElementById(
+                "currentUserSteam"
             );
+
+
+        if (
+            nameElement
+            && state.name
+        ) {
+            nameElement.textContent =
+                state.name;
         }
 
 
-        /*
-        Sidebar label -> current user's profile.
-        */
-        const labels =
-            Array.from(
-                document.querySelectorAll(
-                    ".side-label"
-                )
-            );
+        if (steamElement) {
+            steamElement.textContent =
+                state.steamId
+                ? `Steam ID: ${state.steamId}`
+                : "Steam ID: \u2014";
+        }
+    }
 
-        const playerLabel =
-            labels.find(
-                label => {
-                    const value =
-                        normalizeText(
-                            label
-                        )
-                        .toUpperCase();
 
-                    return (
-                        value
-                        === "\u0418\u0413\u0420\u041e\u041a"
-                        ||
-                        value
-                        === "\u0422\u0412\u041e\u0419 \u041f\u0420\u041e\u0424\u0418\u041b\u042c"
-                    );
+    window.cs2SyncCurrentUserCard =
+        syncCurrentUserCard;
+
+
+    async function loadCurrentUser() {
+        const meResponse =
+            await fetch(
+                "/me",
+                {
+                    credentials:
+                        "same-origin",
+
+                    cache:
+                        "no-store",
+
+                    headers: {
+                        Accept:
+                            "application/json",
+                    },
                 }
             );
 
 
-        if (playerLabel) {
+        if (!meResponse.ok) {
+            throw new Error(
+                "Current user request failed: "
+                + `${meResponse.status}`
+            );
+        }
 
-            playerLabel.textContent =
-                "\u0422\u0412\u041e\u0419 \u041f\u0420\u041e\u0424\u0418\u041b\u042c";
+
+        const me =
+            await meResponse.json();
+
+        const steamId =
+            String(
+                me.steam_id
+                || ""
+            ).trim();
 
 
-            let card =
-                document.getElementById(
-                    "currentUserCard"
+        if (!steamId) {
+            throw new Error(
+                "Current user Steam ID is empty."
+            );
+        }
+
+
+        syncCurrentUserCard(
+            null,
+            steamId
+        );
+
+
+        const summaryResponse =
+            await fetch(
+                "/me/summary?limit=1",
+                {
+                    credentials:
+                        "same-origin",
+
+                    cache:
+                        "no-store",
+
+                    headers: {
+                        Accept:
+                            "application/json",
+                    },
+                }
+            );
+
+
+        if (summaryResponse.ok) {
+            const summary =
+                await summaryResponse.json();
+
+            syncCurrentUserCard(
+                summary.player_name,
+                summary.steam_id
+            );
+        }
+
+
+        return state;
+    }
+
+
+    window.cs2CurrentUserReady =
+        loadCurrentUser()
+        .catch(
+            error => {
+                console.error(
+                    "Current user identity failed:",
+                    error
                 );
 
-
-            if (!card) {
-
-                card =
-                    document.createElement(
-                        "div"
-                    );
-
-                card.id =
-                    "currentUserCard";
-
-                card.className =
-                    "current-user-card";
-
-
-                const name =
-                    document.createElement(
-                        "div"
-                    );
-
-                name.id =
-                    "currentUserName";
-
-                name.className =
-                    "current-user-name";
-
-                name.textContent =
-                    CURRENT_NAME;
-
-
-                const steam =
-                    document.createElement(
-                        "div"
-                    );
-
-                steam.id =
-                    "currentUserSteam";
-
-                steam.className =
-                    "current-user-steam";
-
-                steam.textContent =
-                    `Steam ID: ${CURRENT_STEAM_ID}`;
-
-
-                card.appendChild(
-                    name
-                );
-
-                card.appendChild(
-                    steam
-                );
-
-
-                playerLabel.insertAdjacentElement(
-                    "afterend",
-                    card
-                );
+                return null;
             }
-        }
-
-
-        /*
-        Visible nav label:
-        Players -> Profile.
-        Existing click handler remains attached
-        to the same button.
-        */
-        document
-            .querySelectorAll(
-                ".nav-button"
-            )
-            .forEach(
-                button => {
-
-                    if (
-                        normalizeText(
-                            button
-                        )
-                        === "\u0418\u0433\u0440\u043e\u043a\u0438"
-                    ) {
-
-                        const textNodes =
-                            Array.from(
-                                button.childNodes
-                            )
-                            .filter(
-                                node =>
-                                    node.nodeType
-                                    === Node.TEXT_NODE
-                            );
-
-
-                        const node =
-                            textNodes.find(
-                                item =>
-                                    String(
-                                        item.textContent
-                                        || ""
-                                    )
-                                    .trim()
-                                    === "\u0418\u0433\u0440\u043e\u043a\u0438"
-                            );
-
-
-                        if (node) {
-
-                            node.textContent =
-                                "\n\u041f\u0440\u043e\u0444\u0438\u043b\u044c\n";
-                        }
-                    }
-                }
-            );
-    }
-
-
-    enforceCurrentUserUi();
-
-
-    /*
-    The original renderer still exists.
-    Wrap it so every loaded match is forced
-    onto the authenticated prototype user.
-    */
-    if (
-        typeof renderMatchAnalysis
-        === "function"
-        &&
-        !window
-            .CS2_CURRENT_USER_RENDER_GUARD
-    ) {
-
-        const originalRenderMatchAnalysis =
-            renderMatchAnalysis;
-
-
-        renderMatchAnalysis =
-            function (
-                analysis
-            ) {
-
-                const currentPlayer =
-                    (
-                        analysis.players
-                        || []
-                    )
-                    .find(
-                        player =>
-                            String(
-                                player.steam_id
-                            )
-                            === CURRENT_STEAM_ID
-                    );
-
-
-                if (!currentPlayer) {
-
-                    if (
-                        typeof analysisView
-                        !== "undefined"
-                    ) {
-                        analysisView.hidden =
-                            true;
-                    }
-
-
-                    if (
-                        typeof analysisEmptyState
-                        !== "undefined"
-                    ) {
-                        analysisEmptyState.hidden =
-                            false;
-                    }
-
-
-                    if (
-                        typeof analysisEmptyTitle
-                        !== "undefined"
-                    ) {
-                        analysisEmptyTitle.textContent =
-                            "\u0422\u0432\u043e\u0439 "
-                            + "\u043f\u0440\u043e\u0444\u0438\u043b\u044c "
-                            + "\u043d\u0435 "
-                            + "\u043d\u0430\u0439\u0434\u0435\u043d "
-                            + "\u0432 "
-                            + "\u044d\u0442\u043e\u043c "
-                            + "\u043c\u0430\u0442\u0447\u0435.";
-                    }
-
-
-                    if (
-                        typeof analysisEmptyText
-                        !== "undefined"
-                    ) {
-                        analysisEmptyText.textContent =
-                            "\u0410\u043d\u0430\u043b\u0438\u0437 "
-                            + "\u0434\u0440\u0443\u0433\u0438\u0445 "
-                            + "\u0438\u0433\u0440\u043e\u043a\u043e\u0432 "
-                            + "\u043d\u0435 "
-                            + "\u043f\u043e\u043a\u0430\u0437\u044b\u0432\u0430\u0435\u0442\u0441\u044f.";
-                    }
-
-
-                    enforceCurrentUserUi();
-
-                    return;
-                }
-
-
-                /*
-                Make old renderer choose kbn_san as well.
-                */
-                const select =
-                    document.querySelector(
-                        ".player-select"
-                    );
-
-                if (select) {
-
-                    select.disabled =
-                        false;
-
-
-                    let option =
-                        Array.from(
-                            select.options
-                        )
-                        .find(
-                            item =>
-                                String(
-                                    item.value
-                                )
-                                === CURRENT_STEAM_ID
-                                ||
-                                normalizeText(
-                                    item
-                                )
-                                === CURRENT_NAME
-                        );
-
-
-                    if (!option) {
-
-                        option =
-                            document.createElement(
-                                "option"
-                            );
-
-                        option.value =
-                            CURRENT_STEAM_ID;
-
-                        option.textContent =
-                            CURRENT_NAME;
-
-                        select.appendChild(
-                            option
-                        );
-                    }
-
-
-                    select.value =
-                        option.value;
-                }
-
-
-                originalRenderMatchAnalysis(
-                    analysis
-                );
-
-
-                /*
-                Final guarantee:
-                render only current player's detail card.
-                */
-                if (
-                    typeof renderPlayer
-                    === "function"
-                ) {
-
-                    renderPlayer(
-                        currentPlayer,
-                        analysis
-                    );
-                }
-
-
-                const finalSelect =
-                    document.querySelector(
-                        ".player-select"
-                    );
-
-                if (finalSelect) {
-
-                    finalSelect.value =
-                        CURRENT_STEAM_ID;
-
-                    finalSelect.onchange =
-                        null;
-                }
-
-
-                enforceCurrentUserUi();
-            };
-
-
-        window
-            .CS2_CURRENT_USER_RENDER_GUARD =
-            true;
-    }
-
-
-    /*
-    Run once more after all synchronous page setup.
-    */
-    setTimeout(
-        enforceCurrentUserUi,
-        0
-    );
+        );
 
 })();
 </script>
