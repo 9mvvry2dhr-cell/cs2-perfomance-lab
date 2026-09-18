@@ -285,6 +285,24 @@ def build_player_analysis(
                     "flash_duration": (
                         stats.flash_duration
                     ),
+                    "trade_kills": float(
+                        stats.trade_kills
+                    ),
+                    "two_k_rounds": float(
+                        stats.two_k_rounds
+                    ),
+                    "three_k_rounds": float(
+                        stats.three_k_rounds
+                    ),
+                    "four_k_rounds": float(
+                        stats.four_k_rounds
+                    ),
+                    "five_k_rounds": float(
+                        stats.five_k_rounds
+                    ),
+                    "clutches_won": float(
+                        stats.clutches_won
+                    ),
                 }
                 if split_stats
                 else None

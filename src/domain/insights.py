@@ -27,6 +27,14 @@ LOW_FLASH_SECONDS_PER_ROUND = 0.15
 STRONG_ENEMIES_FLASHED_PER_ROUND = 0.75
 STRONG_FLASH_SECONDS_PER_ROUND = 1.80
 
+STRONG_TRADE_MIN_KILLS = 4
+STRONG_TRADE_KILLS_PER_ROUND = 0.23
+
+STRONG_MULTIKILL_MIN_ROUNDS = 6
+STRONG_MULTIKILL_ROUND_RATE = 0.33
+
+MULTIPLE_CLUTCH_MIN_WINS = 2
+
 
 @dataclass(frozen=True)
 class Finding:
@@ -401,7 +409,7 @@ def generate_flash_findings(
     overall_stats: Mapping[str, float],
 ) -> List[Finding]:
     """
-    Detect clearly low or clearly strong verified flash support.
+    Detect clearly low or clearly strong verified flash impact.
 
     Both enemy-count rate and blind-time rate must point in the
     same direction. Mixed signals deliberately produce no finding.
@@ -497,6 +505,221 @@ def generate_flash_findings(
     return []
 
 
+def generate_trade_findings(
+    overall_stats: Mapping[str, float],
+) -> List[Finding]:
+    """
+    Detect unusually strong verified trade impact.
+
+    No low-trade weakness is emitted because the current contract
+    does not expose the number of available trade opportunities.
+    """
+
+    required = {
+        "rounds_played",
+        "trade_kills",
+    }
+
+    if not required.issubset(
+        overall_stats
+    ):
+        return []
+
+    rounds = int(
+        overall_stats["rounds_played"]
+    )
+
+    if rounds < MIN_SUPPORT_ROUNDS:
+        return []
+
+    trade_kills = int(
+        overall_stats["trade_kills"]
+    )
+
+    trade_rate = round(
+        trade_kills / rounds,
+        3,
+    )
+
+    if (
+        trade_kills
+        < STRONG_TRADE_MIN_KILLS
+        or trade_rate
+        < STRONG_TRADE_KILLS_PER_ROUND
+    ):
+        return []
+
+    return [
+        Finding(
+            code="STRONG_TRADE_IMPACT",
+            category="trade",
+            kind="strength",
+            severity="medium",
+            side="MATCH",
+            evidence={
+                "rounds_played": float(rounds),
+                "trade_kills": float(
+                    trade_kills
+                ),
+                "trade_kills_per_round": (
+                    trade_rate
+                ),
+            },
+        )
+    ]
+
+
+def generate_multikill_findings(
+    overall_stats: Mapping[str, float],
+) -> List[Finding]:
+    """
+    Detect unusually strong verified multikill impact.
+
+    Only a strength is emitted. A low number of multikill rounds
+    is not treated as a weakness because role and opportunity
+    strongly affect this metric.
+    """
+
+    required = {
+        "rounds_played",
+        "two_k_rounds",
+        "three_k_rounds",
+        "four_k_rounds",
+        "five_k_rounds",
+    }
+
+    if not required.issubset(
+        overall_stats
+    ):
+        return []
+
+    rounds = int(
+        overall_stats["rounds_played"]
+    )
+
+    if rounds < MIN_SUPPORT_ROUNDS:
+        return []
+
+    two_k = int(
+        overall_stats["two_k_rounds"]
+    )
+
+    three_k = int(
+        overall_stats["three_k_rounds"]
+    )
+
+    four_k = int(
+        overall_stats["four_k_rounds"]
+    )
+
+    five_k = int(
+        overall_stats["five_k_rounds"]
+    )
+
+    multikill_rounds = (
+        two_k
+        + three_k
+        + four_k
+        + five_k
+    )
+
+    multikill_rate = round(
+        multikill_rounds / rounds,
+        3,
+    )
+
+    if (
+        multikill_rounds
+        < STRONG_MULTIKILL_MIN_ROUNDS
+        or multikill_rate
+        < STRONG_MULTIKILL_ROUND_RATE
+    ):
+        return []
+
+    return [
+        Finding(
+            code="STRONG_MULTIKILL_IMPACT",
+            category="multikill",
+            kind="strength",
+            severity="medium",
+            side="MATCH",
+            evidence={
+                "rounds_played": float(rounds),
+                "multikill_rounds": float(
+                    multikill_rounds
+                ),
+                "multikill_round_rate": (
+                    multikill_rate
+                ),
+                "two_k_rounds": float(two_k),
+                "three_k_rounds": float(
+                    three_k
+                ),
+                "four_k_rounds": float(
+                    four_k
+                ),
+                "five_k_rounds": float(
+                    five_k
+                ),
+            },
+        )
+    ]
+
+
+def generate_clutch_findings(
+    overall_stats: Mapping[str, float],
+) -> List[Finding]:
+    """
+    Detect multiple verified clutch wins in one match.
+
+    No clutch weakness is emitted because the current contract
+    does not expose clutch opportunities or attempts.
+    """
+
+    required = {
+        "rounds_played",
+        "clutches_won",
+    }
+
+    if not required.issubset(
+        overall_stats
+    ):
+        return []
+
+    rounds = int(
+        overall_stats["rounds_played"]
+    )
+
+    if rounds < MIN_SUPPORT_ROUNDS:
+        return []
+
+    clutches_won = int(
+        overall_stats["clutches_won"]
+    )
+
+    if (
+        clutches_won
+        < MULTIPLE_CLUTCH_MIN_WINS
+    ):
+        return []
+
+    return [
+        Finding(
+            code="MULTIPLE_CLUTCH_WINS",
+            category="clutch",
+            kind="strength",
+            severity="medium",
+            side="MATCH",
+            evidence={
+                "rounds_played": float(rounds),
+                "clutches_won": float(
+                    clutches_won
+                ),
+            },
+        )
+    ]
+
+
 def generate_player_findings(
     split_stats: Mapping[
         str,
@@ -534,6 +757,24 @@ def generate_player_findings(
 
         findings.extend(
             generate_flash_findings(
+                overall_stats
+            )
+        )
+
+        findings.extend(
+            generate_trade_findings(
+                overall_stats
+            )
+        )
+
+        findings.extend(
+            generate_multikill_findings(
+                overall_stats
+            )
+        )
+
+        findings.extend(
+            generate_clutch_findings(
                 overall_stats
             )
         )

@@ -1,11 +1,14 @@
 import unittest
 
 from src.domain.insights import (
+    generate_clutch_findings,
     generate_entry_findings,
     generate_flash_findings,
     generate_grenade_findings,
+    generate_multikill_findings,
     generate_player_findings,
     generate_side_findings,
+    generate_trade_findings,
 )
 
 
@@ -535,6 +538,187 @@ class TestFlashFindings(unittest.TestCase):
                     "rounds_played": 20,
                     "enemies_flashed": 16,
                     "flash_duration": 2.0,
+                }
+            ),
+            [],
+        )
+
+
+class TestTradeFindings(unittest.TestCase):
+
+    def test_detects_strong_trade_impact(self):
+        findings = generate_trade_findings(
+            {
+                "rounds_played": 20,
+                "trade_kills": 5,
+            }
+        )
+
+        self.assertEqual(
+            len(findings),
+            1,
+        )
+
+        self.assertEqual(
+            findings[0].code,
+            "STRONG_TRADE_IMPACT",
+        )
+
+        self.assertEqual(
+            findings[0].kind,
+            "strength",
+        )
+
+        self.assertEqual(
+            findings[0].evidence[
+                "trade_kills_per_round"
+            ],
+            0.25,
+        )
+
+    def test_trade_count_must_also_be_high_enough(self):
+        self.assertEqual(
+            generate_trade_findings(
+                {
+                    "rounds_played": 12,
+                    "trade_kills": 3,
+                }
+            ),
+            [],
+        )
+
+    def test_trade_finding_requires_enough_rounds(self):
+        self.assertEqual(
+            generate_trade_findings(
+                {
+                    "rounds_played": 10,
+                    "trade_kills": 4,
+                }
+            ),
+            [],
+        )
+
+
+class TestMultikillFindings(unittest.TestCase):
+
+    def test_detects_strong_multikill_impact(self):
+        findings = generate_multikill_findings(
+            {
+                "rounds_played": 18,
+                "two_k_rounds": 4,
+                "three_k_rounds": 2,
+                "four_k_rounds": 0,
+                "five_k_rounds": 0,
+            }
+        )
+
+        self.assertEqual(
+            len(findings),
+            1,
+        )
+
+        self.assertEqual(
+            findings[0].code,
+            "STRONG_MULTIKILL_IMPACT",
+        )
+
+        self.assertEqual(
+            findings[0].kind,
+            "strength",
+        )
+
+        self.assertEqual(
+            findings[0].evidence[
+                "multikill_rounds"
+            ],
+            6.0,
+        )
+
+        self.assertEqual(
+            findings[0].evidence[
+                "multikill_round_rate"
+            ],
+            0.333,
+        )
+
+    def test_multikill_count_must_also_be_high_enough(self):
+        self.assertEqual(
+            generate_multikill_findings(
+                {
+                    "rounds_played": 12,
+                    "two_k_rounds": 4,
+                    "three_k_rounds": 0,
+                    "four_k_rounds": 0,
+                    "five_k_rounds": 0,
+                }
+            ),
+            [],
+        )
+
+    def test_multikill_finding_requires_enough_rounds(self):
+        self.assertEqual(
+            generate_multikill_findings(
+                {
+                    "rounds_played": 10,
+                    "two_k_rounds": 6,
+                    "three_k_rounds": 0,
+                    "four_k_rounds": 0,
+                    "five_k_rounds": 0,
+                }
+            ),
+            [],
+        )
+
+
+class TestClutchFindings(unittest.TestCase):
+
+    def test_detects_multiple_clutch_wins(self):
+        findings = generate_clutch_findings(
+            {
+                "rounds_played": 20,
+                "clutches_won": 2,
+            }
+        )
+
+        self.assertEqual(
+            len(findings),
+            1,
+        )
+
+        self.assertEqual(
+            findings[0].code,
+            "MULTIPLE_CLUTCH_WINS",
+        )
+
+        self.assertEqual(
+            findings[0].kind,
+            "strength",
+        )
+
+        self.assertEqual(
+            findings[0].evidence[
+                "clutches_won"
+            ],
+            2.0,
+        )
+
+    def test_one_clutch_win_is_not_enough(self):
+        self.assertEqual(
+            generate_clutch_findings(
+                {
+                    "rounds_played": 20,
+                    "clutches_won": 1,
+                }
+            ),
+            [],
+        )
+
+    def test_clutch_finding_requires_enough_rounds(self):
+        self.assertEqual(
+            generate_clutch_findings(
+                {
+                    "rounds_played": 10,
+                    "clutches_won": 3,
                 }
             ),
             [],
