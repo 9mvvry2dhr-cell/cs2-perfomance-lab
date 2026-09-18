@@ -319,7 +319,7 @@ class AnalysisWorkerTest(
             analyses.saved
         )
 
-    def test_process_marks_job_failed_and_keeps_demo_when_analysis_fails(
+    def test_process_marks_job_failed_and_deletes_demo_when_analysis_fails(
         self,
     ):
         jobs = StubJobRepository(
@@ -354,6 +354,68 @@ class AnalysisWorkerTest(
             worker.process(
                 "job-001"
             )
+
+        self.assertEqual(
+            jobs.job.status,
+            "failed",
+        )
+
+        self.assertEqual(
+            jobs.failed_error,
+            "Analysis failed",
+        )
+
+        self.assertIsNone(
+            analyses.saved
+        )
+
+        self.assertFalse(
+            demo_path.exists()
+        )
+
+    def test_process_stays_failed_when_failed_demo_cleanup_fails(
+        self,
+    ):
+        jobs = StubJobRepository(
+            self._make_job()
+        )
+
+        analyses = (
+            StubAnalysisRepository()
+        )
+
+        demo_path = (
+            self.storage.path_for(
+                self.stored.storage_key
+            )
+        )
+
+        def fail(_):
+            raise RuntimeError(
+                "parser exploded"
+            )
+
+        worker = AnalysisWorker(
+            storage=self.storage,
+            job_repository=jobs,
+            analysis_repository=analyses,
+            analyzer=fail,
+        )
+
+        with patch.object(
+            self.storage,
+            "delete",
+            side_effect=OSError(
+                "cleanup failed"
+            ),
+        ):
+            with self.assertRaisesRegex(
+                RuntimeError,
+                "parser exploded",
+            ):
+                worker.process(
+                    "job-001"
+                )
 
         self.assertEqual(
             jobs.job.status,

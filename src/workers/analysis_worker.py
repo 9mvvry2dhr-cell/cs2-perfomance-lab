@@ -149,6 +149,22 @@ class AnalysisWorker:
                 job.id,
                 error="Analysis failed",
             )
+
+            try:
+                self.storage.delete(
+                    job.storage_key
+                )
+            except Exception:
+                logger.exception(
+                    "Failed to delete failed job demo",
+                    extra={
+                        "job_id": job.id,
+                        "storage_key": (
+                            job.storage_key
+                        ),
+                    },
+                )
+
             raise
 
         try:
