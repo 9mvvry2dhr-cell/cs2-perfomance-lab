@@ -3655,6 +3655,839 @@ does not slide underneath the replacement icon.
 
 /* END NAV SECTIONS */
 
+
+/* =========================================================
+   PLAYER MATCH HISTORY
+   ========================================================= */
+
+.player-history {
+    margin-top:
+        18px;
+
+    padding:
+        22px;
+}
+
+
+.player-history-head {
+    display:
+        flex;
+
+    align-items:
+        flex-start;
+
+    justify-content:
+        space-between;
+
+    gap:
+        18px;
+}
+
+
+.player-history-eyebrow {
+    color:
+        #8299ac;
+
+    font-size:
+        10px;
+
+    font-weight:
+        800;
+
+    letter-spacing:
+        0.12em;
+
+    text-transform:
+        uppercase;
+}
+
+
+.player-history-title {
+    margin-top:
+        5px;
+
+    color:
+        #e8f0f5;
+
+    font-size:
+        19px;
+
+    font-weight:
+        750;
+}
+
+
+.player-history-meta {
+    color:
+        #8299ac;
+
+    font-size:
+        11px;
+
+    line-height:
+        1.5;
+
+    text-align:
+        right;
+}
+
+
+.player-history-summary {
+    display:
+        grid;
+
+    grid-template-columns:
+        repeat(
+            4,
+            minmax(0, 1fr)
+        );
+
+    gap:
+        10px;
+
+    margin-top:
+        18px;
+}
+
+
+.player-history-metric {
+    padding:
+        14px;
+
+    border:
+        1px solid
+        rgba(
+            137,
+            167,
+            187,
+            0.14
+        );
+
+    border-radius:
+        10px;
+
+    background:
+        rgba(
+            12,
+            21,
+            28,
+            0.48
+        );
+}
+
+
+.player-history-metric-label {
+    color:
+        #8299ac;
+
+    font-size:
+        10px;
+
+    font-weight:
+        700;
+
+    letter-spacing:
+        0.04em;
+}
+
+
+.player-history-metric-value {
+    margin-top:
+        6px;
+
+    color:
+        #edf4f8;
+
+    font-size:
+        19px;
+
+    font-weight:
+        760;
+}
+
+
+.player-history-signals {
+    display:
+        grid;
+
+    grid-template-columns:
+        repeat(
+            2,
+            minmax(0, 1fr)
+        );
+
+    gap:
+        12px;
+
+    margin-top:
+        14px;
+}
+
+
+.player-history-panel {
+    padding:
+        15px;
+
+    border:
+        1px solid
+        rgba(
+            137,
+            167,
+            187,
+            0.14
+        );
+
+    border-radius:
+        10px;
+
+    background:
+        rgba(
+            12,
+            21,
+            28,
+            0.34
+        );
+}
+
+
+.player-history-panel-title {
+    margin-bottom:
+        9px;
+
+    color:
+        #d8e2ea;
+
+    font-size:
+        11px;
+
+    font-weight:
+        800;
+
+    letter-spacing:
+        0.05em;
+}
+
+
+.player-history-signal {
+    display:
+        flex;
+
+    align-items:
+        center;
+
+    justify-content:
+        space-between;
+
+    gap:
+        14px;
+
+    padding:
+        8px 0;
+
+    border-top:
+        1px solid
+        rgba(
+            137,
+            167,
+            187,
+            0.09
+        );
+}
+
+
+.player-history-signal:first-of-type {
+    border-top:
+        0;
+}
+
+
+.player-history-signal-name {
+    color:
+        #b9c9d3;
+
+    font-size:
+        12px;
+
+    line-height:
+        1.4;
+}
+
+
+.player-history-signal-count {
+    flex:
+        0 0 auto;
+
+    color:
+        #e5a744;
+
+    font-size:
+        11px;
+
+    font-weight:
+        750;
+}
+
+
+.player-history-empty {
+    color:
+        #738b9d;
+
+    font-size:
+        11px;
+
+    line-height:
+        1.5;
+}
+
+
+.player-history-matches {
+    margin-top:
+        18px;
+}
+
+
+.player-history-matches-title {
+    margin-bottom:
+        8px;
+
+    color:
+        #d8e2ea;
+
+    font-size:
+        11px;
+
+    font-weight:
+        800;
+
+    letter-spacing:
+        0.05em;
+}
+
+
+.player-history-match {
+    width:
+        100%;
+
+    display:
+        grid;
+
+    grid-template-columns:
+        minmax(120px, 1fr)
+        minmax(220px, 2fr)
+        auto;
+
+    align-items:
+        center;
+
+    gap:
+        14px;
+
+    padding:
+        11px 12px;
+
+    border:
+        0;
+
+    border-top:
+        1px solid
+        rgba(
+            137,
+            167,
+            187,
+            0.09
+        );
+
+    background:
+        transparent;
+
+    color:
+        inherit;
+
+    text-align:
+        left;
+
+    cursor:
+        pointer;
+}
+
+
+.player-history-match:hover {
+    background:
+        rgba(
+            255,
+            255,
+            255,
+            0.025
+        );
+}
+
+
+.player-history-map {
+    color:
+        #e8f0f5;
+
+    font-size:
+        12px;
+
+    font-weight:
+        700;
+}
+
+
+.player-history-stats {
+    color:
+        #9cb0bd;
+
+    font-size:
+        11px;
+}
+
+
+.player-history-date {
+    color:
+        #667f91;
+
+    font-size:
+        10px;
+
+    text-align:
+        right;
+}
+
+
+.player-history-loading {
+    color:
+        #8299ac;
+
+    font-size:
+        12px;
+
+    line-height:
+        1.6;
+}
+
+
+@media (
+    max-width: 900px
+) {
+    .player-history-summary,
+    .player-history-signals {
+        grid-template-columns:
+            1fr 1fr;
+    }
+
+    .player-history-match {
+        grid-template-columns:
+            1fr;
+
+        gap:
+            5px;
+    }
+
+    .player-history-date {
+        text-align:
+            left;
+    }
+}
+
+
+@media (
+    max-width: 620px
+) {
+    .player-history-summary,
+    .player-history-signals {
+        grid-template-columns:
+            1fr;
+    }
+
+    .player-history-head {
+        flex-direction:
+            column;
+    }
+
+    .player-history-meta {
+        text-align:
+            left;
+    }
+}
+
+
+
+.player-history-lower {
+    display:
+        grid;
+
+    grid-template-columns:
+        minmax(0, 1.55fr)
+        minmax(300px, 0.85fr);
+
+    gap:
+        14px;
+
+    margin-top:
+        18px;
+}
+
+
+.player-history-lower
+.player-history-matches {
+    margin-top:
+        0;
+}
+
+
+.player-history-match {
+    border-radius:
+        8px;
+
+    transition:
+        background 0.15s ease,
+        border-color 0.15s ease;
+}
+
+
+.player-history-match:hover {
+    background:
+        rgba(
+            70,
+            145,
+            198,
+            0.055
+        );
+}
+
+
+.player-history-match-details {
+    min-width:
+        0;
+}
+
+
+.player-history-match-line {
+    color:
+        #9cb0bd;
+
+    font-size:
+        11px;
+
+    white-space:
+        nowrap;
+
+    overflow:
+        hidden;
+
+    text-overflow:
+        ellipsis;
+}
+
+
+.player-history-badges {
+    display:
+        flex;
+
+    flex-wrap:
+        wrap;
+
+    gap:
+        6px;
+
+    margin-top:
+        6px;
+}
+
+
+.player-history-badge {
+    padding:
+        3px 7px;
+
+    border:
+        1px solid
+        rgba(
+            137,
+            167,
+            187,
+            0.14
+        );
+
+    border-radius:
+        999px;
+
+    color:
+        #8299ac;
+
+    font-size:
+        9px;
+
+    font-weight:
+        700;
+}
+
+
+.player-history-badge.weakness {
+    border-color:
+        rgba(
+            229,
+            167,
+            68,
+            0.24
+        );
+
+    color:
+        #e5a744;
+}
+
+
+.player-history-badge.strength {
+    border-color:
+        rgba(
+            95,
+            174,
+            240,
+            0.24
+        );
+
+    color:
+        #79bdf2;
+}
+
+
+.player-history-match-right {
+    display:
+        flex;
+
+    align-items:
+        center;
+
+    justify-content:
+        flex-end;
+
+    gap:
+        10px;
+
+    min-width:
+        120px;
+}
+
+
+.player-history-arrow {
+    color:
+        #5faef0;
+
+    font-size:
+        15px;
+
+    opacity:
+        0.55;
+
+    transition:
+        transform 0.15s ease,
+        opacity 0.15s ease;
+}
+
+
+.player-history-match:hover
+.player-history-arrow {
+    transform:
+        translateX(3px);
+
+    opacity:
+        1;
+}
+
+
+.player-game-profile {
+    align-self:
+        start;
+
+    padding:
+        15px;
+
+    border:
+        1px solid
+        rgba(
+            137,
+            167,
+            187,
+            0.14
+        );
+
+    border-radius:
+        10px;
+
+    background:
+        rgba(
+            12,
+            21,
+            28,
+            0.34
+        );
+}
+
+
+.player-game-profile-title {
+    margin-bottom:
+        12px;
+
+    color:
+        #d8e2ea;
+
+    font-size:
+        11px;
+
+    font-weight:
+        800;
+
+    letter-spacing:
+        0.05em;
+}
+
+
+.player-game-profile-grid {
+    display:
+        grid;
+
+    grid-template-columns:
+        repeat(
+            2,
+            minmax(0, 1fr)
+        );
+
+    gap:
+        9px;
+}
+
+
+.player-game-profile-item {
+    min-height:
+        78px;
+
+    padding:
+        11px;
+
+    border:
+        1px solid
+        rgba(
+            137,
+            167,
+            187,
+            0.11
+        );
+
+    border-radius:
+        8px;
+
+    background:
+        rgba(
+            8,
+            17,
+            24,
+            0.42
+        );
+}
+
+
+.player-game-profile-label {
+    color:
+        #71899a;
+
+    font-size:
+        9px;
+
+    font-weight:
+        750;
+
+    letter-spacing:
+        0.05em;
+
+    text-transform:
+        uppercase;
+}
+
+
+.player-game-profile-value {
+    margin-top:
+        5px;
+
+    color:
+        #edf4f8;
+
+    font-size:
+        17px;
+
+    font-weight:
+        780;
+}
+
+
+.player-game-profile-sub {
+    margin-top:
+        4px;
+
+    color:
+        #71899a;
+
+    font-size:
+        9px;
+
+    line-height:
+        1.45;
+}
+
+
+.player-game-profile-note {
+    margin-top:
+        12px;
+
+    padding-top:
+        10px;
+
+    border-top:
+        1px solid
+        rgba(
+            137,
+            167,
+            187,
+            0.09
+        );
+
+    color:
+        #667f91;
+
+    font-size:
+        9px;
+
+    line-height:
+        1.5;
+}
+
+
+@media (
+    max-width: 1050px
+) {
+    .player-history-lower {
+        grid-template-columns:
+            1fr;
+    }
+}
+
+
+@media (
+    max-width: 620px
+) {
+    .player-game-profile-grid {
+        grid-template-columns:
+            1fr;
+    }
+
+    .player-history-match-right {
+        justify-content:
+            flex-start;
+    }
+}
+
+
+/* END PLAYER MATCH HISTORY */
+
 </style>
 </head>
 
@@ -3864,6 +4697,21 @@ hidden
 </section>
 
 <!-- END NAV SECTIONS V2 -->
+
+
+<section
+class="card player-history"
+id="playerHistory"
+hidden
+>
+
+<div
+class="player-history-body"
+id="playerHistoryBody"
+>
+</div>
+
+</section>
 
 
 
@@ -6029,6 +6877,1053 @@ function renderFinding(
 }
 
 
+
+let playerHistoryRequestId = 0;
+
+
+const historyFindingLabels = {
+    SIDE_PERFORMANCE_GAP:
+        "\u0420\u0430\u0437\u043d\u0438\u0446\u0430 "
+        + "\u043c\u0435\u0436\u0434\u0443 CT / T",
+
+    FREQUENT_OPENING_DEATHS:
+        "\u0427\u0430\u0441\u0442\u044b\u0435 "
+        + "\u043f\u0435\u0440\u0432\u044b\u0435 "
+        + "\u0441\u043c\u0435\u0440\u0442\u0438",
+
+    LOW_FLASH_IMPACT:
+        "\u041d\u0438\u0437\u043a\u0438\u0439 "
+        + "\u0438\u043c\u043f\u0430\u043a\u0442 "
+        + "\u0444\u043b\u0435\u0448\u0435\u043a",
+
+    LOW_GRENADE_DAMAGE_IMPACT:
+        "\u041d\u0438\u0437\u043a\u0438\u0439 "
+        + "\u0443\u0440\u043e\u043d HE + Molotov",
+
+    STRONG_OPENING_IMPACT:
+        "\u0421\u0438\u043b\u044c\u043d\u044b\u0435 "
+        + "\u043f\u0435\u0440\u0432\u044b\u0435 "
+        + "\u043a\u043e\u043d\u0442\u0430\u043a\u0442\u044b",
+
+    STRONG_MULTIKILL_IMPACT:
+        "\u0421\u0438\u043b\u044c\u043d\u044b\u0439 "
+        + "\u043c\u0443\u043b\u044c\u0442\u0438\u043a\u0438\u043b\u043b-"
+        + "\u0438\u043c\u043f\u0430\u043a\u0442",
+
+    STRONG_GRENADE_DAMAGE_IMPACT:
+        "\u0421\u0438\u043b\u044c\u043d\u044b\u0439 "
+        + "\u0443\u0440\u043e\u043d HE + Molotov",
+
+    STRONG_FLASH_IMPACT:
+        "\u0421\u0438\u043b\u044c\u043d\u044b\u0439 "
+        + "\u0438\u043c\u043f\u0430\u043a\u0442 "
+        + "\u0444\u043b\u0435\u0448\u0435\u043a",
+
+    STRONG_TRADE_IMPACT:
+        "\u0421\u0438\u043b\u044c\u043d\u044b\u0435 "
+        + "\u0440\u0430\u0437\u043c\u0435\u043d\u044b",
+
+    MULTIPLE_CLUTCH_WINS:
+        "\u041d\u0435\u0441\u043a\u043e\u043b\u044c\u043a\u043e "
+        + "\u0432\u044b\u0438\u0433\u0440\u0430\u043d\u043d\u044b\u0445 "
+        + "\u043a\u043b\u0430\u0442\u0447\u0435\u0439",
+};
+
+
+function historyElement(
+    tag,
+    className,
+    textContent = null
+) {
+    const element =
+        document.createElement(
+            tag
+        );
+
+    if (className) {
+        element.className =
+            className;
+    }
+
+    if (textContent !== null) {
+        element.textContent =
+            textContent;
+    }
+
+    return element;
+}
+
+
+function formatHistoryMap(
+    mapName
+) {
+    return String(
+        mapName || ""
+    )
+        .replace(
+            /^de_/,
+            ""
+        )
+        .replace(
+            /_/g,
+            " "
+        )
+        .replace(
+            /\b\w/g,
+            letter =>
+                letter.toUpperCase()
+        );
+}
+
+
+function formatAnalyzedAt(
+    value
+) {
+    const date =
+        new Date(value);
+
+    if (
+        Number.isNaN(
+            date.getTime()
+        )
+    ) {
+        return "";
+    }
+
+    return date.toLocaleString(
+        "ru-RU",
+        {
+            day:
+                "2-digit",
+
+            month:
+                "2-digit",
+
+            hour:
+                "2-digit",
+
+            minute:
+                "2-digit",
+        }
+    );
+}
+
+
+function appendHistorySignals(
+    container,
+    titleText,
+    items,
+    matchesAnalyzed
+) {
+    const panel =
+        historyElement(
+            "div",
+            "player-history-panel"
+        );
+
+    panel.appendChild(
+        historyElement(
+            "div",
+            "player-history-panel-title",
+            titleText
+        )
+    );
+
+    if (!items.length) {
+        panel.appendChild(
+            historyElement(
+                "div",
+                "player-history-empty",
+                "\u041f\u043e\u043a\u0430 "
+                + "\u043d\u0435\u0442 "
+                + "\u0441\u0438\u0433\u043d\u0430\u043b\u0430, "
+                + "\u043a\u043e\u0442\u043e\u0440\u044b\u0439 "
+                + "\u043f\u043e\u0432\u0442\u043e\u0440\u0438\u043b\u0441\u044f "
+                + "\u043c\u0438\u043d\u0438\u043c\u0443\u043c "
+                + "\u0432 2 "
+                + "\u043c\u0430\u0442\u0447\u0430\u0445."
+            )
+        );
+
+        container.appendChild(
+            panel
+        );
+
+        return;
+    }
+
+    items.forEach(
+        item => {
+            const row =
+                historyElement(
+                    "div",
+                    "player-history-signal"
+                );
+
+            row.appendChild(
+                historyElement(
+                    "div",
+                    "player-history-signal-name",
+                    historyFindingLabels[
+                        item.code
+                    ]
+                    || item.code
+                )
+            );
+
+            row.appendChild(
+                historyElement(
+                    "div",
+                    "player-history-signal-count",
+                    `${item.matches} `
+                    + `\u0438\u0437 `
+                    + `${matchesAnalyzed}`
+                )
+            );
+
+            panel.appendChild(
+                row
+            );
+        }
+    );
+
+    container.appendChild(
+        panel
+    );
+}
+
+
+
+function historyFindingCounts(
+    item
+) {
+    const weaknessCodes =
+        new Set();
+
+    const strengthCodes =
+        new Set();
+
+    (
+        item.findings
+        || []
+    ).forEach(
+        finding => {
+            if (
+                finding.kind
+                === "weakness"
+            ) {
+                weaknessCodes.add(
+                    finding.code
+                );
+            }
+
+            if (
+                finding.kind
+                === "strength"
+            ) {
+                strengthCodes.add(
+                    finding.code
+                );
+            }
+        }
+    );
+
+    return {
+        weaknesses:
+            weaknessCodes.size,
+
+        strengths:
+            strengthCodes.size,
+    };
+}
+
+
+function appendGameProfileMetric(
+    container,
+    label,
+    value,
+    subtext
+) {
+    const item =
+        historyElement(
+            "div",
+            "player-game-profile-item"
+        );
+
+    item.appendChild(
+        historyElement(
+            "div",
+            "player-game-profile-label",
+            label
+        )
+    );
+
+    item.appendChild(
+        historyElement(
+            "div",
+            "player-game-profile-value",
+            value
+        )
+    );
+
+    if (subtext) {
+        item.appendChild(
+            historyElement(
+                "div",
+                "player-game-profile-sub",
+                subtext
+            )
+        );
+    }
+
+    container.appendChild(
+        item
+    );
+}
+
+
+function renderPlayerHistory(
+    summary,
+    matches
+) {
+    const section =
+        document.getElementById(
+            "playerHistory"
+        );
+
+    const body =
+        document.getElementById(
+            "playerHistoryBody"
+        );
+
+    body.replaceChildren();
+
+
+    const head =
+        historyElement(
+            "div",
+            "player-history-head"
+        );
+
+    const headLeft =
+        historyElement(
+            "div",
+            ""
+        );
+
+    headLeft.appendChild(
+        historyElement(
+            "div",
+            "player-history-eyebrow",
+            "\u041f\u0420\u041e\u0424\u0418\u041b\u042c "
+            + "\u0418\u0413\u0420\u041e\u041a\u0410"
+        )
+    );
+
+    headLeft.appendChild(
+        historyElement(
+            "div",
+            "player-history-title",
+            summary.player_name
+        )
+    );
+
+    head.appendChild(
+        headLeft
+    );
+
+    head.appendChild(
+        historyElement(
+            "div",
+            "player-history-meta",
+            `${summary.matches_analyzed} `
+            + "\u043c\u0430\u0442\u0447\u0435\u0439 "
+            + "\u00b7 "
+            + `${summary.stats.rounds_played} `
+            + "\u0440\u0430\u0443\u043d\u0434\u043e\u0432"
+        )
+    );
+
+    body.appendChild(
+        head
+    );
+
+
+    const metrics =
+        historyElement(
+            "div",
+            "player-history-summary"
+        );
+
+    const metricData = [
+        [
+            "K/D",
+            formatNumber(
+                summary.stats.kd,
+                2
+            ),
+        ],
+        [
+            "ADR",
+            formatNumber(
+                summary.stats.adr
+            ),
+        ],
+        [
+            "KAST",
+            `${formatNumber(
+                summary.stats.kast_pct
+            )}%`,
+        ],
+        [
+            "\u041f\u0435\u0440\u0432\u044b\u0435 K / D",
+            `${summary.stats.entry_kills}`
+            + " / "
+            + `${summary.stats.entry_deaths}`,
+        ],
+    ];
+
+    metricData.forEach(
+        ([label, value]) => {
+            const card =
+                historyElement(
+                    "div",
+                    "player-history-metric"
+                );
+
+            card.appendChild(
+                historyElement(
+                    "div",
+                    "player-history-metric-label",
+                    label
+                )
+            );
+
+            card.appendChild(
+                historyElement(
+                    "div",
+                    "player-history-metric-value",
+                    value
+                )
+            );
+
+            metrics.appendChild(
+                card
+            );
+        }
+    );
+
+    body.appendChild(
+        metrics
+    );
+
+
+    const recurring =
+        summary.finding_frequency
+            .filter(
+                item =>
+                    item.matches >= 2
+            );
+
+    const weaknesses =
+        recurring.filter(
+            item =>
+                item.kind
+                === "weakness"
+        );
+
+    const strengths =
+        recurring.filter(
+            item =>
+                item.kind
+                === "strength"
+        );
+
+
+    const signals =
+        historyElement(
+            "div",
+            "player-history-signals"
+        );
+
+    appendHistorySignals(
+        signals,
+        "\u041f\u041e\u0412\u0422\u041e\u0420\u042f\u0415\u0422\u0421\u042f",
+        weaknesses,
+        summary.matches_analyzed
+    );
+
+    appendHistorySignals(
+        signals,
+        "\u0421\u0418\u041b\u042c\u041d\u042b\u0415 "
+        + "\u0421\u0422\u041e\u0420\u041e\u041d\u042b",
+        strengths,
+        summary.matches_analyzed
+    );
+
+    body.appendChild(
+        signals
+    );
+
+
+    const lower =
+        historyElement(
+            "div",
+            "player-history-lower"
+        );
+
+
+    const matchesSection =
+        historyElement(
+            "div",
+            "player-history-matches"
+        );
+
+    matchesSection.appendChild(
+        historyElement(
+            "div",
+            "player-history-matches-title",
+            "\u0418\u0421\u0422\u041e\u0420\u0418\u042f "
+            + "\u041c\u0410\u0422\u0427\u0415\u0419"
+        )
+    );
+
+
+    matches.forEach(
+        item => {
+            const counts =
+                historyFindingCounts(
+                    item
+                );
+
+            const button =
+                historyElement(
+                    "button",
+                    "player-history-match"
+                );
+
+            button.type =
+                "button";
+
+
+            button.appendChild(
+                historyElement(
+                    "div",
+                    "player-history-map",
+                    formatHistoryMap(
+                        item.map_name
+                    )
+                    + " \u00b7 "
+                    + `${item.score_ct}:`
+                    + `${item.score_t}`
+                )
+            );
+
+
+            const details =
+                historyElement(
+                    "div",
+                    "player-history-match-details"
+                );
+
+            details.appendChild(
+                historyElement(
+                    "div",
+                    "player-history-match-line",
+                    `${item.stats.kills}`
+                    + " / "
+                    + `${item.stats.deaths}`
+                    + " \u00b7 "
+                    + `K/D ${formatNumber(
+                        item.stats.kd,
+                        2
+                    )}`
+                    + " \u00b7 "
+                    + `ADR ${formatNumber(
+                        item.stats.adr
+                    )}`
+                    + " \u00b7 "
+                    + `KAST ${formatNumber(
+                        item.stats.kast_pct
+                    )}%`
+                )
+            );
+
+
+            const badges =
+                historyElement(
+                    "div",
+                    "player-history-badges"
+                );
+
+            if (
+                counts.weaknesses
+                > 0
+            ) {
+                const badge =
+                    historyElement(
+                        "span",
+                        "player-history-badge weakness",
+                        "\u041f\u0440\u043e\u0431\u043b\u0435\u043c\u044b: "
+                        + `${counts.weaknesses}`
+                    );
+
+                badges.appendChild(
+                    badge
+                );
+            }
+
+            if (
+                counts.strengths
+                > 0
+            ) {
+                const badge =
+                    historyElement(
+                        "span",
+                        "player-history-badge strength",
+                        "\u0421\u0438\u043b\u044c\u043d\u044b\u0435: "
+                        + `${counts.strengths}`
+                    );
+
+                badges.appendChild(
+                    badge
+                );
+            }
+
+            if (
+                counts.weaknesses
+                === 0
+                && counts.strengths
+                === 0
+            ) {
+                badges.appendChild(
+                    historyElement(
+                        "span",
+                        "player-history-badge",
+                        "\u0411\u0435\u0437 "
+                        + "\u0432\u044b\u0440\u0430\u0436\u0435\u043d\u043d\u044b\u0445 "
+                        + "findings"
+                    )
+                );
+            }
+
+            details.appendChild(
+                badges
+            );
+
+            button.appendChild(
+                details
+            );
+
+
+            const right =
+                historyElement(
+                    "div",
+                    "player-history-match-right"
+                );
+
+            right.appendChild(
+                historyElement(
+                    "div",
+                    "player-history-date",
+                    formatAnalyzedAt(
+                        item.analyzed_at
+                    )
+                )
+            );
+
+            right.appendChild(
+                historyElement(
+                    "div",
+                    "player-history-arrow",
+                    "\u2192"
+                )
+            );
+
+            button.appendChild(
+                right
+            );
+
+
+            button.addEventListener(
+                "click",
+                async () => {
+                    button.disabled =
+                        true;
+
+                    try {
+                        const analysis =
+                            await loadMatchAnalysis(
+                                item.match_id
+                            );
+
+                        if (
+                            typeof window.cs2OpenAnalysis
+                            === "function"
+                        ) {
+                            window.cs2OpenAnalysis();
+                        }
+
+                        showAnalysisState();
+
+                        renderMatchAnalysis(
+                            analysis
+                        );
+
+                        window.scrollTo(
+                            {
+                                top:
+                                    0,
+
+                                behavior:
+                                    "smooth",
+                            }
+                        );
+                    } catch (
+                        error
+                    ) {
+                        setUploadStatus(
+                            error.message
+                            || "\u041d\u0435 "
+                            + "\u0443\u0434\u0430\u043b\u043e\u0441\u044c "
+                            + "\u043e\u0442\u043a\u0440\u044b\u0442\u044c "
+                            + "\u043c\u0430\u0442\u0447.",
+                            "error"
+                        );
+                    } finally {
+                        button.disabled =
+                            false;
+                    }
+                }
+            );
+
+            matchesSection.appendChild(
+                button
+            );
+        }
+    );
+
+
+    lower.appendChild(
+        matchesSection
+    );
+
+
+    const gameProfile =
+        historyElement(
+            "div",
+            "player-game-profile"
+        );
+
+    gameProfile.appendChild(
+        historyElement(
+            "div",
+            "player-game-profile-title",
+            "\u041f\u0420\u041e\u0424\u0418\u041b\u042c "
+            + "\u0418\u0413\u0420\u042b"
+        )
+    );
+
+
+    const profileGrid =
+        historyElement(
+            "div",
+            "player-game-profile-grid"
+        );
+
+
+    appendGameProfileMetric(
+        profileGrid,
+
+        "ENTRY K / D",
+
+        `${summary.stats.entry_kills}`
+        + " / "
+        + `${summary.stats.entry_deaths}`,
+
+        "\u041f\u0435\u0440\u0432\u044b\u0435 "
+        + "\u0434\u0443\u044d\u043b\u0438"
+    );
+
+
+    appendGameProfileMetric(
+        profileGrid,
+
+        "\u0420\u0410\u0417\u041c\u0415\u041d\u042b",
+
+        String(
+            summary.stats.trade_kills
+        ),
+
+        "\u0420\u0430\u0437\u043c\u0435\u043d\u044f\u043d\u043e "
+        + "\u0441\u043c\u0435\u0440\u0442\u0435\u0439: "
+        + `${summary.stats.traded_deaths}`
+    );
+
+
+    appendGameProfileMetric(
+        profileGrid,
+
+        "\u041a\u041b\u0410\u0422\u0427\u0418",
+
+        String(
+            summary.stats.clutches_won
+        ),
+
+        "\u0412\u044b\u0438\u0433\u0440\u0430\u043d\u043d\u044b\u0435 "
+        + "\u043a\u043b\u0430\u0442\u0447\u0438"
+    );
+
+
+    const utilityDamage =
+        Number(
+            summary.stats.he_damage
+            || 0
+        )
+        + Number(
+            summary.stats.inferno_damage
+            || 0
+        );
+
+    appendGameProfileMetric(
+        profileGrid,
+
+        "UTILITY DAMAGE",
+
+        formatNumber(
+            utilityDamage,
+            0
+        ),
+
+        `HE ${formatNumber(
+            summary.stats.he_damage,
+            0
+        )}`
+        + " \u00b7 "
+        + `Molotov ${formatNumber(
+            summary.stats.inferno_damage,
+            0
+        )}`
+    );
+
+
+    appendGameProfileMetric(
+        profileGrid,
+
+        "\u0424\u041b\u0415\u0428\u041a\u0418",
+
+        `${summary.stats.enemies_flashed} `
+        + "\u0432\u0440\u0430\u0433\u043e\u0432",
+
+        `${formatNumber(
+            summary.stats.flash_duration
+        )} `
+        + "\u0441\u0435\u043a "
+        + "\u043e\u0441\u043b\u0435\u043f\u043b\u0435\u043d\u0438\u044f"
+    );
+
+
+    const multikillRounds =
+        Number(
+            summary.stats.two_k_rounds
+            || 0
+        )
+        + Number(
+            summary.stats.three_k_rounds
+            || 0
+        )
+        + Number(
+            summary.stats.four_k_rounds
+            || 0
+        )
+        + Number(
+            summary.stats.five_k_rounds
+            || 0
+        );
+
+    appendGameProfileMetric(
+        profileGrid,
+
+        "\u041c\u0423\u041b\u042c\u0422\u0418\u041a\u0418\u041b\u041b\u042b",
+
+        String(
+            multikillRounds
+        ),
+
+        `2K ${summary.stats.two_k_rounds}`
+        + " \u00b7 "
+        + `3K ${summary.stats.three_k_rounds}`
+        + " \u00b7 "
+        + `4K ${summary.stats.four_k_rounds}`
+        + " \u00b7 "
+        + `5K ${summary.stats.five_k_rounds}`
+    );
+
+
+    gameProfile.appendChild(
+        profileGrid
+    );
+
+
+    gameProfile.appendChild(
+        historyElement(
+            "div",
+            "player-game-profile-note",
+            "\u0410\u0433\u0440\u0435\u0433\u0438\u0440\u043e\u0432\u0430\u043d\u043e "
+            + "\u043f\u043e "
+            + `${summary.matches_analyzed} `
+            + "\u043f\u0440\u043e\u0430\u043d\u0430\u043b\u0438\u0437\u0438\u0440\u043e\u0432\u0430\u043d\u043d\u044b\u043c "
+            + "\u043c\u0430\u0442\u0447\u0430\u043c "
+            + "\u0438 "
+            + `${summary.stats.rounds_played} `
+            + "\u0440\u0430\u0443\u043d\u0434\u0430\u043c."
+        )
+    );
+
+
+    lower.appendChild(
+        gameProfile
+    );
+
+
+    body.appendChild(
+        lower
+    );
+}
+
+
+async function loadPlayerHistory(
+    steamId
+) {
+    const section =
+        document.getElementById(
+            "playerHistory"
+        );
+
+    const body =
+        document.getElementById(
+            "playerHistoryBody"
+        );
+
+    const requestId =
+        ++playerHistoryRequestId;
+
+    body.replaceChildren(
+        historyElement(
+            "div",
+            "player-history-loading",
+            "\u0417\u0430\u0433\u0440\u0443\u0436\u0430\u0435\u043c "
+            + "\u0438\u0441\u0442\u043e\u0440\u0438\u044e "
+            + "\u0438\u0433\u0440\u043e\u043a\u0430\u2026"
+        )
+    );
+
+    try {
+        const [
+            summaryResponse,
+            matchesResponse,
+        ] = await Promise.all(
+            [
+                fetch(
+                    `/players/${steamId}`
+                    + "/summary?limit=10"
+                ),
+
+                fetch(
+                    `/players/${steamId}`
+                    + "/matches?limit=10"
+                ),
+            ]
+        );
+
+        if (
+            requestId
+            !== playerHistoryRequestId
+        ) {
+            return;
+        }
+
+        if (
+            summaryResponse.status
+            === 404
+        ) {
+            body.replaceChildren(
+                historyElement(
+                    "div",
+                    "player-history-loading",
+                    "\u0418\u0441\u0442\u043e\u0440\u0438\u0438 "
+                    + "\u0434\u043b\u044f "
+                    + "\u044d\u0442\u043e\u0433\u043e "
+                    + "\u0438\u0433\u0440\u043e\u043a\u0430 "
+                    + "\u043f\u043e\u043a\u0430 "
+                    + "\u043d\u0435\u0442."
+                )
+            );
+
+            return;
+        }
+
+        if (!summaryResponse.ok) {
+            throw new Error(
+                await readApiError(
+                    summaryResponse
+                )
+            );
+        }
+
+        if (!matchesResponse.ok) {
+            throw new Error(
+                await readApiError(
+                    matchesResponse
+                )
+            );
+        }
+
+        const summary =
+            await summaryResponse.json();
+
+        const matches =
+            await matchesResponse.json();
+
+        if (
+            requestId
+            !== playerHistoryRequestId
+        ) {
+            return;
+        }
+
+        renderPlayerHistory(
+            summary,
+            matches
+        );
+    } catch (
+        error
+    ) {
+        if (
+            requestId
+            !== playerHistoryRequestId
+        ) {
+            return;
+        }
+
+        console.error(
+            "Player history failed:",
+            error
+        );
+
+        body.replaceChildren(
+            historyElement(
+                "div",
+                "player-history-loading",
+                "\u0418\u0441\u0442\u043e\u0440\u0438\u044f "
+                + "\u0432\u0440\u0435\u043c\u0435\u043d\u043d\u043e "
+                + "\u043d\u0435\u0434\u043e\u0441\u0442\u0443\u043f\u043d\u0430."
+            )
+        );
+    }
+}
+
+
 function renderPlayer(
     player,
     analysis
@@ -6200,6 +8095,29 @@ function renderPlayer(
     renderFinding(
         player
     );
+
+    try {
+        localStorage.setItem(
+            "cs2pl:lastPlayerSteamId",
+            player.steam_id
+        );
+    } catch {
+        // Local storage is optional.
+    }
+
+    const historySection =
+        document.getElementById(
+            "playerHistory"
+        );
+
+    if (
+        historySection
+        && !historySection.hidden
+    ) {
+        loadPlayerHistory(
+            player.steam_id
+        );
+    }
 
     document
         .querySelectorAll(
@@ -7537,6 +9455,16 @@ document
             "sectionPlaceholderText"
         );
 
+    const playerHistory =
+        document.getElementById(
+            "playerHistory"
+        );
+
+    const playerHistoryBody =
+        document.getElementById(
+            "playerHistoryBody"
+        );
+
 
     const analysisElements = [
         document.getElementById(
@@ -7610,6 +9538,9 @@ document
     ) {
         hideAnalysisPage();
 
+        playerHistory.hidden =
+            true;
+
         placeholder.hidden =
             false;
 
@@ -7632,10 +9563,94 @@ document
         placeholder.hidden =
             true;
 
+        playerHistory.hidden =
+            true;
+
         restoreAnalysisPage();
 
         setActive(
             analysisNav
+        );
+    }
+
+
+    window.cs2OpenAnalysis =
+        openAnalysis;
+
+
+    function openPlayers() {
+        hideAnalysisPage();
+
+        placeholder.hidden =
+            true;
+
+        playerHistory.hidden =
+            false;
+
+        setActive(
+            playersNav
+        );
+
+
+        const playerSelect =
+            document.querySelector(
+                ".player-select"
+            );
+
+        let steamId =
+            String(
+                playerSelect?.value
+                || ""
+            ).trim();
+
+
+        if (!steamId) {
+            try {
+                steamId =
+                    String(
+                        localStorage.getItem(
+                            "cs2pl:lastPlayerSteamId"
+                        )
+                        || ""
+                    ).trim();
+            } catch {
+                steamId = "";
+            }
+        }
+
+
+        if (steamId) {
+            loadPlayerHistory(
+                steamId
+            );
+
+            return;
+        }
+
+
+        playerHistoryBody.replaceChildren();
+
+        const empty =
+            document.createElement(
+                "div"
+            );
+
+        empty.className =
+            "player-history-loading";
+
+        empty.textContent =
+            "Пока "
+            + "нет "
+            + "выбранного "
+            + "игрока. "
+            + "Сначала "
+            + "открой "
+            + "или "
+            + "проанализируй "
+            + "матч.";
+
+        playerHistoryBody.appendChild(
+            empty
         );
     }
 
@@ -7669,17 +9684,7 @@ document
 
     bind(
         playersNav,
-        () => {
-            openPlaceholder(
-                playersNav,
-
-                "\u0418\u0433\u0440\u043e\u043a\u0438",
-
-                "\u041f\u0440\u043e\u0444\u0438\u043b\u0438 \u0438\u0433\u0440\u043e\u043a\u043e\u0432",
-
-                "\u0417\u0434\u0435\u0441\u044c \u0431\u0443\u0434\u0443\u0442 \u043b\u0438\u0447\u043d\u044b\u0435 \u043c\u0435\u0442\u0440\u0438\u043a\u0438, \u0438\u0441\u0442\u043e\u0440\u0438\u044f \u043c\u0430\u0442\u0447\u0435\u0439 \u0438 \u043a\u043b\u044e\u0447\u0435\u0432\u044b\u0435 findings."
-            );
-        }
+        openPlayers
     );
 
 
