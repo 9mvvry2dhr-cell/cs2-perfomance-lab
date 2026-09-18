@@ -9764,5 +9764,567 @@ document
 
 <!-- END NAV SECTIONS JS -->
 
+
+<!-- CURRENT USER UI GUARD START -->
+
+<style>
+/*
+Prototype product rule:
+one account -> one visible Steam profile.
+*/
+
+.player-select {
+    display:
+        none !important;
+}
+
+
+#players {
+    display:
+        none !important;
+}
+
+
+.current-user-card {
+    padding:
+        10px
+        12px;
+
+    border:
+        1px solid
+        rgba(
+            86,
+            139,
+            177,
+            0.20
+        );
+
+    border-radius:
+        9px;
+
+    background:
+        rgba(
+            9,
+            23,
+            34,
+            0.62
+        );
+}
+
+
+.current-user-name {
+    color:
+        #e9f2f7;
+
+    font-size:
+        12px;
+
+    font-weight:
+        750;
+}
+
+
+.current-user-steam {
+    margin-top:
+        3px;
+
+    color:
+        #668094;
+
+    font-size:
+        8px;
+
+    line-height:
+        1.4;
+
+    word-break:
+        break-all;
+}
+</style>
+
+
+<script>
+(function () {
+
+    const CURRENT_STEAM_ID =
+        "76561198055629469";
+
+    const CURRENT_NAME =
+        "kbn_san";
+
+
+    window.CS2_CURRENT_USER_STEAM_ID =
+        CURRENT_STEAM_ID;
+
+
+    function normalizeText(
+        element
+    ) {
+        return String(
+            element?.textContent
+            || ""
+        )
+        .replace(
+            /\s+/g,
+            " "
+        )
+        .trim();
+    }
+
+
+    function enforceCurrentUserUi() {
+
+        /*
+        Hide the old infrastructure selector.
+        Keep it in DOM because old rendering code
+        still expects it to exist.
+        */
+        const select =
+            document.querySelector(
+                ".player-select"
+            );
+
+        if (select) {
+
+            let option =
+                Array.from(
+                    select.options
+                )
+                .find(
+                    item =>
+                        String(
+                            item.value
+                        )
+                        === CURRENT_STEAM_ID
+                        ||
+                        normalizeText(
+                            item
+                        )
+                        === CURRENT_NAME
+                );
+
+
+            if (!option) {
+
+                option =
+                    document.createElement(
+                        "option"
+                    );
+
+                option.value =
+                    CURRENT_STEAM_ID;
+
+                option.textContent =
+                    CURRENT_NAME;
+
+                select.appendChild(
+                    option
+                );
+            }
+
+
+            select.value =
+                option.value;
+
+            select.disabled =
+                true;
+
+            select.hidden =
+                true;
+
+            select.style.setProperty(
+                "display",
+                "none",
+                "important"
+            );
+        }
+
+
+        /*
+        Hide detailed teammate statistics.
+        */
+        const players =
+            document.getElementById(
+                "players"
+            );
+
+        if (players) {
+
+            players.hidden =
+                true;
+
+            players.style.setProperty(
+                "display",
+                "none",
+                "important"
+            );
+        }
+
+
+        /*
+        Sidebar label -> current user's profile.
+        */
+        const labels =
+            Array.from(
+                document.querySelectorAll(
+                    ".side-label"
+                )
+            );
+
+        const playerLabel =
+            labels.find(
+                label => {
+                    const value =
+                        normalizeText(
+                            label
+                        )
+                        .toUpperCase();
+
+                    return (
+                        value
+                        === "\u0418\u0413\u0420\u041e\u041a"
+                        ||
+                        value
+                        === "\u0422\u0412\u041e\u0419 \u041f\u0420\u041e\u0424\u0418\u041b\u042c"
+                    );
+                }
+            );
+
+
+        if (playerLabel) {
+
+            playerLabel.textContent =
+                "\u0422\u0412\u041e\u0419 \u041f\u0420\u041e\u0424\u0418\u041b\u042c";
+
+
+            let card =
+                document.getElementById(
+                    "currentUserCard"
+                );
+
+
+            if (!card) {
+
+                card =
+                    document.createElement(
+                        "div"
+                    );
+
+                card.id =
+                    "currentUserCard";
+
+                card.className =
+                    "current-user-card";
+
+
+                const name =
+                    document.createElement(
+                        "div"
+                    );
+
+                name.id =
+                    "currentUserName";
+
+                name.className =
+                    "current-user-name";
+
+                name.textContent =
+                    CURRENT_NAME;
+
+
+                const steam =
+                    document.createElement(
+                        "div"
+                    );
+
+                steam.id =
+                    "currentUserSteam";
+
+                steam.className =
+                    "current-user-steam";
+
+                steam.textContent =
+                    `Steam ID: ${CURRENT_STEAM_ID}`;
+
+
+                card.appendChild(
+                    name
+                );
+
+                card.appendChild(
+                    steam
+                );
+
+
+                playerLabel.insertAdjacentElement(
+                    "afterend",
+                    card
+                );
+            }
+        }
+
+
+        /*
+        Visible nav label:
+        Players -> Profile.
+        Existing click handler remains attached
+        to the same button.
+        */
+        document
+            .querySelectorAll(
+                ".nav-button"
+            )
+            .forEach(
+                button => {
+
+                    if (
+                        normalizeText(
+                            button
+                        )
+                        === "\u0418\u0433\u0440\u043e\u043a\u0438"
+                    ) {
+
+                        const textNodes =
+                            Array.from(
+                                button.childNodes
+                            )
+                            .filter(
+                                node =>
+                                    node.nodeType
+                                    === Node.TEXT_NODE
+                            );
+
+
+                        const node =
+                            textNodes.find(
+                                item =>
+                                    String(
+                                        item.textContent
+                                        || ""
+                                    )
+                                    .trim()
+                                    === "\u0418\u0433\u0440\u043e\u043a\u0438"
+                            );
+
+
+                        if (node) {
+
+                            node.textContent =
+                                "\n\u041f\u0440\u043e\u0444\u0438\u043b\u044c\n";
+                        }
+                    }
+                }
+            );
+    }
+
+
+    enforceCurrentUserUi();
+
+
+    /*
+    The original renderer still exists.
+    Wrap it so every loaded match is forced
+    onto the authenticated prototype user.
+    */
+    if (
+        typeof renderMatchAnalysis
+        === "function"
+        &&
+        !window
+            .CS2_CURRENT_USER_RENDER_GUARD
+    ) {
+
+        const originalRenderMatchAnalysis =
+            renderMatchAnalysis;
+
+
+        renderMatchAnalysis =
+            function (
+                analysis
+            ) {
+
+                const currentPlayer =
+                    (
+                        analysis.players
+                        || []
+                    )
+                    .find(
+                        player =>
+                            String(
+                                player.steam_id
+                            )
+                            === CURRENT_STEAM_ID
+                    );
+
+
+                if (!currentPlayer) {
+
+                    if (
+                        typeof analysisView
+                        !== "undefined"
+                    ) {
+                        analysisView.hidden =
+                            true;
+                    }
+
+
+                    if (
+                        typeof analysisEmptyState
+                        !== "undefined"
+                    ) {
+                        analysisEmptyState.hidden =
+                            false;
+                    }
+
+
+                    if (
+                        typeof analysisEmptyTitle
+                        !== "undefined"
+                    ) {
+                        analysisEmptyTitle.textContent =
+                            "\u0422\u0432\u043e\u0439 "
+                            + "\u043f\u0440\u043e\u0444\u0438\u043b\u044c "
+                            + "\u043d\u0435 "
+                            + "\u043d\u0430\u0439\u0434\u0435\u043d "
+                            + "\u0432 "
+                            + "\u044d\u0442\u043e\u043c "
+                            + "\u043c\u0430\u0442\u0447\u0435.";
+                    }
+
+
+                    if (
+                        typeof analysisEmptyText
+                        !== "undefined"
+                    ) {
+                        analysisEmptyText.textContent =
+                            "\u0410\u043d\u0430\u043b\u0438\u0437 "
+                            + "\u0434\u0440\u0443\u0433\u0438\u0445 "
+                            + "\u0438\u0433\u0440\u043e\u043a\u043e\u0432 "
+                            + "\u043d\u0435 "
+                            + "\u043f\u043e\u043a\u0430\u0437\u044b\u0432\u0430\u0435\u0442\u0441\u044f.";
+                    }
+
+
+                    enforceCurrentUserUi();
+
+                    return;
+                }
+
+
+                /*
+                Make old renderer choose kbn_san as well.
+                */
+                const select =
+                    document.querySelector(
+                        ".player-select"
+                    );
+
+                if (select) {
+
+                    select.disabled =
+                        false;
+
+
+                    let option =
+                        Array.from(
+                            select.options
+                        )
+                        .find(
+                            item =>
+                                String(
+                                    item.value
+                                )
+                                === CURRENT_STEAM_ID
+                                ||
+                                normalizeText(
+                                    item
+                                )
+                                === CURRENT_NAME
+                        );
+
+
+                    if (!option) {
+
+                        option =
+                            document.createElement(
+                                "option"
+                            );
+
+                        option.value =
+                            CURRENT_STEAM_ID;
+
+                        option.textContent =
+                            CURRENT_NAME;
+
+                        select.appendChild(
+                            option
+                        );
+                    }
+
+
+                    select.value =
+                        option.value;
+                }
+
+
+                originalRenderMatchAnalysis(
+                    analysis
+                );
+
+
+                /*
+                Final guarantee:
+                render only current player's detail card.
+                */
+                if (
+                    typeof renderPlayer
+                    === "function"
+                ) {
+
+                    renderPlayer(
+                        currentPlayer,
+                        analysis
+                    );
+                }
+
+
+                const finalSelect =
+                    document.querySelector(
+                        ".player-select"
+                    );
+
+                if (finalSelect) {
+
+                    finalSelect.value =
+                        CURRENT_STEAM_ID;
+
+                    finalSelect.onchange =
+                        null;
+                }
+
+
+                enforceCurrentUserUi();
+            };
+
+
+        window
+            .CS2_CURRENT_USER_RENDER_GUARD =
+            true;
+    }
+
+
+    /*
+    Run once more after all synchronous page setup.
+    */
+    setTimeout(
+        enforceCurrentUserUi,
+        0
+    );
+
+})();
+</script>
+
+<!-- CURRENT USER UI GUARD END -->
+
 </body>
 </html>
