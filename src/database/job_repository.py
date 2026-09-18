@@ -3,7 +3,7 @@ from __future__ import annotations
 from datetime import datetime, timezone
 from typing import cast
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from src.database.models import AnalysisJobModel
@@ -69,6 +69,30 @@ class AnalysisJobRepository:
         return self._to_domain(
             model
         )
+
+    def count_active_jobs(
+        self,
+    ) -> int:
+        stmt = (
+            select(func.count())
+            .select_from(
+                AnalysisJobModel
+            )
+            .where(
+                AnalysisJobModel.status.in_(
+                    (
+                        "queued",
+                        "processing",
+                    )
+                )
+            )
+        )
+
+        return int(
+            self.session.scalar(stmt)
+            or 0
+        )
+
     def requeue_stale_processing_jobs(
         self,
         *,

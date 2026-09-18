@@ -1,9 +1,10 @@
-﻿import unittest
+import unittest
 from io import BytesIO
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
 from src.ingestion.service import (
+    AnalysisQueueFullError,
     DemoIngestionService,
 )
 from src.ingestion.storage import (
@@ -17,10 +18,17 @@ class StubJobRepository:
         *,
         result=None,
         error=None,
+        active_jobs=0,
     ):
         self.result = result
         self.error = error
+        self.active_jobs = active_jobs
         self.calls = []
+
+    def count_active_jobs(
+        self,
+    ):
+        return self.active_jobs
 
     def create_job(
         self,
@@ -112,6 +120,39 @@ class DemoIngestionServiceTest(
                 self.root
                 / call["storage_key"]
             ).exists()
+        )
+
+    def test_ingest_rejects_when_active_job_limit_is_reached(
+        self,
+    ):
+        repository = StubJobRepository(
+            active_jobs=4
+        )
+
+        service = DemoIngestionService(
+            storage=self.storage,
+            job_repository=repository,
+            max_active_jobs=4,
+        )
+
+        with self.assertRaises(
+            AnalysisQueueFullError
+        ):
+            service.ingest(
+                original_filename="match.dem",
+                source=BytesIO(
+                    b"demo-content"
+                ),
+            )
+
+        self.assertEqual(
+            repository.calls,
+            [],
+        )
+
+        self.assertEqual(
+            list(self.root.iterdir()),
+            [],
         )
 
     def test_ingest_deletes_demo_when_job_creation_fails(

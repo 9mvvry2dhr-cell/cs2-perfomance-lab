@@ -41,7 +41,10 @@ from src.api.schemas import (
 from src.database.job_repository import AnalysisJobRepository
 from src.database.repository import AnalysisRepository
 from src.domain.identity import CurrentUser
-from src.ingestion.service import DemoIngestionService
+from src.ingestion.service import (
+    AnalysisQueueFullError,
+    DemoIngestionService,
+)
 from src.ingestion.storage import (
     DemoTooLargeError,
     InvalidDemoFileError,
@@ -164,6 +167,17 @@ def create_analysis_job(
             original_filename=filename,
             source=file.file,
         )
+
+    except AnalysisQueueFullError as exc:
+        raise HTTPException(
+            status_code=(
+                status.HTTP_429_TOO_MANY_REQUESTS
+            ),
+            detail=str(exc),
+            headers={
+                "Retry-After": "30",
+            },
+        ) from exc
 
     except DemoTooLargeError as exc:
         raise HTTPException(

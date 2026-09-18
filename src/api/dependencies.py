@@ -20,7 +20,10 @@ from src.database.connection import (
 )
 from src.database.job_repository import AnalysisJobRepository
 from src.database.repository import AnalysisRepository
-from src.ingestion.service import DemoIngestionService
+from src.ingestion.service import (
+    DEFAULT_MAX_ACTIVE_JOBS,
+    DemoIngestionService,
+)
 from src.ingestion.storage import LocalDemoStorage
 from src.domain.identity import CurrentUser
 
@@ -92,9 +95,17 @@ def get_demo_ingestion_service(
         Depends(get_demo_storage),
     ],
 ) -> DemoIngestionService:
+    max_active_jobs = int(
+        os.environ.get(
+            "ANALYSIS_MAX_ACTIVE_JOBS",
+            str(DEFAULT_MAX_ACTIVE_JOBS),
+        )
+    )
+
     return DemoIngestionService(
         storage=storage,
         job_repository=repository,
+        max_active_jobs=max_active_jobs,
     )
 
 

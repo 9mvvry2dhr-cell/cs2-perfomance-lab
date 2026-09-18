@@ -1,4 +1,4 @@
-﻿import unittest
+import unittest
 from datetime import datetime, timezone
 
 from fastapi.testclient import TestClient
@@ -8,6 +8,9 @@ from src.api.dependencies import (
     get_demo_ingestion_service,
 )
 from src.domain.jobs import AnalysisJob
+from src.ingestion.service import (
+    AnalysisQueueFullError,
+)
 from src.ingestion.storage import (
     DemoTooLargeError,
     InvalidDemoFileError,
@@ -132,6 +135,53 @@ class AnalysisJobUploadApiTest(
         self.assertNotIn(
             "file_sha256",
             body,
+        )
+
+    def test_upload_rejects_when_analysis_queue_is_full(
+        self,
+    ):
+        service = StubIngestionService(
+            error=AnalysisQueueFullError(
+                "Analysis queue is full"
+            )
+        )
+
+        app.dependency_overrides[
+            get_demo_ingestion_service
+        ] = lambda: service
+
+        client = TestClient(app)
+
+        response = client.post(
+            "/analysis-jobs",
+            files={
+                "file": (
+                    "match.dem",
+                    b"content",
+                    "application/octet-stream",
+                )
+            },
+        )
+
+        self.assertEqual(
+            response.status_code,
+            429,
+        )
+
+        self.assertEqual(
+            response.headers.get(
+                "retry-after"
+            ),
+            "30",
+        )
+
+        self.assertEqual(
+            response.json(),
+            {
+                "detail": (
+                    "Analysis queue is full"
+                )
+            },
         )
 
     def test_upload_rejects_non_demo_file(

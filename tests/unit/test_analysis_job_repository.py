@@ -120,6 +120,55 @@ class AnalysisJobRepositoryTest(
             loaded
         )
 
+    def test_count_active_jobs_counts_queued_and_processing(
+        self,
+    ):
+        first = self._create_job()
+
+        second = self.repository.create_job(
+            original_filename="second.dem",
+            storage_key="demos/second.dem",
+            file_sha256="b" * 64,
+        )
+
+        self.assertEqual(
+            self.repository.count_active_jobs(),
+            2,
+        )
+
+        self.repository.mark_processing(
+            first.id
+        )
+
+        self.assertEqual(
+            self.repository.count_active_jobs(),
+            2,
+        )
+
+        self.repository.mark_failed(
+            first.id,
+            error="Parser failed",
+        )
+
+        self.assertEqual(
+            self.repository.count_active_jobs(),
+            1,
+        )
+
+        self.repository.mark_processing(
+            second.id
+        )
+
+        self.repository.mark_failed(
+            second.id,
+            error="Parser failed",
+        )
+
+        self.assertEqual(
+            self.repository.count_active_jobs(),
+            0,
+        )
+
     def test_claim_next_job_returns_none_when_queue_empty(
         self,
     ):
