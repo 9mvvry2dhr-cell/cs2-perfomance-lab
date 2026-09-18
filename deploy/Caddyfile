@@ -2,6 +2,15 @@
 
     encode zstd gzip
 
+    @demo_upload {
+        method POST
+        path /analysis-jobs
+    }
+
+    request_body @demo_upload {
+        max_size 400MiB
+    }
+
 
     basic_auth {
 
