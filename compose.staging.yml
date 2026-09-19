@@ -110,7 +110,7 @@ services:
     environment:
       DATABASE_URL: postgresql+psycopg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
       DEMO_STORAGE_DIR: /app/data/uploads
-      DEMO_MAX_BYTES: ${DEMO_MAX_BYTES:-402653184}
+      DEMO_MAX_BYTES: ${DEMO_MAX_BYTES:-536870912}
       DEMO_STORAGE_MAX_BYTES: ${DEMO_STORAGE_MAX_BYTES:-2147483648}
       ANALYSIS_MAX_ACTIVE_JOBS: ${ANALYSIS_MAX_ACTIVE_JOBS:-4}
       CURRENT_USER_STEAM_ID: ${CURRENT_USER_STEAM_ID:?CURRENT_USER_STEAM_ID is required}
@@ -128,7 +128,7 @@ services:
         condition: service_completed_successfully
     read_only: true
     tmpfs:
-      - /tmp:size=512m,mode=1777
+      - /tmp:size=640m,mode=1777
     cap_drop:
       - ALL
     security_opt:

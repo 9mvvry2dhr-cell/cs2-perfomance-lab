@@ -8,7 +8,7 @@
     }
 
     request_body @demo_upload {
-        max_size 400MiB
+        max_size 544MiB
     }
 
 
