@@ -184,8 +184,8 @@ services:
       - ALL
     security_opt:
       - no-new-privileges:true
-    mem_limit: ${WORKER_MEMORY_LIMIT:-4g}
-    cpus: ${WORKER_CPU_LIMIT:-2.0}
+    mem_limit: ${WORKER_MEMORY_LIMIT:-2g}
+    cpus: ${WORKER_CPU_LIMIT:-3.0}
     pids_limit: 512
     logging:
       driver: json-file
