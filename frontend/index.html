@@ -2040,6 +2040,413 @@ tr.selected td {
 
 
 
+
+/* =========================================================
+   LOGGED OUT LANDING
+   ========================================================= */
+
+.auth-landing {
+    position: relative;
+    overflow: hidden;
+
+    margin-bottom: 18px;
+    padding: 34px;
+}
+
+.auth-landing[hidden] {
+    display: none;
+}
+
+.auth-landing::before {
+    content: "";
+
+    position: absolute;
+
+    width: 520px;
+    height: 520px;
+
+    right: -210px;
+    top: -260px;
+
+    border-radius: 50%;
+
+    background:
+        radial-gradient(
+            circle,
+            rgba(73, 168, 255, 0.12),
+            transparent 68%
+        );
+
+    pointer-events: none;
+}
+
+.auth-landing-main {
+    position: relative;
+    z-index: 1;
+
+    display: grid;
+
+    grid-template-columns:
+        minmax(0, 1.08fr)
+        minmax(360px, 0.92fr);
+
+    gap: 50px;
+
+    align-items: center;
+}
+
+.auth-landing-copy {
+    max-width: 700px;
+}
+
+.auth-landing-kicker {
+    margin-bottom: 15px;
+
+    color: var(--orange);
+
+    font-size: 9px;
+    font-weight: 850;
+
+    letter-spacing: 0.16em;
+}
+
+.auth-landing-title {
+    max-width: 690px;
+
+    margin: 0;
+
+    color: #f6f9fc;
+
+    font-size: clamp(
+        30px,
+        3vw,
+        46px
+    );
+
+    font-weight: 820;
+
+    line-height: 1.05;
+
+    letter-spacing: -0.045em;
+}
+
+.auth-landing-text {
+    max-width: 650px;
+
+    margin:
+        18px
+        0
+        0;
+
+    color: #8ca2b5;
+
+    font-size: 13px;
+
+    line-height: 1.7;
+}
+
+.auth-landing-login {
+    width: fit-content;
+
+    margin-top: 25px;
+
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    min-height: 44px;
+
+    padding:
+        0
+        20px;
+
+    border:
+        1px solid
+        rgba(240, 165, 47, 0.55);
+
+    border-radius: 10px;
+
+    color: #18120a;
+
+    background:
+        linear-gradient(
+            145deg,
+            #ffc252,
+            #e79522
+        );
+
+    font-size: 11px;
+    font-weight: 900;
+
+    text-decoration: none;
+
+    box-shadow:
+        0 10px 28px
+        rgba(229, 149, 34, 0.12);
+
+    transition:
+        transform 150ms ease,
+        box-shadow 150ms ease;
+}
+
+.auth-landing-login:hover {
+    transform:
+        translateY(-1px);
+
+    box-shadow:
+        0 13px 34px
+        rgba(229, 149, 34, 0.18);
+}
+
+.auth-landing-note {
+    margin-top: 10px;
+
+    color: #60798e;
+
+    font-size: 9px;
+}
+
+
+.auth-preview {
+    padding: 20px;
+
+    border:
+        1px solid
+        rgba(73, 168, 255, 0.20);
+
+    border-radius: 14px;
+
+    background:
+        linear-gradient(
+            145deg,
+            rgba(12, 31, 47, 0.88),
+            rgba(5, 15, 24, 0.88)
+        );
+
+    box-shadow:
+        0 20px 55px
+        rgba(0,0,0,0.20);
+}
+
+.auth-preview-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    gap: 12px;
+
+    color: #668399;
+
+    font-size: 8px;
+    font-weight: 800;
+
+    letter-spacing: 0.12em;
+}
+
+.auth-preview-verified {
+    color: var(--green);
+
+    white-space: nowrap;
+}
+
+.auth-preview-match {
+    margin-top: 22px;
+
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    color: #f3f8fc;
+
+    font-size: 22px;
+    font-weight: 820;
+
+    letter-spacing: -0.03em;
+}
+
+.auth-preview-match span {
+    color: #8ba4b8;
+
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.auth-preview-metrics {
+    margin-top: 18px;
+
+    display: grid;
+
+    grid-template-columns:
+        repeat(3, 1fr);
+
+    border:
+        1px solid
+        rgba(255,255,255,0.06);
+
+    border-radius: 10px;
+
+    overflow: hidden;
+}
+
+.auth-preview-metrics > div {
+    padding: 13px 14px;
+
+    border-right:
+        1px solid
+        rgba(255,255,255,0.06);
+}
+
+.auth-preview-metrics > div:last-child {
+    border-right: 0;
+}
+
+.auth-preview-metrics span {
+    display: block;
+
+    color: #668399;
+
+    font-size: 8px;
+}
+
+.auth-preview-metrics strong {
+    display: block;
+
+    margin-top: 5px;
+
+    color: #f2f7fb;
+
+    font-size: 18px;
+}
+
+.auth-preview-finding {
+    margin-top: 13px;
+
+    padding: 14px;
+
+    display: grid;
+
+    gap: 5px;
+
+    border:
+        1px solid
+        rgba(240, 165, 47, 0.20);
+
+    border-radius: 10px;
+
+    background:
+        rgba(240, 165, 47, 0.055);
+}
+
+.auth-preview-finding-label {
+    color: var(--orange);
+
+    font-size: 8px;
+    font-weight: 850;
+
+    letter-spacing: 0.09em;
+}
+
+.auth-preview-finding strong {
+    color: #f4f7fa;
+
+    font-size: 13px;
+}
+
+.auth-preview-finding span {
+    color: #7f95a8;
+
+    font-size: 9px;
+
+    line-height: 1.55;
+}
+
+
+.auth-capabilities {
+    position: relative;
+    z-index: 1;
+
+    margin-top: 30px;
+
+    padding-top: 22px;
+
+    display: grid;
+
+    grid-template-columns:
+        repeat(3, 1fr);
+
+    gap: 12px;
+
+    border-top:
+        1px solid
+        rgba(255,255,255,0.06);
+}
+
+.auth-capability {
+    min-height: 108px;
+
+    padding: 14px 15px;
+
+    border:
+        1px solid
+        rgba(73, 168, 255, 0.10);
+
+    border-radius: 10px;
+
+    background:
+        rgba(4, 14, 23, 0.34);
+}
+
+.auth-capability > span {
+    color: #5d7f99;
+
+    font-size: 8px;
+    font-weight: 850;
+
+    letter-spacing: 0.12em;
+}
+
+.auth-capability strong {
+    display: block;
+
+    margin-top: 7px;
+
+    color: #dfeaf2;
+
+    font-size: 11px;
+}
+
+.auth-capability p {
+    margin:
+        7px
+        0
+        0;
+
+    color: #71889b;
+
+    font-size: 9px;
+
+    line-height: 1.55;
+}
+
+
+@media (max-width: 1100px) {
+
+    .auth-landing-main {
+        grid-template-columns:
+            1fr;
+    }
+
+    .auth-preview {
+        max-width: 620px;
+    }
+
+    .auth-capabilities {
+        grid-template-columns:
+            1fr;
+    }
+}
+
+
 /* =========================================================
    DEMO UPLOAD
    ========================================================= */
@@ -4632,17 +5039,7 @@ tabindex="-1"
 
 
 
-<div class="side-label">
-ТЕКУЩИЙ МАТЧ
-</div>
-
-<div class="current-match">
-
-de_mirage · 13:11
-<br>
-24 раунда
-
-</div>
+<div class="current-match" hidden></div>
 
 
 
@@ -4666,10 +5063,7 @@ id="demoUploadForm"
 Загрузить новый матч
 </div>
 
-<div class="upload-sub">
-Выбери файл CS2 .dem.
-Он будет отправлен в локальный анализатор.
-</div>
+
 
 </div>
 
@@ -4704,6 +5098,140 @@ type="submit"
 </div>
 
 </form>
+
+<section
+class="card auth-landing"
+id="authLanding"
+hidden
+>
+
+<div class="auth-landing-main">
+
+<div class="auth-landing-copy">
+
+<div class="auth-landing-kicker">
+CS2 PERFORMANCE LAB
+</div>
+
+<h1 class="auth-landing-title">
+Разбери матч.
+Найди то, чего не видно
+в scoreboard.
+</h1>
+
+<p class="auth-landing-text">
+CS2 Performance Lab разбирает .dem
+и показывает не только K/D:
+размены, первые дуэли, utility,
+CT / T, клатчи и повторяющиеся
+паттерны.
+</p>
+
+<a
+class="auth-landing-login"
+href="/auth/steam/login"
+>
+Войти через Steam
+</a>
+
+<div class="auth-landing-note">
+Steam нужен для привязки
+твоих матчей и истории.
+</div>
+
+</div>
+
+
+<div class="auth-preview">
+
+<div class="auth-preview-head">
+<span>ПРИМЕР АНАЛИЗА</span>
+<span class="auth-preview-verified">
+● DATA VERIFIED
+</span>
+</div>
+
+<div class="auth-preview-match">
+Ancient
+<span>13 : 8</span>
+</div>
+
+<div class="auth-preview-metrics">
+
+<div>
+<span>K/D</span>
+<strong>1.33</strong>
+</div>
+
+<div>
+<span>ADR</span>
+<strong>82.4</strong>
+</div>
+
+<div>
+<span>KAST</span>
+<strong>88.2%</strong>
+</div>
+
+</div>
+
+<div class="auth-preview-finding">
+<div class="auth-preview-finding-label">
+СИЛЬНАЯ СТОРОНА
+</div>
+
+<strong>
+Размены · 4
+</strong>
+
+<span>
+Команда часто
+возвращает игрока
+в раунд после твоего
+контакта.
+</span>
+</div>
+
+</div>
+
+</div>
+
+
+<div class="auth-capabilities">
+
+<div class="auth-capability">
+<span>МАТЧ</span>
+<strong>K/D · ADR · KAST · Entry</strong>
+<p>
+Цифры матча
+без отрыва от контекста.
+</p>
+</div>
+
+<div class="auth-capability">
+<span>КОНТЕКСТ</span>
+<strong>CT / T · Utility · Trades</strong>
+<p>
+Где и как
+ты создаёшь
+или теряешь преимущество.
+</p>
+</div>
+
+<div class="auth-capability">
+<span>ПАТТЕРНЫ</span>
+<strong>Сильные и слабые стороны</strong>
+<p>
+Что начинает
+повторяться
+из матча в матч.
+</p>
+</div>
+
+</div>
+
+</section>
+
 
 
 <!-- NAV SECTIONS V2 -->
@@ -5690,10 +6218,36 @@ async function readApiError(
 async function pollAnalysisJob(
     jobId
 ) {
+    const deadline =
+        Date.now()
+        + 10 * 60 * 1000;
+
     while (true) {
+        if (Date.now() > deadline) {
+            throw new Error(
+                "\u0410\u043d\u0430\u043b\u0438\u0437 "
+                + "\u0437\u0430\u043d\u044f\u043b "
+                + "\u0441\u043b\u0438\u0448\u043a\u043e\u043c "
+                + "\u043c\u043d\u043e\u0433\u043e "
+                + "\u0432\u0440\u0435\u043c\u0435\u043d\u0438."
+            );
+        }
+
         const response =
             await fetch(
-                `/analysis-jobs/${jobId}`
+                `/analysis-jobs/${jobId}`,
+                {
+                    credentials:
+                        "same-origin",
+
+                    cache:
+                        "no-store",
+
+                    headers: {
+                        Accept:
+                            "application/json",
+                    },
+                }
             );
 
         if (!response.ok) {
@@ -5757,7 +6311,19 @@ async function loadMatchAnalysis(
 ) {
     const response =
         await fetch(
-            `/matches/${matchId}`
+            `/matches/${matchId}`,
+            {
+                credentials:
+                    "same-origin",
+
+                cache:
+                    "no-store",
+
+                headers: {
+                    Accept:
+                        "application/json",
+                },
+            }
         );
 
     if (!response.ok) {
@@ -8448,6 +9014,9 @@ demoUploadForm.addEventListener(
             const createdJob =
                 await response.json();
 
+            window.cs2CurrentAnalysisJobId =
+                createdJob.id;
+
             setUploadStatus(
                 "Демо принята. "
                 + "Job создан, "
@@ -8469,6 +9038,20 @@ demoUploadForm.addEventListener(
             );
 
             showAnalysisState();
+
+            if (
+                typeof window
+                    .cs2SetAnalysisRadarVisible
+                === "function"
+            ) {
+                window
+                    .cs2SetAnalysisRadarVisible(
+                        false
+                    );
+            }
+
+            window.cs2CurrentAnalysisJobId =
+                null;
 
             const playerCount =
                 analysis.players.length;
@@ -8494,6 +9077,17 @@ demoUploadForm.addEventListener(
 
         } catch (error) {
             console.error(error);
+
+            if (
+                typeof window
+                    .cs2SetAnalysisRadarVisible
+                === "function"
+            ) {
+                window
+                    .cs2SetAnalysisRadarVisible(
+                        false
+                    );
+            }
 
             setUploadStatus(
                 `Ошибка: ${error.message}`,
@@ -8851,6 +9445,10 @@ document
             emptyState.hidden = true;
         }
     }
+
+    window.cs2SetAnalysisRadarVisible =
+        setRadarVisible;
+
 
     function sync() {
         const text = String(button.textContent || "")
@@ -9243,6 +9841,10 @@ document
 
 
     const analysisElements = [
+        document.getElementById(
+            "authLanding"
+        ),
+
         document.getElementById(
             "demoUploadForm"
         ),
@@ -9734,6 +10336,14 @@ document
 
 
 <style id="cs2-steam-auth-ui">
+
+#demoUploadForm[hidden],
+#currentUserCard[hidden],
+.side-label[hidden] {
+    display: none !important;
+}
+
+
 .current-user-card {
     height: auto !important;
     min-height: 50px;
@@ -9819,6 +10429,71 @@ document
     }
 
 
+    const uploadForm =
+        document.getElementById(
+            "demoUploadForm"
+        );
+
+    const profileSideLabel =
+        card.previousElementSibling
+        && card.previousElementSibling.classList.contains(
+            "side-label"
+        )
+            ? card.previousElementSibling
+            : null;
+
+
+    const authLanding =
+        document.getElementById(
+            "authLanding"
+        );
+
+    const emptyState =
+        document.getElementById(
+            "analysisEmptyState"
+        );
+
+    const analysisView =
+        document.getElementById(
+            "analysisView"
+        );
+
+
+    function setAppAuthState(
+        loggedIn
+    ) {
+        if (uploadForm) {
+            uploadForm.hidden =
+                !loggedIn;
+        }
+
+        if (profileSideLabel) {
+            profileSideLabel.hidden =
+                !loggedIn;
+        }
+
+        card.hidden =
+            !loggedIn;
+
+        if (authLanding) {
+            authLanding.hidden =
+                loggedIn;
+        }
+
+        if (!loggedIn) {
+            if (emptyState) {
+                emptyState.hidden =
+                    true;
+            }
+
+            if (analysisView) {
+                analysisView.hidden =
+                    true;
+            }
+        }
+    }
+
+
     let actions =
         document.getElementById(
             "currentUserAuthActions"
@@ -9844,6 +10519,10 @@ document
 
 
     function setLoggedOut() {
+        setAppAuthState(
+            false
+        );
+
         const logoutRow =
             document.getElementById(
                 "currentUserLogoutRow"
@@ -9890,6 +10569,10 @@ document
     function setLoggedIn(
         steamId
     ) {
+        setAppAuthState(
+            true
+        );
+
         const logoutRow =
             document.getElementById(
                 "currentUserLogoutRow"
