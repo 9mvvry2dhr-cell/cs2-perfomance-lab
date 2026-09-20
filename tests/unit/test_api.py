@@ -436,6 +436,8 @@ class ApiTest(unittest.TestCase):
                 "steam_id": (
                     "76561198055629469"
                 ),
+                "player_name": None,
+                "avatar_url": None,
             },
         )
 

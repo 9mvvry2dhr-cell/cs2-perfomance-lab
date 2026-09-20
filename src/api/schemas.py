@@ -14,6 +14,8 @@ class ApiModel(BaseModel):
 
 class CurrentUserResponse(ApiModel):
     steam_id: str
+    player_name: str | None = None
+    avatar_url: str | None = None
 
 
 class HealthResponse(ApiModel):

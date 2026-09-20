@@ -3,6 +3,7 @@ from __future__ import annotations
 from contextlib import asynccontextmanager
 from dataclasses import replace
 from pathlib import Path
+import os
 from typing import Annotated
 
 from fastapi import (
@@ -27,6 +28,7 @@ from src.auth.steam_openid import (
     verify_steam_openid_response,
 )
 from src.auth.session import SESSION_COOKIE_NAME
+from src.auth.steam_profile import fetch_steam_profile
 from src.api.dependencies import (
     dispose_database_resources,
     get_auth_repository,
@@ -262,8 +264,28 @@ def get_me(
         Depends(get_current_user),
     ],
 ) -> CurrentUserResponse:
+    api_key = os.getenv(
+        "STEAM_API_KEY",
+        "",
+    ).strip()
+
+    profile = fetch_steam_profile(
+        steam_id=current_user.steam_id,
+        api_key=api_key,
+    )
+
     return CurrentUserResponse(
-        steam_id=current_user.steam_id
+        steam_id=current_user.steam_id,
+        player_name=(
+            profile.player_name
+            if profile
+            else None
+        ),
+        avatar_url=(
+            profile.avatar_url
+            if profile
+            else None
+        ),
     )
 
 

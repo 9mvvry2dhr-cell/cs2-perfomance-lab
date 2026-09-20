@@ -2049,7 +2049,8 @@ tr.selected td {
     position: relative;
     overflow: hidden;
 
-    margin-bottom: 18px;
+    max-width: 1120px;
+    margin: 64px auto 18px;
     padding: 34px;
 }
 
@@ -2690,11 +2691,54 @@ tr.selected td {
 
 /* SIDEBAR BRAND */
 
-/* Slightly wider sidebar */
+/* Wider, calmer sidebar */
 .app {
     grid-template-columns:
-        285px
+        305px
         minmax(0, 1fr);
+}
+
+/* Sidebar typography / spacing */
+.sidebar {
+    padding:
+        28px
+        18px
+        22px;
+}
+
+.nav-button {
+    min-height: 48px;
+
+    padding:
+        0
+        14px;
+
+    gap: 12px;
+
+    border-radius: 11px;
+
+    font-size: 13.5px;
+    font-weight: 650;
+
+    letter-spacing: -0.01em;
+}
+
+.nav-button svg {
+    width: 18px;
+    height: 18px;
+
+    flex: 0 0 18px;
+}
+
+.side-label {
+    margin:
+        30px
+        10px
+        9px;
+
+    font-size: 9.5px;
+
+    letter-spacing: 0.14em;
 }
 
 
@@ -2708,10 +2752,10 @@ tr.selected td {
 
 
 .brand-logo {
-    width: 38px;
-    height: 38px;
+    width: 40px;
+    height: 40px;
 
-    flex: 0 0 38px;
+    flex: 0 0 40px;
 
     border-radius:
         11px;
@@ -2737,7 +2781,7 @@ tr.selected td {
 
 .brand-title {
     font-size:
-        15.5px;
+        17px;
 
     font-weight:
         850;
@@ -2771,7 +2815,7 @@ tr.selected td {
         #8197aa;
 
     font-size:
-        9.5px;
+        10.5px;
 }
 
 
@@ -4898,6 +4942,192 @@ does not slide underneath the replacement icon.
 </style>
 
 
+
+
+<style id="cs2-upload-dropzone-polish">
+/* =========================================================
+   DEMO DROPZONE POLISH
+   ========================================================= */
+
+.upload-panel {
+    padding: 24px 26px;
+    align-items: stretch;
+    flex-direction: column;
+    gap: 18px;
+}
+
+.upload-title {
+    font-size: 18px;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+}
+
+.upload-actions {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 12px;
+    align-items: center;
+}
+
+.demo-file-input {
+    position: absolute !important;
+    width: 1px !important;
+    height: 1px !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+}
+
+.demo-file-picker {
+    grid-column: 1 / -1;
+
+    min-height: 150px;
+    padding: 26px 22px;
+
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+
+    gap: 8px;
+
+    border:
+        1px dashed
+        rgba(73,168,255,0.42);
+
+    border-radius: 14px;
+
+    background:
+        linear-gradient(
+            135deg,
+            rgba(73,168,255,0.07),
+            rgba(73,168,255,0.018)
+        );
+
+    color: #eaf4fc;
+
+    font-size: 15px;
+    font-weight: 750;
+
+    text-align: center;
+
+    cursor: pointer;
+
+    transition:
+        border-color 160ms ease,
+        background 160ms ease,
+        transform 160ms ease,
+        box-shadow 160ms ease;
+}
+
+.demo-file-picker::before {
+    content: "?";
+
+    width: 42px;
+    height: 42px;
+
+    display: grid;
+    place-items: center;
+
+    margin-bottom: 4px;
+
+    border:
+        1px solid
+        rgba(73,168,255,0.25);
+
+    border-radius: 12px;
+
+    color: #64b7ff;
+
+    background:
+        rgba(73,168,255,0.08);
+
+    font-size: 22px;
+    font-weight: 500;
+}
+
+.demo-file-picker::after {
+    content: "??? ?????, ????? ??????? ???? ? ?????? .dem";
+
+    color: #70899e;
+
+    font-size: 11px;
+    font-weight: 500;
+}
+
+.demo-file-picker:hover {
+    border-color:
+        rgba(73,168,255,0.72);
+
+    background:
+        linear-gradient(
+            135deg,
+            rgba(73,168,255,0.11),
+            rgba(73,168,255,0.035)
+        );
+}
+
+.demo-file-picker.is-dragover {
+    border-color: #49a8ff;
+
+    background:
+        rgba(73,168,255,0.13);
+
+    box-shadow:
+        0 0 0 3px
+        rgba(73,168,255,0.07);
+
+    transform: translateY(-1px);
+}
+
+.demo-file-picker.has-file {
+    border-style: solid;
+
+    border-color:
+        rgba(82,211,159,0.48);
+
+    background:
+        rgba(82,211,159,0.055);
+
+    color: #dff9ee;
+}
+
+.demo-file-picker.has-file::before {
+    content: "?";
+
+    color: #75dfb5;
+
+    border-color:
+        rgba(82,211,159,0.28);
+
+    background:
+        rgba(82,211,159,0.08);
+}
+
+.demo-file-picker.has-file::after {
+    content: "???? ????? ? ???????";
+}
+
+.demo-upload-button {
+    min-height: 44px;
+
+    padding:
+        0
+        22px;
+
+    font-size: 12px;
+    font-weight: 800;
+}
+
+@media (max-width: 900px) {
+    .upload-actions {
+        grid-template-columns: 1fr;
+    }
+
+    .demo-upload-button {
+        width: 100%;
+    }
+}
+</style>
 
 </head>
 
@@ -10173,9 +10403,16 @@ document
         name,
         steamId
     ) {
+        const steamDisplayName =
+            String(
+                window.CS2_STEAM_DISPLAY_NAME
+                || ""
+            ).trim();
+
         const cleanName =
             String(
-                name
+                steamDisplayName
+                || name
                 || state.name
                 || ""
             ).trim();
@@ -10688,6 +10925,1113 @@ document
     .finally(
         refreshAuthUI
     );
+})();
+</script>
+
+
+<script id="cs2-upload-dropzone-js">
+(function () {
+    const input =
+        document.getElementById("demoFile");
+
+    const zone =
+        document.getElementById(
+            "demoFilePicker"
+        );
+
+    if (!input || !zone) {
+        return;
+    }
+
+    function refreshZone() {
+        const file =
+            input.files
+            && input.files[0];
+
+        zone.classList.toggle(
+            "has-file",
+            Boolean(file)
+        );
+
+        zone.textContent =
+            file
+                ? file.name
+                : "???????? .dem ????";
+    }
+
+    input.addEventListener(
+        "change",
+        refreshZone
+    );
+
+    [
+        "dragenter",
+        "dragover"
+    ].forEach(type => {
+        zone.addEventListener(
+            type,
+            event => {
+                event.preventDefault();
+                event.stopPropagation();
+
+                zone.classList.add(
+                    "is-dragover"
+                );
+            }
+        );
+    });
+
+    [
+        "dragleave",
+        "dragend"
+    ].forEach(type => {
+        zone.addEventListener(
+            type,
+            event => {
+                event.preventDefault();
+
+                zone.classList.remove(
+                    "is-dragover"
+                );
+            }
+        );
+    });
+
+    zone.addEventListener(
+        "drop",
+        event => {
+            event.preventDefault();
+            event.stopPropagation();
+
+            zone.classList.remove(
+                "is-dragover"
+            );
+
+            const file =
+                event.dataTransfer
+                && event.dataTransfer.files
+                && event.dataTransfer.files[0];
+
+            if (!file) {
+                return;
+            }
+
+            if (
+                !file.name
+                    .toLowerCase()
+                    .endsWith(".dem")
+            ) {
+                zone.textContent =
+                    "????? ???? ??????? .dem";
+
+                zone.classList.remove(
+                    "has-file"
+                );
+
+                return;
+            }
+
+            const transfer =
+                new DataTransfer();
+
+            transfer.items.add(file);
+
+            input.files =
+                transfer.files;
+
+            input.dispatchEvent(
+                new Event(
+                    "change",
+                    {
+                        bubbles: true
+                    }
+                )
+            );
+        }
+    );
+
+    refreshZone();
+})();
+</script>
+
+
+<style id="cs2-dropzone-fix-v2">
+
+/* Old empty-state placeholder is kept for JS compatibility,
+   but is no longer shown to the user. */
+#analysisEmptyState {
+    display: none !important;
+}
+
+/* Broken pseudo text from the first dropzone version */
+.demo-file-picker::before,
+.demo-file-picker::after {
+    display: none !important;
+}
+
+.demo-file-picker {
+    gap: 8px;
+}
+
+.demo-drop-icon {
+    width: 42px;
+    height: 42px;
+
+    display: grid;
+    place-items: center;
+
+    margin-bottom: 4px;
+
+    border: 1px solid rgba(73,168,255,0.25);
+    border-radius: 12px;
+
+    color: #64b7ff;
+    background: rgba(73,168,255,0.08);
+
+    font-size: 21px;
+    font-weight: 700;
+}
+
+.demo-drop-title {
+    color: #edf7ff;
+
+    font-size: 15px;
+    font-weight: 750;
+    line-height: 1.35;
+}
+
+.demo-drop-sub {
+    color: #70899e;
+
+    font-size: 11px;
+    font-weight: 500;
+    line-height: 1.4;
+}
+
+.demo-file-picker.has-file .demo-drop-icon {
+    color: #75dfb5;
+    border-color: rgba(82,211,159,0.28);
+    background: rgba(82,211,159,0.08);
+}
+
+</style>
+
+<script>
+(function () {
+    const input =
+        document.getElementById("demoFile");
+
+    const zone =
+        document.getElementById("demoFilePicker");
+
+    if (!input || !zone) {
+        return;
+    }
+
+    function renderDropzone() {
+        const file =
+            input.files &&
+            input.files.length
+                ? input.files[0]
+                : null;
+
+        zone.replaceChildren();
+
+        const icon =
+            document.createElement("span");
+
+        icon.className =
+            "demo-drop-icon";
+
+        icon.textContent =
+            file ? "\u2713" : "\u2193";
+
+        const title =
+            document.createElement("span");
+
+        title.className =
+            "demo-drop-title";
+
+        title.textContent =
+            file
+                ? file.name
+                : "\u041f\u0435\u0440\u0435\u0442\u0430\u0449\u0438 .dem \u0441\u044e\u0434\u0430";
+
+        const sub =
+            document.createElement("span");
+
+        sub.className =
+            "demo-drop-sub";
+
+        sub.textContent =
+            file
+                ? "\u0424\u0430\u0439\u043b \u0433\u043e\u0442\u043e\u0432 \u043a \u0430\u043d\u0430\u043b\u0438\u0437\u0443"
+                : "\u0438\u043b\u0438 \u043d\u0430\u0436\u043c\u0438, \u0447\u0442\u043e\u0431\u044b \u0432\u044b\u0431\u0440\u0430\u0442\u044c \u0444\u0430\u0439\u043b \u00b7 \u0442\u043e\u043b\u044c\u043a\u043e .dem";
+
+        zone.append(
+            icon,
+            title,
+            sub
+        );
+
+        zone.classList.toggle(
+            "has-file",
+            Boolean(file)
+        );
+    }
+
+    input.addEventListener(
+        "change",
+        renderDropzone
+    );
+
+    renderDropzone();
+})();
+</script>
+
+
+<style id="cs2-profile-card-polish">
+
+.current-user-card {
+    padding: 14px !important;
+
+    border:
+        1px solid
+        rgba(73,168,255,0.17) !important;
+
+    border-radius: 14px !important;
+
+    background:
+        linear-gradient(
+            145deg,
+            rgba(14,32,46,0.92),
+            rgba(7,20,31,0.78)
+        ) !important;
+
+    box-shadow:
+        inset 0 1px 0
+        rgba(255,255,255,0.025);
+}
+
+.current-user-profile-head {
+    display: grid;
+
+    grid-template-columns:
+        46px
+        minmax(0,1fr);
+
+    gap: 12px;
+
+    align-items: center;
+}
+
+.current-user-avatar {
+    position: relative;
+
+    width: 46px;
+    height: 46px;
+
+    display: grid;
+    place-items: center;
+
+    border:
+        1px solid
+        rgba(73,168,255,0.28);
+
+    border-radius: 12px;
+
+    color: #edf7ff;
+
+    background:
+        linear-gradient(
+            145deg,
+            rgba(73,168,255,0.18),
+            rgba(73,168,255,0.06)
+        );
+
+    font-size: 17px;
+    font-weight: 850;
+
+    text-transform: uppercase;
+}
+
+.current-user-avatar::after {
+    content: "";
+
+    position: absolute;
+
+    right: -2px;
+    bottom: -2px;
+
+    width: 10px;
+    height: 10px;
+
+    border:
+        2px solid
+        #091722;
+
+    border-radius: 50%;
+
+    background:
+        #52d39f;
+}
+
+.current-user-profile-meta {
+    min-width: 0;
+}
+
+.current-user-name {
+    color: #f1f7fb !important;
+
+    font-size: 14px !important;
+    font-weight: 800 !important;
+
+    line-height: 1.25;
+
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.current-user-connection {
+    margin-top: 3px;
+
+    display: flex;
+    align-items: center;
+
+    gap: 5px;
+
+    color: #75cdaa;
+
+    font-size: 9px;
+    font-weight: 650;
+}
+
+.current-user-connection-dot {
+    width: 5px;
+    height: 5px;
+
+    flex: 0 0 5px;
+
+    border-radius: 50%;
+
+    background: #52d39f;
+}
+
+.current-user-steam {
+    margin-top: 5px !important;
+
+    color: #668094 !important;
+
+    font-size: 9px !important;
+    line-height: 1.35 !important;
+
+    word-break: normal !important;
+
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.current-user-auth-actions {
+    margin-top: 13px !important;
+
+    padding-top: 12px;
+
+    border-top:
+        1px solid
+        rgba(255,255,255,0.055);
+}
+
+.steam-logout-button {
+    min-height: 36px !important;
+
+    border-radius: 9px !important;
+
+    font-size: 10.5px !important;
+
+    color: #aabcca !important;
+
+    background:
+        rgba(255,255,255,0.025) !important;
+}
+
+.steam-logout-button:hover {
+    color: #eef6fb !important;
+
+    background:
+        rgba(255,255,255,0.06) !important;
+}
+
+</style>
+
+<script id="cs2-profile-card-enhancer">
+(function () {
+    const card =
+        document.getElementById(
+            "currentUserCard"
+        );
+
+    const name =
+        document.getElementById(
+            "currentUserName"
+        );
+
+    const steam =
+        document.getElementById(
+            "currentUserSteam"
+        );
+
+    if (
+        !card
+        || !name
+        || !steam
+    ) {
+        return;
+    }
+
+    let head =
+        card.querySelector(
+            ".current-user-profile-head"
+        );
+
+    let avatar;
+
+    if (!head) {
+        head =
+            document.createElement("div");
+
+        head.className =
+            "current-user-profile-head";
+
+        avatar =
+            document.createElement("div");
+
+        avatar.className =
+            "current-user-avatar";
+
+        const meta =
+            document.createElement("div");
+
+        meta.className =
+            "current-user-profile-meta";
+
+        const connection =
+            document.createElement("div");
+
+        connection.className =
+            "current-user-connection";
+
+        const dot =
+            document.createElement("span");
+
+        dot.className =
+            "current-user-connection-dot";
+
+        const connectionText =
+            document.createElement("span");
+
+        connectionText.textContent =
+            "Steam \u043f\u043e\u0434\u043a\u043b\u044e\u0447\u0451\u043d";
+
+        connection.append(
+            dot,
+            connectionText
+        );
+
+        meta.append(
+            name,
+            connection,
+            steam
+        );
+
+        head.append(
+            avatar,
+            meta
+        );
+
+        card.insertBefore(
+            head,
+            card.firstChild
+        );
+    } else {
+        avatar =
+            head.querySelector(
+                ".current-user-avatar"
+            );
+    }
+
+    function showFallbackAvatar() {
+        if (!avatar) {
+            return;
+        }
+
+        const value =
+            String(
+                name.textContent || ""
+            ).trim();
+
+        avatar.replaceChildren();
+
+        avatar.textContent =
+            value
+                ? value.charAt(0)
+                : "?";
+    }
+
+    async function loadSteamProfile() {
+        try {
+            const response =
+                await fetch(
+                    "/me",
+                    {
+                        credentials:
+                            "same-origin",
+
+                        cache:
+                            "no-store",
+
+                        headers: {
+                            Accept:
+                                "application/json"
+                        }
+                    }
+                );
+
+            if (!response.ok) {
+                showFallbackAvatar();
+                return;
+            }
+
+            const me =
+                await response.json();
+
+            const steamName =
+                String(
+                    me.player_name || ""
+                ).trim();
+
+            const avatarUrl =
+                String(
+                    me.avatar_url || ""
+                ).trim();
+
+            if (steamName) {
+                window.CS2_STEAM_DISPLAY_NAME =
+                    steamName;
+
+                if (
+                    typeof window
+                        .cs2SyncCurrentUserCard
+                    === "function"
+                ) {
+                    window.cs2SyncCurrentUserCard(
+                        steamName,
+                        me.steam_id
+                    );
+                } else {
+                    name.textContent =
+                        steamName;
+                }
+            }
+
+            if (
+                avatar
+                && avatarUrl
+            ) {
+                const image =
+                    document.createElement(
+                        "img"
+                    );
+
+                image.src =
+                    avatarUrl;
+
+                image.alt =
+                    steamName
+                    || "Steam avatar";
+
+                image.referrerPolicy =
+                    "no-referrer";
+
+                image.addEventListener(
+                    "error",
+                    showFallbackAvatar,
+                    {
+                        once: true
+                    }
+                );
+
+                avatar.replaceChildren(
+                    image
+                );
+            } else {
+                showFallbackAvatar();
+            }
+        }
+        catch (_) {
+            showFallbackAvatar();
+        }
+    }
+
+    showFallbackAvatar();
+    loadSteamProfile();
+})();
+</script>
+
+
+<style id="cs2-sidebar-profile-stats">
+
+.current-user-mini-stats {
+    margin-top: 13px;
+
+    padding-top: 12px;
+
+    display: grid;
+
+    grid-template-columns:
+        repeat(3, minmax(0, 1fr));
+
+    gap: 7px;
+
+    border-top:
+        1px solid
+        rgba(255,255,255,0.055);
+}
+
+.current-user-mini-stat {
+    min-width: 0;
+
+    padding:
+        8px
+        7px;
+
+    border:
+        1px solid
+        rgba(255,255,255,0.055);
+
+    border-radius: 9px;
+
+    background:
+        rgba(255,255,255,0.018);
+}
+
+.current-user-mini-stat-label {
+    color: #668094;
+
+    font-size: 7.5px;
+    font-weight: 750;
+
+    letter-spacing: 0.08em;
+
+    text-transform: uppercase;
+}
+
+.current-user-mini-stat-value {
+    margin-top: 4px;
+
+    color: #f1f7fb;
+
+    font-size: 13px;
+    font-weight: 850;
+
+    line-height: 1;
+}
+
+.current-user-mini-footer {
+    margin-top: 9px;
+
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    gap: 8px;
+
+    color: #668094;
+
+    font-size: 8.5px;
+}
+
+.current-user-mini-footer strong {
+    color: #9eb3c3;
+
+    font-weight: 700;
+}
+
+</style>
+
+<script id="cs2-sidebar-profile-stats-script">
+(function () {
+    const card =
+        document.getElementById(
+            "currentUserCard"
+        );
+
+    if (!card) {
+        return;
+    }
+
+    if (
+        card.querySelector(
+            ".current-user-mini-stats"
+        )
+    ) {
+        return;
+    }
+
+    const stats =
+        document.createElement("div");
+
+    stats.className =
+        "current-user-mini-stats";
+
+    function makeStat(
+        labelText,
+        valueId
+    ) {
+        const item =
+            document.createElement("div");
+
+        item.className =
+            "current-user-mini-stat";
+
+        const label =
+            document.createElement("div");
+
+        label.className =
+            "current-user-mini-stat-label";
+
+        label.textContent =
+            labelText;
+
+        const value =
+            document.createElement("div");
+
+        value.className =
+            "current-user-mini-stat-value";
+
+        value.id =
+            valueId;
+
+        value.textContent =
+            "\u2014";
+
+        item.append(
+            label,
+            value
+        );
+
+        return item;
+    }
+
+    stats.append(
+        makeStat(
+            "K/D",
+            "sidebarProfileKd"
+        ),
+        makeStat(
+            "ADR",
+            "sidebarProfileAdr"
+        ),
+        makeStat(
+            "KAST",
+            "sidebarProfileKast"
+        )
+    );
+
+    const footer =
+        document.createElement("div");
+
+    footer.className =
+        "current-user-mini-footer";
+
+    const matches =
+        document.createElement("strong");
+
+    matches.id =
+        "sidebarProfileMatches";
+
+    matches.textContent =
+        "\u2014";
+
+    const caption =
+        document.createElement("span");
+
+    caption.textContent =
+        "\u043f\u043e \u0438\u0441\u0442\u043e\u0440\u0438\u0438";
+
+    footer.append(
+        matches,
+        caption
+    );
+
+    const actions =
+        card.querySelector(
+            ".current-user-auth-actions"
+        );
+
+    if (actions) {
+        card.insertBefore(
+            stats,
+            actions
+        );
+
+        card.insertBefore(
+            footer,
+            actions
+        );
+    } else {
+        card.append(
+            stats,
+            footer
+        );
+    }
+
+    async function loadSummary() {
+        try {
+            const response =
+                await fetch(
+                    "/me/summary",
+                    {
+                        credentials:
+                            "same-origin",
+
+                        cache:
+                            "no-store",
+
+                        headers: {
+                            Accept:
+                                "application/json"
+                        }
+                    }
+                );
+
+            if (!response.ok) {
+                return;
+            }
+
+            const data =
+                await response.json();
+
+            const values =
+                data.stats || {};
+
+            const kd =
+                document.getElementById(
+                    "sidebarProfileKd"
+                );
+
+            const adr =
+                document.getElementById(
+                    "sidebarProfileAdr"
+                );
+
+            const kast =
+                document.getElementById(
+                    "sidebarProfileKast"
+                );
+
+            const matchesElement =
+                document.getElementById(
+                    "sidebarProfileMatches"
+                );
+
+            if (kd) {
+                kd.textContent =
+                    Number(
+                        values.kd ?? 0
+                    ).toFixed(2);
+            }
+
+            if (adr) {
+                adr.textContent =
+                    Number(
+                        values.adr ?? 0
+                    ).toFixed(1);
+            }
+
+            if (kast) {
+                kast.textContent =
+                    Number(
+                        values.kast_pct ?? 0
+                    ).toFixed(1)
+                    + "%";
+            }
+
+            if (matchesElement) {
+                const count =
+                    Number(
+                        data.matches_analyzed
+                        ?? 0
+                    );
+
+                matchesElement.textContent =
+                    count
+                    + " "
+                    + (
+                        count === 1
+                            ? "\u043c\u0430\u0442\u0447"
+                            : (
+                                count >= 2
+                                && count <= 4
+                                    ? "\u043c\u0430\u0442\u0447\u0430"
+                                    : "\u043c\u0430\u0442\u0447\u0435\u0439"
+                            )
+                    );
+            }
+        } catch (_) {
+            /* Keep placeholders on network failure. */
+        }
+    }
+
+    loadSummary();
+})();
+</script>
+
+
+<style id="cs2-steam-avatar-ui">
+
+.current-user-avatar {
+    overflow: hidden;
+}
+
+.current-user-avatar img {
+    width: 100%;
+    height: 100%;
+
+    display: block;
+
+    object-fit: cover;
+
+    border-radius: inherit;
+}
+
+</style>
+
+<script id="cs2-steam-avatar-script">
+(function () {
+    let attempts = 0;
+
+    async function applySteamProfile() {
+        attempts += 1;
+
+        try {
+            const response =
+                await fetch(
+                    "/me",
+                    {
+                        credentials:
+                            "same-origin",
+
+                        cache:
+                            "no-store",
+
+                        headers: {
+                            Accept:
+                                "application/json"
+                        }
+                    }
+                );
+
+            if (!response.ok) {
+                return;
+            }
+
+            const me =
+                await response.json();
+
+            const name =
+                String(
+                    me.player_name || ""
+                ).trim();
+
+            const avatarUrl =
+                String(
+                    me.avatar_url || ""
+                ).trim();
+
+            const nameElement =
+                document.getElementById(
+                    "currentUserName"
+                );
+
+            const avatar =
+                document.querySelector(
+                    ".current-user-avatar"
+                );
+
+            if (
+                (!avatar || !nameElement)
+                && attempts < 20
+            ) {
+                setTimeout(
+                    applySteamProfile,
+                    150
+                );
+
+                return;
+            }
+
+            if (nameElement && name) {
+                nameElement.textContent =
+                    name;
+            }
+
+            if (
+                avatar
+                && avatarUrl
+            ) {
+                const image =
+                    document.createElement(
+                        "img"
+                    );
+
+                image.src =
+                    avatarUrl;
+
+                image.alt =
+                    name || "Steam avatar";
+
+                image.referrerPolicy =
+                    "no-referrer";
+
+                image.addEventListener(
+                    "error",
+                    () => {
+                        console.error(
+                            "Steam avatar failed to load",
+                            avatarUrl
+                        );
+                    }
+                );
+
+                avatar.replaceChildren(
+                    image
+                );
+            }
+        }
+        catch (error) {
+            console.error(
+                "Steam profile UI load failed",
+                error
+            );
+        }
+    }
+
+    if (
+        document.readyState
+        === "loading"
+    ) {
+        document.addEventListener(
+            "DOMContentLoaded",
+            applySteamProfile,
+            {
+                once: true
+            }
+        );
+    } else {
+        applySteamProfile();
+    }
 })();
 </script>
 
