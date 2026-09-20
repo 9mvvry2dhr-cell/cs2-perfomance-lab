@@ -433,6 +433,16 @@ class AnalysisJobModel(Base):
         index=True,
     )
 
+    owner_steam_id: Mapped[str | None] = mapped_column(
+        String(32),
+        ForeignKey(
+            "users.steam_id",
+            ondelete="SET NULL",
+        ),
+        nullable=True,
+        index=True,
+    )
+
     original_filename: Mapped[str] = mapped_column(
         String(255),
         nullable=False,

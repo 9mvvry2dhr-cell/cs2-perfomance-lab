@@ -46,6 +46,7 @@ class DemoIngestionService:
     def ingest(
         self,
         *,
+        owner_steam_id: str,
         original_filename: str,
         source: BinaryIO,
     ) -> AnalysisJob:
@@ -70,6 +71,7 @@ class DemoIngestionService:
 
             try:
                 return self.job_repository.create_job(
+                    owner_steam_id=owner_steam_id,
                     original_filename=(
                         stored.original_filename
                     ),

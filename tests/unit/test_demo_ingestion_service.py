@@ -33,12 +33,16 @@ class StubJobRepository:
     def create_job(
         self,
         *,
+        owner_steam_id,
         original_filename,
         storage_key,
         file_sha256,
     ):
         self.calls.append(
             {
+                "owner_steam_id": (
+                    owner_steam_id
+                ),
                 "original_filename": (
                     original_filename
                 ),
@@ -87,6 +91,7 @@ class DemoIngestionServiceTest(
         )
 
         result = service.ingest(
+            owner_steam_id="76561198055629469",
             original_filename="match.dem",
             source=BytesIO(
                 b"demo-content"
@@ -104,6 +109,11 @@ class DemoIngestionServiceTest(
         )
 
         call = repository.calls[0]
+
+        self.assertEqual(
+            call["owner_steam_id"],
+            "76561198055629469",
+        )
 
         self.assertEqual(
             call["original_filename"],
@@ -139,6 +149,7 @@ class DemoIngestionServiceTest(
             AnalysisQueueFullError
         ):
             service.ingest(
+                owner_steam_id="76561198055629469",
                 original_filename="match.dem",
                 source=BytesIO(
                     b"demo-content"
@@ -173,6 +184,7 @@ class DemoIngestionServiceTest(
             RuntimeError
         ):
             service.ingest(
+                owner_steam_id="76561198055629469",
                 original_filename="match.dem",
                 source=BytesIO(
                     b"demo-content"

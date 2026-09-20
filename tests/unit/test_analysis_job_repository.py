@@ -13,7 +13,12 @@ from src.database.models import (
     AnalysisJobModel,
     Base,
     MatchModel,
+    UserModel,
 )
+
+
+TEST_STEAM_ID = "76561198055629469"
+OTHER_STEAM_ID = "76561198000000000"
 
 
 class AnalysisJobRepositoryTest(
@@ -35,6 +40,18 @@ class AnalysisJobRepositoryTest(
 
         self.session = self.Session()
 
+        self.session.add_all(
+            [
+                UserModel(
+                    steam_id=TEST_STEAM_ID
+                ),
+                UserModel(
+                    steam_id=OTHER_STEAM_ID
+                ),
+            ]
+        )
+        self.session.commit()
+
         self.repository = (
             AnalysisJobRepository(
                 self.session
@@ -52,6 +69,7 @@ class AnalysisJobRepositoryTest(
 
     def _create_job(self):
         return self.repository.create_job(
+            owner_steam_id=TEST_STEAM_ID,
             original_filename="match.dem",
             storage_key=(
                 "demos/test-match.dem"
@@ -97,6 +115,11 @@ class AnalysisJobRepositoryTest(
             "queued",
         )
 
+        self.assertEqual(
+            loaded.owner_steam_id,
+            TEST_STEAM_ID,
+        )
+
         self.assertIsNotNone(
             loaded.created_at
         )
@@ -107,6 +130,30 @@ class AnalysisJobRepositoryTest(
 
         self.assertIsNone(
             loaded.finished_at
+        )
+
+    def test_get_owned_job_returns_only_owner(
+        self,
+    ):
+        created = self._create_job()
+
+        owned = self.repository.get_owned_job(
+            created.id,
+            owner_steam_id=TEST_STEAM_ID,
+        )
+
+        foreign = self.repository.get_owned_job(
+            created.id,
+            owner_steam_id=OTHER_STEAM_ID,
+        )
+
+        self.assertEqual(
+            owned,
+            created,
+        )
+
+        self.assertIsNone(
+            foreign
         )
 
     def test_get_job_returns_none_when_missing(
@@ -126,6 +173,7 @@ class AnalysisJobRepositoryTest(
         first = self._create_job()
 
         second = self.repository.create_job(
+            owner_steam_id=TEST_STEAM_ID,
             original_filename="second.dem",
             storage_key="demos/second.dem",
             file_sha256="b" * 64,
@@ -186,6 +234,7 @@ class AnalysisJobRepositoryTest(
         first = self._create_job()
 
         second = self.repository.create_job(
+            owner_steam_id=TEST_STEAM_ID,
             original_filename=(
                 "second.dem"
             ),

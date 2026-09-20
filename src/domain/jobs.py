@@ -28,3 +28,5 @@ class AnalysisJob:
     created_at: datetime
     started_at: datetime | None
     finished_at: datetime | None
+
+    owner_steam_id: str | None = None

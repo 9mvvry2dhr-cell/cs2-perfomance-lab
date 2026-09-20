@@ -12,6 +12,7 @@ from src.ingestion.storage import (
 )
 from src.workers.analysis_worker import (
     AnalysisWorker,
+    DemoOwnerNotFoundError,
 )
 from tests.unit.test_analysis_repository import (
     make_analysis,
@@ -26,6 +27,9 @@ NOW = datetime(
     0,
     tzinfo=timezone.utc,
 )
+
+TEST_STEAM_ID = "76561198055629469"
+OTHER_STEAM_ID = "76561198000000000"
 
 
 class StubJobRepository:
@@ -158,6 +162,7 @@ class AnalysisWorkerTest(
             created_at=NOW,
             started_at=None,
             finished_at=None,
+            owner_steam_id=TEST_STEAM_ID,
         )
 
     def test_process_completes_job_saves_analysis_and_deletes_demo(
@@ -205,12 +210,12 @@ class AnalysisWorkerTest(
 
         expected_saved = replace(
             expected_analysis,
-            match_id="match",
+            match_id=self.stored.file_sha256,
         )
 
         self.assertEqual(
             result.match_id,
-            "match",
+            self.stored.file_sha256,
         )
 
         self.assertEqual(
@@ -265,7 +270,7 @@ class AnalysisWorkerTest(
 
         self.assertEqual(
             result.match_id,
-            "match",
+            self.stored.file_sha256,
         )
 
         self.assertEqual(
@@ -277,7 +282,7 @@ class AnalysisWorkerTest(
             analyses.saved,
             replace(
                 expected_analysis,
-                match_id="match",
+                match_id=self.stored.file_sha256,
             ),
         )
 
@@ -317,6 +322,61 @@ class AnalysisWorkerTest(
 
         self.assertIsNone(
             analyses.saved
+        )
+
+    def test_process_rejects_demo_without_owner(
+        self,
+    ):
+        expected_analysis = make_analysis()
+
+        foreign_job = replace(
+            self._make_job(),
+            owner_steam_id=OTHER_STEAM_ID,
+        )
+
+        jobs = StubJobRepository(
+            foreign_job
+        )
+
+        analyses = StubAnalysisRepository()
+
+        demo_path = self.storage.path_for(
+            self.stored.storage_key
+        )
+
+        worker = AnalysisWorker(
+            storage=self.storage,
+            job_repository=jobs,
+            analysis_repository=analyses,
+            analyzer=lambda _: expected_analysis,
+        )
+
+        with self.assertRaises(
+            DemoOwnerNotFoundError
+        ):
+            worker.process(
+                foreign_job.id
+            )
+
+        self.assertEqual(
+            jobs.job.status,
+            "failed",
+        )
+
+        self.assertEqual(
+            jobs.failed_error,
+            (
+                "Authenticated Steam account "
+                "was not found in demo"
+            ),
+        )
+
+        self.assertIsNone(
+            analyses.saved
+        )
+
+        self.assertFalse(
+            demo_path.exists()
         )
 
     def test_process_marks_job_failed_and_deletes_demo_when_analysis_fails(

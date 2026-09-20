@@ -31,11 +31,13 @@ class AnalysisJobRepository:
     def create_job(
         self,
         *,
+        owner_steam_id: str,
         original_filename: str,
         storage_key: str,
         file_sha256: str,
     ) -> AnalysisJob:
         model = AnalysisJobModel(
+            owner_steam_id=owner_steam_id,
             original_filename=original_filename,
             storage_key=storage_key,
             file_sha256=file_sha256,
@@ -61,6 +63,32 @@ class AnalysisJobRepository:
         model = self.session.get(
             AnalysisJobModel,
             job_id,
+        )
+
+        if model is None:
+            return None
+
+        return self._to_domain(
+            model
+        )
+
+    def get_owned_job(
+        self,
+        job_id: str,
+        *,
+        owner_steam_id: str,
+    ) -> AnalysisJob | None:
+        stmt = (
+            select(AnalysisJobModel)
+            .where(
+                AnalysisJobModel.id == job_id,
+                AnalysisJobModel.owner_steam_id
+                == owner_steam_id,
+            )
+        )
+
+        model = self.session.scalar(
+            stmt
         )
 
         if model is None:
@@ -353,4 +381,5 @@ class AnalysisJobRepository:
             created_at=model.created_at,
             started_at=model.started_at,
             finished_at=model.finished_at,
+            owner_steam_id=model.owner_steam_id,
         )

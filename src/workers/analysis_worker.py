@@ -28,6 +28,10 @@ from src.parsing.demo_parser import DemoParser
 logger = logging.getLogger(__name__)
 
 
+class DemoOwnerNotFoundError(ValueError):
+    pass
+
+
 def analyze_demo_file(
     demo_path: Path,
 ) -> MatchAnalysis:
@@ -120,14 +124,26 @@ class AnalysisWorker:
                 demo_path
             )
 
-            # Uploaded demos are stored under a random UUID.
-            # Preserve the original filename-based match identity
-            # used by DemoParser before the ingestion layer existed.
+            if (
+                job.owner_steam_id is not None
+                and not any(
+                    player.steam_id
+                    == job.owner_steam_id
+                    for player in analysis.players
+                )
+            ):
+                raise DemoOwnerNotFoundError(
+                    "Authenticated Steam account "
+                    "was not found in demo"
+                )
+
+            # Uploaded demos need a stable identity independent
+            # of the user-provided filename. The content hash is
+            # deterministic and prevents different files with the
+            # same name from overwriting each other.
             analysis = replace(
                 analysis,
-                match_id=Path(
-                    job.original_filename
-                ).stem,
+                match_id=job.file_sha256,
             )
 
             self.analysis_repository.save_analysis(
@@ -144,10 +160,20 @@ class AnalysisWorker:
                 )
             )
 
-        except Exception:
+        except Exception as exc:
+            error = (
+                "Authenticated Steam account "
+                "was not found in demo"
+                if isinstance(
+                    exc,
+                    DemoOwnerNotFoundError,
+                )
+                else "Analysis failed"
+            )
+
             self.job_repository.mark_failed(
                 job.id,
-                error="Analysis failed",
+                error=error,
             )
 
             try:

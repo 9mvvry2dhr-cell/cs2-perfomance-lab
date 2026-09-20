@@ -5,8 +5,10 @@ from fastapi.testclient import TestClient
 
 from src.api.app import app
 from src.api.dependencies import (
+    get_current_user,
     get_demo_ingestion_service,
 )
+from src.domain.identity import CurrentUser
 from src.domain.jobs import AnalysisJob
 from src.ingestion.service import (
     AnalysisQueueFullError,
@@ -16,6 +18,9 @@ from src.ingestion.storage import (
     DemoTooLargeError,
     InvalidDemoFileError,
 )
+
+
+TEST_STEAM_ID = "76561198055629469"
 
 
 def make_queued_job() -> AnalysisJob:
@@ -53,13 +58,16 @@ class StubIngestionService:
         self.error = error
         self.filename = None
         self.payload = None
+        self.owner_steam_id = None
 
     def ingest(
         self,
         *,
+        owner_steam_id,
         original_filename,
         source,
     ):
+        self.owner_steam_id = owner_steam_id
         self.filename = original_filename
         self.payload = source.read()
 
@@ -72,6 +80,13 @@ class StubIngestionService:
 class AnalysisJobUploadApiTest(
     unittest.TestCase
 ):
+    def setUp(self):
+        app.dependency_overrides[
+            get_current_user
+        ] = lambda: CurrentUser(
+            steam_id=TEST_STEAM_ID
+        )
+
     def tearDown(self):
         app.dependency_overrides.clear()
 
@@ -104,6 +119,11 @@ class AnalysisJobUploadApiTest(
         self.assertEqual(
             response.status_code,
             202,
+        )
+
+        self.assertEqual(
+            service.owner_steam_id,
+            TEST_STEAM_ID,
         )
 
         self.assertEqual(

@@ -281,11 +281,16 @@ def create_analysis_job(
         DemoIngestionService,
         Depends(get_demo_ingestion_service),
     ],
+    current_user: Annotated[
+        CurrentUser,
+        Depends(get_current_user),
+    ],
 ) -> AnalysisJobResponse:
     filename = file.filename or ""
 
     try:
         job = service.ingest(
+            owner_steam_id=current_user.steam_id,
             original_filename=filename,
             source=file.file,
         )
@@ -336,9 +341,14 @@ def get_analysis_job(
         AnalysisJobRepository,
         Depends(get_analysis_job_repository),
     ],
+    current_user: Annotated[
+        CurrentUser,
+        Depends(get_current_user),
+    ],
 ) -> AnalysisJobResponse:
-    job = repository.get_job(
-        job_id
+    job = repository.get_owned_job(
+        job_id,
+        owner_steam_id=current_user.steam_id,
     )
 
     if job is None:
