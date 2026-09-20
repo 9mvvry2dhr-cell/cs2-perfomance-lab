@@ -7,6 +7,7 @@ from pathlib import Path
 from typing import Annotated
 
 from fastapi import (
+    Cookie,
     Depends,
     HTTPException,
     status,
@@ -14,6 +15,8 @@ from fastapi import (
 from sqlalchemy import Engine
 from sqlalchemy.orm import Session, sessionmaker
 
+from src.auth.session import SESSION_COOKIE_NAME
+from src.database.auth_repository import AuthRepository
 from src.database.connection import (
     create_db_engine,
     create_session_factory,
@@ -51,6 +54,17 @@ def get_database_session() -> Iterator[Session]:
         yield session
     finally:
         session.close()
+
+
+def get_auth_repository(
+    session: Annotated[
+        Session,
+        Depends(get_database_session),
+    ],
+) -> AuthRepository:
+    return AuthRepository(
+        session
+    )
 
 
 def get_analysis_repository(
@@ -129,34 +143,67 @@ def get_demo_ingestion_service(
     )
 
 
-def get_current_user() -> CurrentUser:
+def get_current_user(
+    auth_repository: Annotated[
+        AuthRepository,
+        Depends(get_auth_repository),
+    ],
+    session_token: Annotated[
+        str | None,
+        Cookie(alias=SESSION_COOKIE_NAME),
+    ] = None,
+) -> CurrentUser:
     """
     Resolve the authenticated product user.
 
-    This is intentionally environment-backed for the local
-    prototype. Steam login/session authentication will replace
-    this implementation without changing protected API routes.
+    Browser sessions are the primary identity source.
+
+    The environment-backed identity remains available only
+    behind an explicit development fallback switch.
     """
-    steam_id = (
+    if session_token:
+        authenticated = (
+            auth_repository.resolve_session(
+                session_token
+            )
+        )
+
+        if authenticated is not None:
+            return CurrentUser(
+                steam_id=authenticated.steam_id
+            )
+
+    allow_dev_fallback = (
         os.environ.get(
-            "CURRENT_USER_STEAM_ID",
+            "AUTH_DEV_IDENTITY_FALLBACK",
             "",
         )
         .strip()
+        .lower()
+        in {
+            "1",
+            "true",
+            "yes",
+        }
     )
 
-    if not steam_id:
-        raise HTTPException(
-            status_code=(
-                status.HTTP_503_SERVICE_UNAVAILABLE
-            ),
-            detail=(
-                "Current user identity is not configured"
-            ),
+    if allow_dev_fallback:
+        steam_id = (
+            os.environ.get(
+                "CURRENT_USER_STEAM_ID",
+                "",
+            )
+            .strip()
         )
 
-    return CurrentUser(
-        steam_id=steam_id
+        if steam_id:
+            return CurrentUser(
+                steam_id=steam_id
+            )
+
+    raise HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Authentication required",
     )
 
 

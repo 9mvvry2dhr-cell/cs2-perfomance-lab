@@ -15,14 +15,21 @@ from fastapi import (
     UploadFile,
     status,
 )
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from sqlalchemy import text
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
+from src.auth.steam_openid import (
+    SteamOpenIDError,
+    build_steam_login_url,
+    verify_steam_openid_response,
+)
+from src.auth.session import SESSION_COOKIE_NAME
 from src.api.dependencies import (
     dispose_database_resources,
+    get_auth_repository,
     get_analysis_job_repository,
     get_analysis_repository,
     get_current_user,
@@ -37,6 +44,10 @@ from src.api.schemas import (
     PlayerHistorySummaryResponse,
     PlayerMatchHistoryResponse,
     ReadyResponse,
+)
+from src.database.auth_repository import (
+    AuthRepository,
+    DEFAULT_SESSION_LIFETIME,
 )
 from src.database.job_repository import AnalysisJobRepository
 from src.database.repository import AnalysisRepository
@@ -113,6 +124,116 @@ def ready(
     return ReadyResponse(
         status="ready"
     )
+
+
+@app.get(
+    "/auth/steam/login",
+)
+def steam_login(
+    request: Request,
+) -> RedirectResponse:
+    base_url = str(
+        request.base_url
+    ).rstrip("/")
+
+    login_url = build_steam_login_url(
+        return_to=(
+            f"{base_url}"
+            "/auth/steam/callback"
+        ),
+        realm=base_url,
+    )
+
+    return RedirectResponse(
+        url=login_url,
+        status_code=307,
+    )
+
+
+@app.get(
+    "/auth/steam/callback",
+)
+def steam_callback(
+    request: Request,
+    auth_repository: Annotated[
+        AuthRepository,
+        Depends(get_auth_repository),
+    ],
+) -> RedirectResponse:
+    params = dict(
+        request.query_params
+    )
+
+    try:
+        steam_id = (
+            verify_steam_openid_response(
+                params
+            )
+        )
+    except SteamOpenIDError as exc:
+        raise HTTPException(
+            status_code=(
+                status.HTTP_401_UNAUTHORIZED
+            ),
+            detail="Steam authentication failed",
+        ) from exc
+
+    created = auth_repository.create_session(
+        steam_id
+    )
+
+    response = RedirectResponse(
+        url="/",
+        status_code=status.HTTP_303_SEE_OTHER,
+    )
+
+    response.set_cookie(
+        key=SESSION_COOKIE_NAME,
+        value=created.token,
+        max_age=int(
+            DEFAULT_SESSION_LIFETIME.total_seconds()
+        ),
+        httponly=True,
+        secure=(
+            request.url.scheme == "https"
+        ),
+        samesite="lax",
+        path="/",
+    )
+
+    return response
+
+
+@app.post(
+    "/auth/logout",
+)
+def logout(
+    request: Request,
+    auth_repository: Annotated[
+        AuthRepository,
+        Depends(get_auth_repository),
+    ],
+) -> RedirectResponse:
+    token = request.cookies.get(
+        SESSION_COOKIE_NAME
+    )
+
+    if token:
+        auth_repository.revoke_session(
+            token
+        )
+
+    response = RedirectResponse(
+        url="/",
+        status_code=status.HTTP_303_SEE_OTHER,
+    )
+
+    response.delete_cookie(
+        key=SESSION_COOKIE_NAME,
+        path="/",
+    )
+
+    return response
 
 
 def require_owned_steam_id(

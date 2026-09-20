@@ -4489,6 +4489,9 @@ does not slide underneath the replacement icon.
 /* END PLAYER MATCH HISTORY */
 
 </style>
+
+
+
 </head>
 
 
@@ -4611,6 +4614,9 @@ Steam ID: —
 
 </div>
 
+
+
+
 <select
 class="player-select"
 hidden
@@ -4621,6 +4627,9 @@ tabindex="-1"
 <option value=""></option>
 
 </select>
+
+
+
 
 
 <div class="side-label">
@@ -9722,6 +9731,282 @@ document
 </script>
 
 <!-- CURRENT USER UI GUARD END -->
+
+
+<style id="cs2-steam-auth-ui">
+.current-user-card {
+    height: auto !important;
+    min-height: 50px;
+    overflow: visible !important;
+}
+
+.current-user-auth-actions {
+    display: block;
+    margin-top: 10px;
+}
+
+.steam-logout-form {
+    display: block;
+    margin: 0;
+}
+
+.steam-auth-link,
+.steam-logout-button {
+    width: 100%;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    min-height: 34px;
+
+    padding: 8px 10px;
+
+    border: 1px solid rgba(102, 128, 148, 0.32);
+    border-radius: 8px;
+
+    background: rgba(255, 255, 255, 0.035);
+
+    color: inherit;
+
+    font: inherit;
+    font-size: 10px;
+    font-weight: 750;
+
+    text-decoration: none;
+
+    cursor: pointer;
+
+    transition:
+        transform 120ms ease,
+        background 120ms ease,
+        border-color 120ms ease;
+}
+
+.steam-auth-link:hover,
+.steam-logout-button:hover {
+    transform: translateY(-1px);
+
+    background: rgba(255, 255, 255, 0.07);
+
+    border-color: rgba(102, 128, 148, 0.6);
+}
+
+.steam-logout-form {
+    margin: 0;
+}
+
+.current-user-auth-status {
+    margin-top: 6px;
+
+    color: #668094;
+
+    font-size: 8px;
+
+    line-height: 1.4;
+}
+</style>
+
+<script id="cs2-steam-auth-ui-script">
+(function () {
+    const card =
+        document.getElementById(
+            "currentUserCard"
+        );
+
+    if (!card) {
+        return;
+    }
+
+
+    let actions =
+        document.getElementById(
+            "currentUserAuthActions"
+        );
+
+
+    if (!actions) {
+        actions =
+            document.createElement(
+                "div"
+            );
+
+        actions.id =
+            "currentUserAuthActions";
+
+        actions.className =
+            "current-user-auth-actions";
+
+        card.appendChild(
+            actions
+        );
+    }
+
+
+    function setLoggedOut() {
+        const logoutRow =
+            document.getElementById(
+                "currentUserLogoutRow"
+            );
+
+        if (logoutRow) {
+            logoutRow.hidden = false;
+        }
+
+        const nameElement =
+            document.getElementById(
+                "currentUserName"
+            );
+
+        const steamElement =
+            document.getElementById(
+                "currentUserSteam"
+            );
+
+
+        if (nameElement) {
+            nameElement.textContent = 'Профиль игрока';
+        }
+
+
+        if (steamElement) {
+            steamElement.textContent = 'Steam не подключен';
+        }
+
+
+        actions.innerHTML = `
+            <a
+                class="steam-auth-link"
+                href="/auth/steam/login"
+            >
+                Sign in through Steam
+            </a>
+
+            <div class="current-user-auth-status">Войдите через Steam, чтобы открыть свою аналитику</div>
+        `;
+    }
+
+
+    function setLoggedIn(
+        steamId
+    ) {
+        const logoutRow =
+            document.getElementById(
+                "currentUserLogoutRow"
+            );
+
+        if (logoutRow) {
+            logoutRow.hidden = false;
+        }
+
+        if (
+            typeof window
+                .cs2SyncCurrentUserCard
+            === "function"
+        ) {
+            window.cs2SyncCurrentUserCard(
+                null,
+                steamId
+            );
+        }
+
+
+        actions.innerHTML = `
+            <form
+                class="steam-logout-form"
+                method="post"
+                action="/auth/logout"
+            >
+                <button
+                    class="steam-logout-button"
+                    type="submit"
+                >Выйти</button>
+            </form>
+        `;
+    }
+
+
+    async function refreshAuthUI() {
+        let response;
+
+        try {
+            response = await fetch(
+                "/me",
+                {
+                    credentials:
+                        "same-origin",
+
+                    cache:
+                        "no-store",
+
+                    headers: {
+                        Accept:
+                            "application/json",
+                    },
+                }
+            );
+        }
+        catch (error) {
+            console.error(
+                "Auth status request failed",
+                error
+            );
+
+            setLoggedOut();
+            return;
+        }
+
+
+        if (
+            response.status === 401
+        ) {
+            setLoggedOut();
+            return;
+        }
+
+
+        if (!response.ok) {
+            console.error(
+                "Auth status request failed:",
+                response.status
+            );
+
+            return;
+        }
+
+
+        const me =
+            await response.json();
+
+        const steamId =
+            String(
+                me.steam_id || ""
+            ).trim();
+
+
+        if (!steamId) {
+            setLoggedOut();
+            return;
+        }
+
+
+        setLoggedIn(
+            steamId
+        );
+    }
+
+
+    Promise.resolve(
+        window.cs2CurrentUserReady
+    )
+    .catch(function () {
+        return null;
+    })
+    .finally(
+        refreshAuthUI
+    );
+})();
+</script>
 
 </body>
 </html>

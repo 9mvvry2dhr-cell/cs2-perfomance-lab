@@ -7,6 +7,7 @@ from datetime import datetime
 
 
 SESSION_TOKEN_BYTES = 32
+SESSION_COOKIE_NAME = "cs2pl_session"
 
 
 @dataclass(frozen=True)
