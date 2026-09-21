@@ -45,6 +45,8 @@ Grounding rules:
     match.player_result explicitly says "win" or "loss".
 13. If match.player_result is "unknown", either omit the result entirely or describe
     the score only neutrally as CT/T side round totals. Do not infer team outcome.
+14. If match.player_result is "win", "loss", or "draw", state that outcome accurately
+    in the summary when it helps the review.
 
 Return one JSON object only with exactly these keys:
 {
