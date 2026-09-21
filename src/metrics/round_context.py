@@ -1,3 +1,5 @@
+import threading
+
 from dataclasses import dataclass
 from typing import List, Optional
 
@@ -17,7 +19,7 @@ class RoundContext:
     winner_team: Optional[int]
 
 
-def build_round_contexts(
+def _build_round_contexts_uncached(
     raw_parser: RawDemoParser
 ) -> List[RoundContext]:
     """
@@ -222,6 +224,49 @@ def build_round_contexts(
         previous_end = end_tick
 
     return contexts
+
+
+_round_context_cache = threading.local()
+
+
+def build_round_contexts(
+    raw_parser: RawDemoParser
+) -> List[RoundContext]:
+    """
+    Build canonical round contexts once per parser instance.
+
+    A demo is immutable during analysis, so every metric that
+    receives the same RawDemoParser can safely reuse the exact
+    same verified round contexts.
+
+    The cache keeps only the most recent parser per thread.
+    """
+
+    cached_parser = getattr(
+        _round_context_cache,
+        "parser",
+        None,
+    )
+
+    if cached_parser is raw_parser:
+        return getattr(
+            _round_context_cache,
+            "rounds",
+        )
+
+    rounds = _build_round_contexts_uncached(
+        raw_parser
+    )
+
+    _round_context_cache.parser = (
+        raw_parser
+    )
+
+    _round_context_cache.rounds = (
+        rounds
+    )
+
+    return rounds
 
 
 def find_round(
