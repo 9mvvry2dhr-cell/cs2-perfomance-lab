@@ -174,6 +174,30 @@ class AnalysisRepositoryTest(unittest.TestCase):
             expected,
         )
 
+    def test_player_result_round_trip_is_persisted(self):
+        expected = replace(
+            make_analysis(),
+            player_results={
+                "76561198055629469": "win",
+            },
+        )
+
+        self.repository.save_analysis(
+            expected
+        )
+
+        actual = self.repository.get_analysis(
+            expected.match_id
+        )
+
+        self.assertEqual(
+            actual.player_results,
+            {
+                "76561198055629469": "win",
+            },
+        )
+
+
     def test_get_analysis_returns_none_for_missing_match(self):
         actual = self.repository.get_analysis(
             "missing-match"
@@ -203,6 +227,55 @@ class AnalysisRepositoryTest(unittest.TestCase):
         self.assertEqual(
             actual,
             second,
+        )
+
+
+    def test_reanalysis_preserves_original_created_at(self):
+        first = make_analysis()
+
+        self.repository.save_analysis(
+            first
+        )
+
+        original_model = self.session.get(
+            MatchModel,
+            first.match_id,
+        )
+
+        original_created_at = datetime(
+            2026,
+            9,
+            1,
+            12,
+            0,
+            tzinfo=timezone.utc,
+        )
+
+        original_model.created_at = (
+            original_created_at
+        )
+
+        self.session.commit()
+
+        updated = replace(
+            first,
+            player_results={
+                "76561198055629469": "win",
+            },
+        )
+
+        self.repository.save_analysis(
+            updated
+        )
+
+        refreshed = self.session.get(
+            MatchModel,
+            first.match_id,
+        )
+
+        self.assertEqual(
+            refreshed.created_at,
+            original_created_at,
         )
 
 
