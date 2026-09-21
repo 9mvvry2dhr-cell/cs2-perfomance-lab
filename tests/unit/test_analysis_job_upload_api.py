@@ -11,6 +11,7 @@ from src.api.dependencies import (
 from src.domain.identity import CurrentUser
 from src.domain.jobs import AnalysisJob
 from src.ingestion.service import (
+    AnalysisAlreadyActiveError,
     AnalysisQueueFullError,
 )
 from src.ingestion.storage import (
@@ -201,6 +202,55 @@ class AnalysisJobUploadApiTest(
             {
                 "detail": (
                     "Analysis queue is full"
+                )
+            },
+        )
+
+    def test_upload_rejects_when_user_already_has_active_analysis(
+        self,
+    ):
+        service = StubIngestionService(
+            error=AnalysisAlreadyActiveError(
+                "An analysis is already active "
+                "for this Steam account"
+            )
+        )
+
+        app.dependency_overrides[
+            get_demo_ingestion_service
+        ] = lambda: service
+
+        client = TestClient(app)
+
+        response = client.post(
+            "/analysis-jobs",
+            files={
+                "file": (
+                    "second.dem",
+                    b"content",
+                    "application/octet-stream",
+                )
+            },
+        )
+
+        self.assertEqual(
+            response.status_code,
+            429,
+        )
+
+        self.assertEqual(
+            response.headers.get(
+                "retry-after"
+            ),
+            "30",
+        )
+
+        self.assertEqual(
+            response.json(),
+            {
+                "detail": (
+                    "An analysis is already active "
+                    "for this Steam account"
                 )
             },
         )

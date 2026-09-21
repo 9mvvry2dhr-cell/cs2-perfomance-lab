@@ -121,6 +121,41 @@ class AnalysisJobRepository:
             or 0
         )
 
+    def count_active_jobs_for_owner(
+        self,
+        owner_steam_id: str,
+    ) -> int:
+        owner_steam_id = (
+            owner_steam_id.strip()
+        )
+
+        if not owner_steam_id:
+            raise ValueError(
+                "owner_steam_id must not be empty"
+            )
+
+        stmt = (
+            select(func.count())
+            .select_from(
+                AnalysisJobModel
+            )
+            .where(
+                AnalysisJobModel.owner_steam_id
+                == owner_steam_id,
+                AnalysisJobModel.status.in_(
+                    (
+                        "queued",
+                        "processing",
+                    )
+                ),
+            )
+        )
+
+        return int(
+            self.session.scalar(stmt)
+            or 0
+        )
+
     def requeue_stale_processing_jobs(
         self,
         *,

@@ -21,6 +21,12 @@ class AnalysisQueueFullError(
     pass
 
 
+class AnalysisAlreadyActiveError(
+    AnalysisQueueFullError
+):
+    pass
+
+
 class DemoIngestionService:
     _admission_lock = Lock()
     def __init__(
@@ -51,6 +57,19 @@ class DemoIngestionService:
         source: BinaryIO,
     ) -> AnalysisJob:
         with self._admission_lock:
+            owner_active_jobs = (
+                self.job_repository
+                .count_active_jobs_for_owner(
+                    owner_steam_id
+                )
+            )
+
+            if owner_active_jobs > 0:
+                raise AnalysisAlreadyActiveError(
+                    "An analysis is already active "
+                    "for this Steam account"
+                )
+
             active_jobs = (
                 self.job_repository
                 .count_active_jobs()

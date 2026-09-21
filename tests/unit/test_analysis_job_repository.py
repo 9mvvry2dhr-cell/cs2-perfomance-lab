@@ -217,6 +217,94 @@ class AnalysisJobRepositoryTest(
             0,
         )
 
+    def test_count_active_jobs_for_owner_isolated_by_steam_id(
+        self,
+    ):
+        first = self._create_job()
+
+        other = self.repository.create_job(
+            owner_steam_id=OTHER_STEAM_ID,
+            original_filename="other.dem",
+            storage_key="demos/other.dem",
+            file_sha256="b" * 64,
+        )
+
+        self.assertEqual(
+            self.repository
+            .count_active_jobs_for_owner(
+                TEST_STEAM_ID
+            ),
+            1,
+        )
+
+        self.assertEqual(
+            self.repository
+            .count_active_jobs_for_owner(
+                OTHER_STEAM_ID
+            ),
+            1,
+        )
+
+        self.repository.mark_processing(
+            first.id
+        )
+
+        self.assertEqual(
+            self.repository
+            .count_active_jobs_for_owner(
+                TEST_STEAM_ID
+            ),
+            1,
+        )
+
+        self.repository.mark_failed(
+            first.id,
+            error="Parser failed",
+        )
+
+        self.assertEqual(
+            self.repository
+            .count_active_jobs_for_owner(
+                TEST_STEAM_ID
+            ),
+            0,
+        )
+
+        self.assertEqual(
+            self.repository
+            .count_active_jobs_for_owner(
+                OTHER_STEAM_ID
+            ),
+            1,
+        )
+
+        self.repository.mark_processing(
+            other.id
+        )
+
+        self.repository.mark_failed(
+            other.id,
+            error="Parser failed",
+        )
+
+        self.assertEqual(
+            self.repository
+            .count_active_jobs_for_owner(
+                OTHER_STEAM_ID
+            ),
+            0,
+        )
+
+    def test_count_active_jobs_for_owner_rejects_empty_steam_id(
+        self,
+    ):
+        with self.assertRaises(
+            ValueError
+        ):
+            self.repository.count_active_jobs_for_owner(
+                "   "
+            )
+
     def test_claim_next_job_returns_none_when_queue_empty(
         self,
     ):
