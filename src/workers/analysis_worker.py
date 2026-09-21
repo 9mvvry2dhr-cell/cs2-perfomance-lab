@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+import time
 from collections.abc import Callable
 from dataclasses import replace
 from pathlib import Path
@@ -35,11 +36,22 @@ class DemoOwnerNotFoundError(ValueError):
 def analyze_demo_file(
     demo_path: Path,
 ) -> MatchAnalysis:
+    total_started = time.perf_counter()
+
     parser = DemoParser(
         str(demo_path)
     )
 
+    parse_started = time.perf_counter()
+
     match = parser.parse()
+
+    parse_seconds = (
+        time.perf_counter()
+        - parse_started
+    )
+
+    splits_started = time.perf_counter()
 
     splits = calculate_split_metrics(
         parser.raw_parser,
@@ -49,10 +61,43 @@ def analyze_demo_file(
         ],
     )
 
-    return build_match_analysis(
+    splits_seconds = (
+        time.perf_counter()
+        - splits_started
+    )
+
+    build_started = time.perf_counter()
+
+    analysis = build_match_analysis(
         match,
         splits,
     )
+
+    build_seconds = (
+        time.perf_counter()
+        - build_started
+    )
+
+    total_seconds = (
+        time.perf_counter()
+        - total_started
+    )
+
+    logger.info(
+        "ANALYSIS_TIMING "
+        "file=%s "
+        "parse=%.2fs "
+        "splits=%.2fs "
+        "build=%.2fs "
+        "total=%.2fs",
+        demo_path.name,
+        parse_seconds,
+        splits_seconds,
+        build_seconds,
+        total_seconds,
+    )
+
+    return analysis
 
 
 class AnalysisWorker:
