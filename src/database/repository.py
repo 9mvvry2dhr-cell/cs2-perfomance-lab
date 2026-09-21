@@ -4,6 +4,7 @@ from sqlalchemy import exists, select
 from sqlalchemy.orm import Session, selectinload
 
 from src.database.models import (
+    AnalysisJobModel,
     FindingModel,
     MatchModel,
     MatchPlayerModel,
@@ -424,10 +425,6 @@ class AnalysisRepository:
                 raise ValueError(
                     "owner_steam_id must not be empty"
                 )
-
-            from src.database.models import (
-                AnalysisJobModel,
-            )
 
             owner_filter = exists(
                 select(
