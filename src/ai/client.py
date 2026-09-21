@@ -113,7 +113,7 @@ def validate_explanation_grounding(
     validate_items(
         "focus",
         explanation.focus,
-        allowed_kind="weakness",
+        allowed_kind=None,
     )
 
 
