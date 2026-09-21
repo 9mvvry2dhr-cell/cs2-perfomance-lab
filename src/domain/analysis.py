@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Dict, List, Mapping
 
 from src.domain.insights import Finding, generate_player_findings
@@ -82,6 +82,15 @@ class MatchAnalysis:
     validation_error: str | None
 
     players: List[PlayerAnalysis]
+
+    # Per-player outcome from the player's final verified side.
+    # Kept separate from score_ct/score_t because those are final
+    # CT/T team totals, not automatically the current user's result.
+    player_results: Dict[str, str] = field(
+        default_factory=dict,
+        repr=False,
+        compare=False,
+    )
 
 
 def _percentage(
@@ -368,4 +377,7 @@ def build_match_analysis(
             match.validation_error
         ),
         players=players,
+        player_results=dict(
+            match.player_results
+        ),
     )
