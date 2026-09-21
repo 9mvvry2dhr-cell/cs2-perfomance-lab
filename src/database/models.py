@@ -10,13 +10,25 @@ from sqlalchemy import (
     DateTime,
     Float,
     ForeignKey,
+    Index,
     Integer,
     JSON,
     String,
     Text,
     UniqueConstraint,
+    text,
 )
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
+
+
+ACTIVE_ANALYSIS_OWNER_INDEX = (
+    "uq_analysis_jobs_active_owner"
+)
+
+ACTIVE_ANALYSIS_OWNER_PREDICATE = (
+    "owner_steam_id IS NOT NULL "
+    "AND status IN ('queued', 'processing')"
+)
 
 
 class Base(DeclarativeBase):
@@ -417,6 +429,17 @@ class AnalysisJobModel(Base):
         CheckConstraint(
             "status IN ('queued', 'processing', 'completed', 'failed')",
             name="ck_analysis_jobs_status",
+        ),
+        Index(
+            ACTIVE_ANALYSIS_OWNER_INDEX,
+            "owner_steam_id",
+            unique=True,
+            postgresql_where=text(
+                ACTIVE_ANALYSIS_OWNER_PREDICATE
+            ),
+            sqlite_where=text(
+                ACTIVE_ANALYSIS_OWNER_PREDICATE
+            ),
         ),
     )
 

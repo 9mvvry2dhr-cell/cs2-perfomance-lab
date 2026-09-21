@@ -5,6 +5,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
 from src.database.job_repository import (
+    ActiveAnalysisJobConflictError,
     AnalysisJobNotFoundError,
     AnalysisJobRepository,
     InvalidAnalysisJobTransitionError,
@@ -173,7 +174,7 @@ class AnalysisJobRepositoryTest(
         first = self._create_job()
 
         second = self.repository.create_job(
-            owner_steam_id=TEST_STEAM_ID,
+            owner_steam_id=OTHER_STEAM_ID,
             original_filename="second.dem",
             storage_key="demos/second.dem",
             file_sha256="b" * 64,
@@ -355,6 +356,60 @@ class AnalysisJobRepositoryTest(
             )
         )
 
+    def test_database_rejects_second_active_job_for_same_owner(
+        self,
+    ):
+        first = self._create_job()
+
+        with self.assertRaises(
+            ActiveAnalysisJobConflictError
+        ):
+            self.repository.create_job(
+                owner_steam_id=TEST_STEAM_ID,
+                original_filename="second.dem",
+                storage_key="demos/second.dem",
+                file_sha256="b" * 64,
+            )
+
+        loaded = self.repository.get_job(
+            first.id
+        )
+
+        self.assertIsNotNone(
+            loaded
+        )
+
+        self.assertEqual(
+            loaded.status,
+            "queued",
+        )
+
+    def test_database_allows_new_job_after_previous_job_is_finished(
+        self,
+    ):
+        first = self._create_job()
+
+        self.repository.mark_processing(
+            first.id
+        )
+
+        self.repository.mark_failed(
+            first.id,
+            error="Parser failed",
+        )
+
+        second = self.repository.create_job(
+            owner_steam_id=TEST_STEAM_ID,
+            original_filename="second.dem",
+            storage_key="demos/second.dem",
+            file_sha256="b" * 64,
+        )
+
+        self.assertEqual(
+            second.status,
+            "queued",
+        )
+
     def test_claim_next_job_returns_none_when_queue_empty(
         self,
     ):
@@ -372,7 +427,7 @@ class AnalysisJobRepositoryTest(
         first = self._create_job()
 
         second = self.repository.create_job(
-            owner_steam_id=TEST_STEAM_ID,
+            owner_steam_id=OTHER_STEAM_ID,
             original_filename=(
                 "second.dem"
             ),

@@ -4,6 +4,7 @@ from threading import Lock
 from typing import BinaryIO
 
 from src.database.job_repository import (
+    ActiveAnalysisJobConflictError,
     AnalysisJobRepository,
 )
 from src.domain.jobs import AnalysisJob
@@ -120,8 +121,18 @@ class DemoIngestionService:
                     ),
                 )
 
-            except Exception:
+            except Exception as exc:
                 self.storage.delete(
                     stored.storage_key
                 )
+
+                if isinstance(
+                    exc,
+                    ActiveAnalysisJobConflictError,
+                ):
+                    raise AnalysisAlreadyActiveError(
+                        "An analysis is already active "
+                        "for this Steam account"
+                    ) from exc
+
                 raise

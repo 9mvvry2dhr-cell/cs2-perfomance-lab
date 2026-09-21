@@ -4,9 +4,13 @@ from datetime import datetime, timezone
 from typing import cast
 
 from sqlalchemy import func, select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
-from src.database.models import AnalysisJobModel
+from src.database.models import (
+    ACTIVE_ANALYSIS_OWNER_INDEX,
+    AnalysisJobModel,
+)
 from src.domain.jobs import (
     AnalysisJob,
     JobStatus,
@@ -14,6 +18,12 @@ from src.domain.jobs import (
 
 
 class AnalysisJobNotFoundError(LookupError):
+    pass
+
+
+class ActiveAnalysisJobConflictError(
+    RuntimeError
+):
     pass
 
 
@@ -51,6 +61,44 @@ class AnalysisJobRepository:
             return self._to_domain(
                 model
             )
+
+        except IntegrityError as exc:
+            self.session.rollback()
+
+            diag = getattr(
+                exc.orig,
+                "diag",
+                None,
+            )
+
+            constraint_name = getattr(
+                diag,
+                "constraint_name",
+                None,
+            )
+
+            sqlite_conflict = (
+                self.session.bind is not None
+                and self.session.bind.dialect.name
+                == "sqlite"
+                and (
+                    "UNIQUE constraint failed: "
+                    "analysis_jobs.owner_steam_id"
+                    in str(exc.orig)
+                )
+            )
+
+            if (
+                constraint_name
+                == ACTIVE_ANALYSIS_OWNER_INDEX
+                or sqlite_conflict
+            ):
+                raise ActiveAnalysisJobConflictError(
+                    "Owner already has an "
+                    "active analysis job"
+                ) from exc
+
+            raise
 
         except Exception:
             self.session.rollback()

@@ -3,6 +3,9 @@ from io import BytesIO
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
+from src.database.job_repository import (
+    ActiveAnalysisJobConflictError,
+)
 from src.ingestion.service import (
     AnalysisAlreadyActiveError,
     AnalysisQueueFullError,
@@ -183,6 +186,42 @@ class DemoIngestionServiceTest(
         self.assertEqual(
             repository.calls,
             [],
+        )
+
+        self.assertEqual(
+            list(self.root.iterdir()),
+            [],
+        )
+
+    def test_ingest_translates_database_active_job_race(
+        self,
+    ):
+        repository = StubJobRepository(
+            error=ActiveAnalysisJobConflictError(
+                "Owner already has an "
+                "active analysis job"
+            )
+        )
+
+        service = DemoIngestionService(
+            storage=self.storage,
+            job_repository=repository,
+        )
+
+        with self.assertRaises(
+            AnalysisAlreadyActiveError
+        ):
+            service.ingest(
+                owner_steam_id="76561198055629469",
+                original_filename="race.dem",
+                source=BytesIO(
+                    b"demo-content"
+                ),
+            )
+
+        self.assertEqual(
+            len(repository.calls),
+            1,
         )
 
         self.assertEqual(
