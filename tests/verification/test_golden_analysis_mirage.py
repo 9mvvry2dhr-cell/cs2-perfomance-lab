@@ -24,6 +24,13 @@ DEMO_ENV = "CS2_GOLDEN_MIRAGE_DEMO"
 def normalize_payload(payload):
     payload = dict(payload)
 
+    # Player result is verified independently from final-side evidence.
+    # The historical golden fixture predates this metadata field.
+    payload.pop(
+        "player_results",
+        None,
+    )
+
     players = [
         dict(player)
         for player in payload["players"]
