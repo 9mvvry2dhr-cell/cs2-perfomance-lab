@@ -1,0 +1,274 @@
+import os
+import unittest
+from types import SimpleNamespace
+from unittest.mock import patch
+
+from src.ai.client import (
+    AIConfigurationError,
+    AIResponseValidationError,
+    DEFAULT_OPENAI_MODEL,
+    OpenAIMatchExplainer,
+    validate_explanation_grounding,
+)
+from src.ai.models import (
+    AIExplanationItem,
+    MatchAIExplanation,
+)
+from src.ai.payload import build_match_ai_payload
+from tests.unit.test_analysis_repository import make_analysis
+
+
+class FakeResponses:
+    def __init__(self, parsed):
+        self.parsed = parsed
+        self.calls = []
+
+    def parse(self, **kwargs):
+        self.calls.append(kwargs)
+
+        return SimpleNamespace(
+            output_parsed=self.parsed
+        )
+
+
+class FakeClient:
+    def __init__(self, parsed):
+        self.responses = FakeResponses(
+            parsed
+        )
+
+
+class OpenAIMatchExplainerTest(unittest.TestCase):
+
+    def _payload(self):
+        return build_match_ai_payload(
+            make_analysis(),
+            steam_id="76561198055629469",
+        )
+
+
+    def _valid_explanation(self):
+        return MatchAIExplanation(
+            summary="На T сторона заметно слабее по подтверждённым показателям.",
+            strengths=[],
+            weaknesses=[
+                AIExplanationItem(
+                    title="Разрыв по сторонам",
+                    text="На T ниже ADR и KAST.",
+                    evidence_codes=[
+                        "SIDE_PERFORMANCE_GAP"
+                    ],
+                )
+            ],
+            focus=[
+                AIExplanationItem(
+                    title="Разобрать T-раунды",
+                    text="Проверь повторяющиеся эпизоды на T, не считая причину заранее доказанной.",
+                    evidence_codes=[
+                        "SIDE_PERFORMANCE_GAP"
+                    ],
+                )
+            ],
+            caveat="Эти данные не доказывают конкретную игровую причину разрыва.",
+        )
+
+
+    def test_explain_uses_responses_parse_and_structured_model(self):
+        explanation = self._valid_explanation()
+        client = FakeClient(
+            explanation
+        )
+
+        explainer = OpenAIMatchExplainer(
+            client=client,
+            model="test-model",
+        )
+
+        actual = explainer.explain(
+            self._payload()
+        )
+
+        self.assertEqual(
+            actual,
+            explanation,
+        )
+
+        self.assertEqual(
+            len(client.responses.calls),
+            1,
+        )
+
+        call = client.responses.calls[0]
+
+        self.assertEqual(
+            call["model"],
+            "test-model",
+        )
+
+        self.assertIs(
+            call["text_format"],
+            MatchAIExplanation,
+        )
+
+        self.assertEqual(
+            call["input"][0]["role"],
+            "system",
+        )
+
+        self.assertEqual(
+            call["input"][1]["role"],
+            "user",
+        )
+
+
+    def test_unknown_evidence_code_is_rejected(self):
+        explanation = self._valid_explanation()
+
+        bad = explanation.model_copy(
+            update={
+                "weaknesses": [
+                    AIExplanationItem(
+                        title="Invented",
+                        text="Invented",
+                        evidence_codes=[
+                            "NOT_IN_PAYLOAD"
+                        ],
+                    )
+                ]
+            }
+        )
+
+        with self.assertRaises(
+            AIResponseValidationError
+        ):
+            validate_explanation_grounding(
+                bad,
+                self._payload(),
+            )
+
+
+    def test_strength_cannot_use_weakness_finding(self):
+        explanation = self._valid_explanation()
+
+        bad = explanation.model_copy(
+            update={
+                "strengths": [
+                    AIExplanationItem(
+                        title="Wrong kind",
+                        text="Wrong kind",
+                        evidence_codes=[
+                            "SIDE_PERFORMANCE_GAP"
+                        ],
+                    )
+                ],
+                "weaknesses": [],
+                "focus": [],
+            }
+        )
+
+        with self.assertRaises(
+            AIResponseValidationError
+        ):
+            validate_explanation_grounding(
+                bad,
+                self._payload(),
+            )
+
+
+    def test_focus_must_be_grounded_in_weakness(self):
+        payload = self._payload()
+
+        payload["verified_findings"].append(
+            {
+                "code": "TEST_STRENGTH",
+                "category": "test",
+                "kind": "strength",
+                "severity": "low",
+                "side": "MATCH",
+                "evidence": {},
+            }
+        )
+
+        bad = self._valid_explanation().model_copy(
+            update={
+                "focus": [
+                    AIExplanationItem(
+                        title="Wrong focus",
+                        text="Wrong focus",
+                        evidence_codes=[
+                            "TEST_STRENGTH"
+                        ],
+                    )
+                ]
+            }
+        )
+
+        with self.assertRaises(
+            AIResponseValidationError
+        ):
+            validate_explanation_grounding(
+                bad,
+                payload,
+            )
+
+
+    def test_empty_evidence_codes_are_rejected(self):
+        bad = self._valid_explanation().model_copy(
+            update={
+                "weaknesses": [
+                    AIExplanationItem(
+                        title="Ungrounded",
+                        text="Ungrounded",
+                        evidence_codes=[],
+                    )
+                ]
+            }
+        )
+
+        with self.assertRaises(
+            AIResponseValidationError
+        ):
+            validate_explanation_grounding(
+                bad,
+                self._payload(),
+            )
+
+
+    def test_missing_api_key_is_rejected_without_network_client(self):
+        with patch.dict(
+            os.environ,
+            {
+                "OPENAI_API_KEY": "",
+            },
+            clear=False,
+        ):
+            with self.assertRaises(
+                AIConfigurationError
+            ):
+                OpenAIMatchExplainer()
+
+
+    def test_default_model_is_gpt_5_6(self):
+        client = FakeClient(
+            self._valid_explanation()
+        )
+
+        with patch.dict(
+            os.environ,
+            {
+                "OPENAI_MODEL": "",
+            },
+            clear=False,
+        ):
+            explainer = OpenAIMatchExplainer(
+                client=client,
+            )
+
+        self.assertEqual(
+            explainer.model,
+            DEFAULT_OPENAI_MODEL,
+        )
+
+
+if __name__ == "__main__":
+    unittest.main()
