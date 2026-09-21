@@ -96,17 +96,20 @@ class DemoIngestionService:
             )
 
             try:
-                if (
+                completed = (
                     self.job_repository
-                    .has_completed_file_for_owner(
+                    .get_completed_file_for_owner(
                         owner_steam_id,
                         stored.file_sha256,
                     )
-                ):
-                    raise DuplicateDemoError(
-                        "This demo has already "
-                        "been analyzed"
+                )
+
+                if completed is not None:
+                    self.storage.delete(
+                        stored.storage_key
                     )
+
+                    return completed
 
                 return self.job_repository.create_job(
                     owner_steam_id=owner_steam_id,
