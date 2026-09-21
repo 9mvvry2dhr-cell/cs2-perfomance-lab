@@ -3,6 +3,7 @@ from __future__ import annotations
 import logging
 import os
 import time
+from functools import partial
 from collections.abc import Callable
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
@@ -27,7 +28,9 @@ from src.ingestion.storage import (
     LocalDemoStorage,
 )
 from src.workers.analysis_worker import (
+    DEFAULT_ANALYSIS_TIMEOUT_SECONDS,
     AnalysisWorker,
+    analyze_demo_file_with_timeout,
 )
 
 
@@ -42,10 +45,19 @@ def process_next_job(
     session_factory: sessionmaker[Session],
     storage: LocalDemoStorage,
     stale_seconds: float = DEFAULT_STALE_SECONDS,
+    analysis_timeout_seconds: float = (
+        DEFAULT_ANALYSIS_TIMEOUT_SECONDS
+    ),
 ) -> AnalysisJob | None:
     if stale_seconds <= 0:
         raise ValueError(
             "stale_seconds must be positive"
+        )
+
+    if analysis_timeout_seconds <= 0:
+        raise ValueError(
+            "analysis_timeout_seconds "
+            "must be positive"
         )
 
     session = session_factory()
@@ -84,6 +96,12 @@ def process_next_job(
                 AnalysisRepository(
                     session
                 )
+            ),
+            analyzer=partial(
+                analyze_demo_file_with_timeout,
+                timeout_seconds=(
+                    analysis_timeout_seconds
+                ),
             ),
         )
 
@@ -172,6 +190,15 @@ def main() -> None:
         )
     )
 
+    analysis_timeout_seconds = float(
+        os.environ.get(
+            "ANALYSIS_JOB_TIMEOUT_SECONDS",
+            str(
+                DEFAULT_ANALYSIS_TIMEOUT_SECONDS
+            ),
+        )
+    )
+
     engine = create_db_engine()
 
     session_factory = (
@@ -196,6 +223,9 @@ def main() -> None:
                 ),
                 storage=storage,
                 stale_seconds=stale_seconds,
+                analysis_timeout_seconds=(
+                    analysis_timeout_seconds
+                ),
             ),
             poll_seconds=poll_seconds,
         )

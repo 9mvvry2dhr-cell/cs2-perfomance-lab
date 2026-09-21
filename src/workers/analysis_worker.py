@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+import multiprocessing
 import time
 from collections.abc import Callable
 from dataclasses import replace
@@ -29,7 +30,14 @@ from src.parsing.demo_parser import DemoParser
 logger = logging.getLogger(__name__)
 
 
+DEFAULT_ANALYSIS_TIMEOUT_SECONDS = 600.0
+
+
 class DemoOwnerNotFoundError(ValueError):
+    pass
+
+
+class AnalysisTimeoutError(TimeoutError):
     pass
 
 
@@ -102,6 +110,220 @@ def analyze_demo_file(
     )
 
     return analysis
+
+
+def _analysis_subprocess(
+    demo_path: str,
+    connection,
+) -> None:
+    """
+    Run parsing in an isolated process.
+
+    If demoparser2 hangs, the parent worker can terminate
+    this process without killing the queue worker itself.
+    """
+
+    logging.basicConfig(
+        level=logging.INFO,
+        format=(
+            "%(asctime)s "
+            "%(levelname)s "
+            "%(name)s: "
+            "%(message)s"
+        ),
+    )
+
+    try:
+        analysis = analyze_demo_file(
+            Path(demo_path)
+        )
+
+        connection.send(
+            (
+                "ok",
+                analysis,
+            )
+        )
+
+    except BaseException as exc:
+        logger.exception(
+            "Analysis subprocess failed"
+        )
+
+        try:
+            connection.send(
+                (
+                    "error",
+                    type(exc).__name__,
+                    str(exc),
+                )
+            )
+
+        except Exception:
+            pass
+
+    finally:
+        connection.close()
+
+
+def _terminate_process(
+    process,
+) -> None:
+    if not process.is_alive():
+        process.join(
+            timeout=0
+        )
+        return
+
+    process.terminate()
+
+    process.join(
+        timeout=5.0
+    )
+
+    if process.is_alive():
+        process.kill()
+
+        process.join(
+            timeout=5.0
+        )
+
+
+def analyze_demo_file_with_timeout(
+    demo_path: Path,
+    *,
+    timeout_seconds: float = (
+        DEFAULT_ANALYSIS_TIMEOUT_SECONDS
+    ),
+) -> MatchAnalysis:
+    """
+    Execute one demo analysis in a disposable child process.
+
+    The parent worker remains able to continue processing the
+    queue even if demoparser2 becomes permanently stuck.
+    """
+
+    if timeout_seconds <= 0:
+        raise ValueError(
+            "timeout_seconds must be positive"
+        )
+
+    context = multiprocessing.get_context(
+        "spawn"
+    )
+
+    parent_connection, child_connection = (
+        context.Pipe(
+            duplex=False
+        )
+    )
+
+    process = context.Process(
+        target=_analysis_subprocess,
+        args=(
+            str(demo_path),
+            child_connection,
+        ),
+        name="cs2-demo-analysis",
+    )
+
+    process.start()
+
+    # Parent never writes to this end.
+    child_connection.close()
+
+    try:
+        if not parent_connection.poll(
+            timeout_seconds
+        ):
+            logger.error(
+                "Analysis timed out after %.1fs: %s",
+                timeout_seconds,
+                demo_path.name,
+            )
+
+            _terminate_process(
+                process
+            )
+
+            raise AnalysisTimeoutError(
+                "Demo analysis exceeded "
+                f"{timeout_seconds:.0f} seconds"
+            )
+
+        try:
+            message = (
+                parent_connection.recv()
+            )
+
+        except EOFError as exc:
+            process.join(
+                timeout=1.0
+            )
+
+            raise RuntimeError(
+                "Analysis subprocess exited "
+                "without a result"
+            ) from exc
+
+        process.join(
+            timeout=5.0
+        )
+
+        if process.is_alive():
+            _terminate_process(
+                process
+            )
+
+            raise RuntimeError(
+                "Analysis subprocess did not exit "
+                "after returning a result"
+            )
+
+        if (
+            not isinstance(message, tuple)
+            or not message
+        ):
+            raise RuntimeError(
+                "Invalid analysis subprocess result"
+            )
+
+        status = message[0]
+
+        if status == "ok":
+            return message[1]
+
+        if status == "error":
+            error_type = (
+                message[1]
+                if len(message) > 1
+                else "UnknownError"
+            )
+
+            error_message = (
+                message[2]
+                if len(message) > 2
+                else ""
+            )
+
+            raise RuntimeError(
+                "Analysis subprocess failed: "
+                f"{error_type}: "
+                f"{error_message}"
+            )
+
+        raise RuntimeError(
+            "Unknown analysis subprocess status: "
+            f"{status}"
+        )
+
+    finally:
+        parent_connection.close()
+
+        if process.is_alive():
+            _terminate_process(
+                process
+            )
 
 
 class AnalysisWorker:
