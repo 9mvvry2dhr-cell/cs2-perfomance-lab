@@ -39,6 +39,8 @@ services:
       DATABASE_URL: postgresql+psycopg://cs2_user:cs2_dev_password@db:5432/cs2_performance_lab
       DEMO_STORAGE_DIR: /app/data/uploads
       STEAM_API_KEY: ${STEAM_API_KEY}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      OPENAI_MODEL: ${OPENAI_MODEL:-gpt-5.6}
 
       # Temporary local identity.
       # Steam session authentication will replace this.
