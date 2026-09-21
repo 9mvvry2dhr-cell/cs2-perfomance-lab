@@ -22,6 +22,13 @@ from sqlalchemy import text
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
+from src.ai.client import (
+    AIProviderError,
+    AIResponseValidationError,
+    OpenAIMatchExplainer,
+)
+from src.ai.models import MatchAIExplanation
+from src.ai.payload import build_match_ai_payload
 from src.auth.steam_openid import (
     SteamOpenIDError,
     build_steam_login_url,
@@ -37,6 +44,7 @@ from src.api.dependencies import (
     get_current_user,
     get_database_session,
     get_demo_ingestion_service,
+    get_match_ai_explainer,
 )
 from src.api.schemas import (
     AnalysisJobResponse,
@@ -443,6 +451,72 @@ def get_match_analysis(
     return MatchAnalysisResponse.model_validate(
         owned_analysis
     )
+
+@app.post(
+    "/matches/{match_id}/ai-explanation",
+    response_model=MatchAIExplanation,
+)
+def explain_match_with_ai(
+    match_id: str,
+    repository: Annotated[
+        AnalysisRepository,
+        Depends(get_analysis_repository),
+    ],
+    explainer: Annotated[
+        OpenAIMatchExplainer,
+        Depends(get_match_ai_explainer),
+    ],
+    current_user: Annotated[
+        CurrentUser,
+        Depends(get_current_user),
+    ],
+) -> MatchAIExplanation:
+    analysis = repository.get_analysis(
+        match_id
+    )
+
+    if analysis is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Match not found",
+        )
+
+    player = next(
+        (
+            item
+            for item in analysis.players
+            if item.steam_id
+            == current_user.steam_id
+        ),
+        None,
+    )
+
+    if player is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Match not found",
+        )
+
+    payload = build_match_ai_payload(
+        analysis,
+        steam_id=current_user.steam_id,
+    )
+
+    try:
+        return explainer.explain(
+            payload
+        )
+    except AIResponseValidationError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail="AI response failed evidence validation",
+        ) from exc
+    except AIProviderError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail="AI provider request failed",
+        ) from exc
+
 
 @app.get(
     "/players/{steam_id}/matches",
