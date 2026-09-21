@@ -77,7 +77,12 @@ def build_match_ai_payload(
             "score_ct": analysis.score_ct,
             "score_t": analysis.score_t,
             "score_semantics": "ct_t_side_round_totals",
-            "player_result": "unknown",
+            "player_result": (
+                analysis.player_results.get(
+                    steam_id,
+                    "unknown",
+                )
+            ),
         },
         "verified_metrics": {
             "overall": overall,
