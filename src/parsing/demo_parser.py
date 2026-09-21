@@ -144,6 +144,16 @@ class DemoParser:
             time.perf_counter() - stage_started,
         )
 
+        player_results = (
+            self._derive_player_results(
+                players=players,
+                rounds=rounds,
+                winner_side=winner_side,
+                score_ct=score_ct,
+                score_t=score_t,
+            )
+        )
+
         # --------------------------------------------------------------
         # Duration
         # --------------------------------------------------------------
@@ -204,7 +214,97 @@ class DemoParser:
             rounds=rounds,
             is_valid=is_valid,
             validation_error=validation_error,
+            player_results=player_results,
         )
+
+    def _derive_player_results(
+        self,
+        *,
+        players: List[ParsedPlayer],
+        rounds: List[ParsedRound],
+        winner_side: str,
+        score_ct: int,
+        score_t: int,
+    ) -> dict[str, str]:
+        """
+        Derive each player's match result from the verified final side.
+
+        score_ct / score_t describe the two teams in their final CT/T
+        positions. A player's result is therefore known only when that
+        player is present in the final confirmed freeze-end roster.
+
+        Missing final-side evidence fails closed to "unknown".
+        """
+
+        results = {
+            player.steam_id: "unknown"
+            for player in players
+        }
+
+        if not rounds:
+            return results
+
+        if (
+            winner_side == "UNKNOWN"
+            and score_ct == score_t
+        ):
+            return {
+                player.steam_id: "draw"
+                for player in players
+            }
+
+        if winner_side not in {
+            "CT",
+            "T",
+        }:
+            return results
+
+        side_events = (
+            self.side_events
+            or []
+        )
+
+        if not side_events:
+            return results
+
+        final_round_num = max(
+            round_data.round_num
+            for round_data in rounds
+        )
+
+        final_side_by_player = {
+            event.steam_id: event.side
+            for event in side_events
+            if (
+                event.round_num
+                == final_round_num
+                and event.side
+                in {
+                    "CT",
+                    "T",
+                }
+            )
+        }
+
+        for player in players:
+            final_side = (
+                final_side_by_player.get(
+                    player.steam_id
+                )
+            )
+
+            if final_side is None:
+                continue
+
+            results[player.steam_id] = (
+                "win"
+                if final_side
+                == winner_side
+                else "loss"
+            )
+
+        return results
+
 
     # ------------------------------------------------------------------
     # ROUNDS
