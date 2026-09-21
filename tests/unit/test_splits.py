@@ -497,6 +497,101 @@ class TestSplitMetrics(unittest.TestCase):
             1,
         )
 
+    def test_scoreboard_kd_counts_between_canonical_rounds(self):
+        parser = FakeDemoParser(
+            team_rows=[
+                # Round 1 freeze_end.
+                {
+                    "tick": 150,
+                    "steamid": "A",
+                    "team_num": 2,
+                },
+                {
+                    "tick": 150,
+                    "steamid": "B",
+                    "team_num": 3,
+                },
+
+                # Events after round_end but before next round_start.
+                {
+                    "tick": 950,
+                    "steamid": "A",
+                    "team_num": 2,
+                },
+                {
+                    "tick": 950,
+                    "steamid": "B",
+                    "team_num": 3,
+                },
+                {
+                    "tick": 970,
+                    "steamid": "A",
+                    "team_num": 2,
+                },
+
+                # Round 2 freeze_end.
+                {
+                    "tick": 1050,
+                    "steamid": "A",
+                    "team_num": 2,
+                },
+                {
+                    "tick": 1050,
+                    "steamid": "B",
+                    "team_num": 3,
+                },
+            ],
+            starts=[
+                100,
+                1000,
+            ],
+            freezes=[
+                150,
+                1050,
+            ],
+            ends=[
+                {
+                    "tick": 900,
+                    "winner": "T",
+                },
+                {
+                    "tick": 1800,
+                    "winner": "CT",
+                },
+            ],
+            deaths=[
+                {
+                    "tick": 950,
+                    "attacker_steamid": "A",
+                    "user_steamid": "B",
+                },
+                {
+                    "tick": 970,
+                    "attacker_steamid": "",
+                    "user_steamid": "A",
+                },
+            ],
+        )
+
+        stats = calculate_split_metrics(
+            parser,
+            ["A", "B"],
+        )
+
+        # Final scoreboard counters include both gap events.
+        self.assertEqual(
+            stats["A"]["T"]["kills"],
+            1,
+        )
+        self.assertEqual(
+            stats["A"]["T"]["deaths"],
+            1,
+        )
+        self.assertEqual(
+            stats["B"]["CT"]["deaths"],
+            1,
+        )
+
     def test_teamkill_counts_death_but_not_kill(self):
         parser = FakeDemoParser(
             team_rows=[
