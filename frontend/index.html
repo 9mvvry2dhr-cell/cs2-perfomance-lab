@@ -5942,6 +5942,222 @@ table {
 </style>
 
 
+<style id="cs2-ai-coach-live-v1">
+
+.ai-coach-matchbar {
+    margin-top: 24px;
+    padding: 16px 18px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 18px;
+    border: 1px solid rgba(125,171,210,0.13);
+    border-radius: 13px;
+    background: rgba(255,255,255,0.018);
+}
+
+.ai-coach-match-label {
+    color: #617c91;
+    font-size: 8px;
+    font-weight: 850;
+    letter-spacing: 0.11em;
+}
+
+.ai-coach-match-value {
+    margin-top: 5px;
+    color: #e8f2f9;
+    font-size: 13px;
+    font-weight: 800;
+}
+
+.ai-coach-generate {
+    min-width: 160px;
+    min-height: 40px;
+    padding: 0 16px;
+    border: 1px solid rgba(240,165,47,0.30);
+    border-radius: 10px;
+    color: #f7fbfe;
+    background:
+        linear-gradient(
+            135deg,
+            rgba(240,165,47,0.20),
+            rgba(73,168,255,0.12)
+        );
+    font-size: 9px;
+    font-weight: 900;
+    letter-spacing: 0.06em;
+    cursor: pointer;
+    transition:
+        transform 140ms ease,
+        border-color 140ms ease,
+        background 140ms ease;
+}
+
+.ai-coach-generate:hover:not(:disabled) {
+    transform: translateY(-1px);
+    border-color: rgba(240,165,47,0.52);
+    background:
+        linear-gradient(
+            135deg,
+            rgba(240,165,47,0.26),
+            rgba(73,168,255,0.16)
+        );
+}
+
+.ai-coach-generate:disabled {
+    opacity: 0.45;
+    cursor: default;
+}
+
+.ai-coach-status {
+    margin-top: 12px;
+    min-height: 18px;
+    color: #71899d;
+    font-size: 10px;
+    line-height: 1.5;
+}
+
+.ai-coach-status[data-state="loading"] {
+    color: #79baf2;
+}
+
+.ai-coach-status[data-state="error"] {
+    color: #ff8388;
+}
+
+.ai-coach-status[data-state="success"] {
+    color: #61d8a6;
+}
+
+.ai-coach-result {
+    margin-top: 18px;
+    display: grid;
+    gap: 14px;
+}
+
+.ai-coach-summary,
+.ai-coach-section,
+.ai-coach-caveat {
+    border: 1px solid rgba(125,171,210,0.12);
+    border-radius: 13px;
+    background: rgba(255,255,255,0.016);
+}
+
+.ai-coach-summary {
+    padding: 20px;
+}
+
+.ai-coach-summary-label,
+.ai-coach-section-label,
+.ai-coach-caveat-label {
+    color: #647f94;
+    font-size: 8px;
+    font-weight: 900;
+    letter-spacing: 0.11em;
+}
+
+.ai-coach-summary-text {
+    margin-top: 8px;
+    max-width: 920px;
+    color: #dce8f1;
+    font-size: 13px;
+    line-height: 1.72;
+}
+
+.ai-coach-sections {
+    display: grid;
+    grid-template-columns:
+        repeat(
+            3,
+            minmax(0, 1fr)
+        );
+    gap: 12px;
+}
+
+.ai-coach-section {
+    padding: 17px;
+}
+
+.ai-coach-section[data-kind="strength"] {
+    border-color: rgba(82,211,159,0.16);
+}
+
+.ai-coach-section[data-kind="weakness"] {
+    border-color: rgba(255,124,131,0.15);
+}
+
+.ai-coach-section[data-kind="focus"] {
+    border-color: rgba(73,168,255,0.17);
+}
+
+.ai-coach-items {
+    margin-top: 11px;
+    display: grid;
+    gap: 10px;
+}
+
+.ai-coach-item {
+    padding-top: 10px;
+    border-top: 1px solid rgba(255,255,255,0.055);
+}
+
+.ai-coach-item:first-child {
+    padding-top: 0;
+    border-top: 0;
+}
+
+.ai-coach-item-title {
+    color: #e9f3fa;
+    font-size: 11px;
+    font-weight: 820;
+    line-height: 1.4;
+}
+
+.ai-coach-item-text {
+    margin-top: 5px;
+    color: #8097aa;
+    font-size: 10px;
+    line-height: 1.65;
+}
+
+.ai-coach-empty-section {
+    margin-top: 10px;
+    color: #566f83;
+    font-size: 10px;
+    line-height: 1.55;
+}
+
+.ai-coach-caveat {
+    padding: 15px 17px;
+}
+
+.ai-coach-caveat-text {
+    margin-top: 6px;
+    color: #71899d;
+    font-size: 9.5px;
+    line-height: 1.6;
+}
+
+@media (max-width: 980px) {
+    .ai-coach-sections {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 650px) {
+    .ai-coach-matchbar {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .ai-coach-generate {
+        width: 100%;
+    }
+}
+
+</style>
+
+
 <style id="cs2-upload-error-visible-v1">
 
 #uploadStatus.visible[data-state="error"] {
@@ -6330,25 +6546,68 @@ hidden
         </h1>
 
         <p class="ai-coach-page-text">
-            Здесь будет персональный разбор твоих матчей
-            на основе проверенных метрик и findings.
+            Разбор матча на основе проверенных метрик и deterministic findings.
+            AI объясняет данные, но не пересчитывает статистику и не выдумывает
+            причины, которых мы не доказали.
         </p>
     </div>
 
-    <div class="ai-coach-empty">
+    <div class="ai-coach-matchbar">
+        <div>
+            <div class="ai-coach-match-label">
+                МАТЧ ДЛЯ РАЗБОРА
+            </div>
+
+            <div
+            class="ai-coach-match-value"
+            id="aiCoachMatchValue"
+            >
+                Ищем последний матч…
+            </div>
+        </div>
+
+        <button
+        class="ai-coach-generate"
+        id="aiCoachGenerateButton"
+        type="button"
+        disabled
+        >
+            РАЗОБРАТЬ МАТЧ
+        </button>
+    </div>
+
+    <div
+    class="ai-coach-status"
+    id="aiCoachStatus"
+    aria-live="polite"
+    >
+        Выбери «Тренер AI» — подхватим последний проанализированный матч.
+    </div>
+
+    <div
+    class="ai-coach-result"
+    id="aiCoachResult"
+    hidden
+    >
+    </div>
+
+    <div
+    class="ai-coach-empty"
+    id="aiCoachEmpty"
+    >
         <div class="ai-coach-empty-icon">
             ✦
         </div>
 
         <div>
             <div class="ai-coach-empty-title">
-                Разговор с твоими данными
+                Первый живой разбор
             </div>
 
             <div class="ai-coach-empty-text">
-                AI не пересчитывает статистику и не придумывает причины.
-                Он объясняет уже проверенные данные, выделяет подтверждённые
-                сильные и слабые стороны и помогает выбрать, что разбирать дальше.
+                Нажми «Разобрать матч». Тренер получит только verified metrics
+                и verified findings текущего матча. Любая сила, слабость или
+                рекомендация должна быть привязана к нашим подтверждённым данным.
             </div>
         </div>
     </div>
@@ -13822,6 +14081,526 @@ document
 }
 
 </style>
+
+<script id="cs2-ai-coach-live-js">
+(function () {
+    const button =
+        document.getElementById(
+            "aiCoachGenerateButton"
+        );
+
+    const matchValue =
+        document.getElementById(
+            "aiCoachMatchValue"
+        );
+
+    const status =
+        document.getElementById(
+            "aiCoachStatus"
+        );
+
+    const result =
+        document.getElementById(
+            "aiCoachResult"
+        );
+
+    const empty =
+        document.getElementById(
+            "aiCoachEmpty"
+        );
+
+    const navButton =
+        document.querySelector(
+            ".ai-coach-button"
+        );
+
+    if (
+        !button
+        || !matchValue
+        || !status
+        || !result
+    ) {
+        return;
+    }
+
+    let selectedMatchId =
+        null;
+
+    const cache =
+        new Map();
+
+
+    function setStatus(
+        text,
+        state = ""
+    ) {
+        status.textContent =
+            text;
+
+        if (state) {
+            status.dataset.state =
+                state;
+        } else {
+            delete status.dataset.state;
+        }
+    }
+
+
+    function setSelectedMatch(
+        match
+    ) {
+        if (!match?.match_id) {
+            selectedMatchId =
+                null;
+
+            button.disabled =
+                true;
+
+            matchValue.textContent =
+                "Нет доступного матча";
+
+            return;
+        }
+
+        selectedMatchId =
+            String(
+                match.match_id
+            );
+
+        const map =
+            String(
+                match.map_name
+                || "Матч"
+            );
+
+        const score =
+            (
+                match.score_ct != null
+                && match.score_t != null
+            )
+                ? (
+                    " · "
+                    + match.score_ct
+                    + ":"
+                    + match.score_t
+                )
+                : "";
+
+        matchValue.textContent =
+            map
+            + score;
+
+        button.disabled =
+            false;
+    }
+
+
+    async function readError(
+        response
+    ) {
+        try {
+            const body =
+                await response.json();
+
+            return (
+                body.detail
+                || "AI запрос завершился ошибкой."
+            );
+        } catch (_) {
+            return "AI запрос завершился ошибкой.";
+        }
+    }
+
+
+    async function prepareMatch() {
+        const current =
+            window.latestMatchAnalysis;
+
+        if (current?.match_id) {
+            setSelectedMatch(
+                current
+            );
+
+            setStatus(
+                "Готов к разбору текущего матча."
+            );
+
+            return;
+        }
+
+        button.disabled =
+            true;
+
+        setStatus(
+            "Ищем последний проанализированный матч…",
+            "loading"
+        );
+
+        try {
+            const response =
+                await fetch(
+                    "/me/matches?limit=1",
+                    {
+                        credentials:
+                            "same-origin",
+                        cache:
+                            "no-store",
+                        headers: {
+                            Accept:
+                                "application/json"
+                        }
+                    }
+                );
+
+            if (!response.ok) {
+                throw new Error(
+                    await readError(
+                        response
+                    )
+                );
+            }
+
+            const matches =
+                await response.json();
+
+            const latest =
+                matches?.[0];
+
+            if (!latest) {
+                setSelectedMatch(
+                    null
+                );
+
+                setStatus(
+                    "Сначала проанализируй хотя бы одну .dem.",
+                    "error"
+                );
+
+                return;
+            }
+
+            setSelectedMatch(
+                latest
+            );
+
+            setStatus(
+                "Последний матч найден. Можно запускать тренера."
+            );
+        } catch (error) {
+            setSelectedMatch(
+                null
+            );
+
+            setStatus(
+                error.message
+                || "Не удалось получить историю матчей.",
+                "error"
+            );
+        }
+    }
+
+
+    function element(
+        tag,
+        className,
+        text
+    ) {
+        const node =
+            document.createElement(
+                tag
+            );
+
+        if (className) {
+            node.className =
+                className;
+        }
+
+        if (text != null) {
+            node.textContent =
+                String(text);
+        }
+
+        return node;
+    }
+
+
+    function renderSection(
+        label,
+        kind,
+        items
+    ) {
+        const section =
+            element(
+                "section",
+                "ai-coach-section"
+            );
+
+        section.dataset.kind =
+            kind;
+
+        section.appendChild(
+            element(
+                "div",
+                "ai-coach-section-label",
+                label
+            )
+        );
+
+        if (!items?.length) {
+            section.appendChild(
+                element(
+                    "div",
+                    "ai-coach-empty-section",
+                    "Нет подтверждённых выводов для этого блока."
+                )
+            );
+
+            return section;
+        }
+
+        const list =
+            element(
+                "div",
+                "ai-coach-items"
+            );
+
+        items.forEach(
+            item => {
+                const row =
+                    element(
+                        "div",
+                        "ai-coach-item"
+                    );
+
+                row.append(
+                    element(
+                        "div",
+                        "ai-coach-item-title",
+                        item.title
+                    ),
+                    element(
+                        "div",
+                        "ai-coach-item-text",
+                        item.text
+                    )
+                );
+
+                list.appendChild(
+                    row
+                );
+            }
+        );
+
+        section.appendChild(
+            list
+        );
+
+        return section;
+    }
+
+
+    function renderExplanation(
+        data
+    ) {
+        result.replaceChildren();
+
+        const summary =
+            element(
+                "section",
+                "ai-coach-summary"
+            );
+
+        summary.append(
+            element(
+                "div",
+                "ai-coach-summary-label",
+                "РАЗБОР МАТЧА"
+            ),
+            element(
+                "div",
+                "ai-coach-summary-text",
+                data.summary
+            )
+        );
+
+        const sections =
+            element(
+                "div",
+                "ai-coach-sections"
+            );
+
+        sections.append(
+            renderSection(
+                "СИЛЬНЫЕ СТОРОНЫ",
+                "strength",
+                data.strengths
+            ),
+            renderSection(
+                "СЛАБЫЕ СТОРОНЫ",
+                "weakness",
+                data.weaknesses
+            ),
+            renderSection(
+                "ЧТО ПРОВЕРИТЬ ДАЛЬШЕ",
+                "focus",
+                data.focus
+            )
+        );
+
+        const caveat =
+            element(
+                "section",
+                "ai-coach-caveat"
+            );
+
+        caveat.append(
+            element(
+                "div",
+                "ai-coach-caveat-label",
+                "ГРАНИЦЫ ВЫВОДА"
+            ),
+            element(
+                "div",
+                "ai-coach-caveat-text",
+                data.caveat
+            )
+        );
+
+        result.append(
+            summary,
+            sections,
+            caveat
+        );
+
+        result.hidden =
+            false;
+
+        if (empty) {
+            empty.hidden =
+                true;
+        }
+    }
+
+
+    async function generate() {
+        if (!selectedMatchId) {
+            await prepareMatch();
+
+            if (!selectedMatchId) {
+                return;
+            }
+        }
+
+        const cached =
+            cache.get(
+                selectedMatchId
+            );
+
+        if (cached) {
+            renderExplanation(
+                cached
+            );
+
+            setStatus(
+                "Показываем уже полученный разбор этого матча.",
+                "success"
+            );
+
+            return;
+        }
+
+        button.disabled =
+            true;
+
+        const oldText =
+            button.textContent;
+
+        button.textContent =
+            "ДУМАЕМ…";
+
+        setStatus(
+            "Тренер читает verified metrics и findings…",
+            "loading"
+        );
+
+        try {
+            const response =
+                await fetch(
+                    "/matches/"
+                    + encodeURIComponent(
+                        selectedMatchId
+                    )
+                    + "/ai-explanation",
+                    {
+                        method:
+                            "POST",
+                        credentials:
+                            "same-origin",
+                        cache:
+                            "no-store",
+                        headers: {
+                            Accept:
+                                "application/json"
+                        }
+                    }
+                );
+
+            if (!response.ok) {
+                throw new Error(
+                    await readError(
+                        response
+                    )
+                );
+            }
+
+            const data =
+                await response.json();
+
+            cache.set(
+                selectedMatchId,
+                data
+            );
+
+            renderExplanation(
+                data
+            );
+
+            setStatus(
+                "Разбор готов. Всё ниже привязано к проверенным данным.",
+                "success"
+            );
+        } catch (error) {
+            setStatus(
+                error.message
+                || "Не удалось получить AI-разбор.",
+                "error"
+            );
+        } finally {
+            button.disabled =
+                !selectedMatchId;
+
+            button.textContent =
+                oldText;
+        }
+    }
+
+
+    button.addEventListener(
+        "click",
+        generate
+    );
+
+    if (navButton) {
+        navButton.addEventListener(
+            "click",
+            prepareMatch
+        );
+    }
+
+    window.cs2PrepareAICoach =
+        prepareMatch;
+})();
+</script>
 
 </body>
 </html>
