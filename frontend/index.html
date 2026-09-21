@@ -6033,6 +6033,13 @@ table {
     color: #61d8a6;
 }
 
+.ai-coach-usage {
+    margin-top: 5px;
+    color: #59758a;
+    font-size: 9.5px;
+    font-variant-numeric: tabular-nums;
+}
+
 .ai-coach-result {
     margin-top: 18px;
     display: grid;
@@ -6692,6 +6699,12 @@ hidden
     >
         Выбери «Тренер AI» — подхватим последний проанализированный матч.
     </div>
+
+    <div
+    class="ai-coach-usage"
+    id="aiCoachUsage"
+    hidden
+    ></div>
 
     <div
     class="ai-coach-result"
@@ -14213,6 +14226,11 @@ document
             "aiCoachResult"
         );
 
+    const usage =
+        document.getElementById(
+            "aiCoachUsage"
+        );
+
     const empty =
         document.getElementById(
             "aiCoachEmpty"
@@ -14514,10 +14532,71 @@ document
     }
 
 
+    function renderUsage(
+        data
+    ) {
+        if (!usage) {
+            return;
+        }
+
+        const stats =
+            data?.usage;
+
+        if (
+            !stats
+            || !stats.total_tokens
+        ) {
+            usage.hidden =
+                true;
+
+            return;
+        }
+
+        const parts = [
+            "API: "
+            + Number(
+                stats.input_tokens || 0
+            ).toLocaleString("ru-RU")
+            + " вход",
+            Number(
+                stats.output_tokens || 0
+            ).toLocaleString("ru-RU")
+            + " выход",
+            Number(
+                stats.total_tokens || 0
+            ).toLocaleString("ru-RU")
+            + " всего"
+        ];
+
+        if (
+            Number(
+                stats.reasoning_tokens || 0
+            ) > 0
+        ) {
+            parts.push(
+                Number(
+                    stats.reasoning_tokens
+                ).toLocaleString("ru-RU")
+                + " reasoning"
+            );
+        }
+
+        usage.textContent =
+            parts.join(" · ");
+
+        usage.hidden =
+            false;
+    }
+
+
     function renderExplanation(
         data
     ) {
         result.replaceChildren();
+
+        renderUsage(
+            data
+        );
 
         const summary =
             element(
