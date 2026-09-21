@@ -15,6 +15,10 @@ from fastapi import (
 from sqlalchemy import Engine
 from sqlalchemy.orm import Session, sessionmaker
 
+from src.ai.client import (
+    AIConfigurationError,
+    OpenAIMatchExplainer,
+)
 from src.auth.session import SESSION_COOKIE_NAME
 from src.database.auth_repository import AuthRepository
 from src.database.connection import (
@@ -141,6 +145,16 @@ def get_demo_ingestion_service(
         job_repository=repository,
         max_active_jobs=max_active_jobs,
     )
+
+
+def get_match_ai_explainer() -> OpenAIMatchExplainer:
+    try:
+        return OpenAIMatchExplainer()
+    except AIConfigurationError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="AI coach is not configured",
+        ) from exc
 
 
 def get_current_user(
