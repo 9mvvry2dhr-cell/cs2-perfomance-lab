@@ -268,8 +268,8 @@ class DemoParser:
             return results
 
         final_round_num = max(
-            round_data.round_num
-            for round_data in rounds
+            event.round_num
+            for event in side_events
         )
 
         final_side_by_player = {
