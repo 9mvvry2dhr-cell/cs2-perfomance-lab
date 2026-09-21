@@ -8516,7 +8516,7 @@ async function loadPlayerHistory() {
         ] = await Promise.all(
             [
                 fetch(
-                    "/me/summary?limit=10",
+                    "/me/summary?limit=100",
                     {
                         credentials:
                             "same-origin",
@@ -8527,7 +8527,7 @@ async function loadPlayerHistory() {
                 ),
 
                 fetch(
-                    "/me/matches?limit=10",
+                    "/me/matches?limit=100",
                     {
                         credentials:
                             "same-origin",
@@ -9266,6 +9266,21 @@ demoUploadForm.addEventListener(
             return;
         }
 
+        const previousAnalysisVisible =
+            !analysisView.hidden;
+
+        demoFile.disabled =
+            true;
+
+        demoFile.dispatchEvent(
+            new Event(
+                "change",
+                {
+                    bubbles: true
+                }
+            )
+        );
+
         demoUploadButton.disabled =
             true;
 
@@ -9390,6 +9405,14 @@ demoUploadForm.addEventListener(
                     );
             }
 
+            if (
+                previousAnalysisVisible
+            ) {
+                showAnalysisState();
+            } else {
+                showIdleState();
+            }
+
             setUploadStatus(
                 `\u041e\u0448\u0438\u0431\u043a\u0430: ${error.message}`,
                 "error"
@@ -9398,6 +9421,18 @@ demoUploadForm.addEventListener(
         } finally {
             window.cs2CurrentAnalysisJobId =
                 null;
+
+            demoFile.disabled =
+                false;
+
+            demoFile.dispatchEvent(
+                new Event(
+                    "change",
+                    {
+                        bubbles: true
+                    }
+                )
+            );
 
             demoUploadButton.disabled =
                 false;
@@ -11081,6 +11116,10 @@ document
                 "is-dragover"
             );
 
+            if (input.disabled) {
+                return;
+            }
+
             const file =
                 event.dataTransfer
                 ?.files?.[0];
@@ -11267,6 +11306,40 @@ document
             "has-file",
             Boolean(file)
         );
+
+        const busy =
+            input.disabled;
+
+        zone.classList.toggle(
+            "is-disabled",
+            busy
+        );
+
+        zone.setAttribute(
+            "aria-disabled",
+            busy
+                ? "true"
+                : "false"
+        );
+
+        if (busy) {
+            icon.textContent =
+                "\u2026";
+
+            title.textContent =
+                "\u0410\u043d\u0430\u043b\u0438\u0437\u0438\u0440\u0443\u0435\u043c "
+                + "\u0442\u0435\u043a\u0443\u0449\u0443\u044e "
+                + "\u0434\u0435\u043c\u043e\u2026";
+
+            sub.textContent =
+                "\u041d\u043e\u0432\u044b\u0439 "
+                + "\u0444\u0430\u0439\u043b "
+                + "\u043c\u043e\u0436\u043d\u043e "
+                + "\u0437\u0430\u0433\u0440\u0443\u0437\u0438\u0442\u044c "
+                + "\u043f\u043e\u0441\u043b\u0435 "
+                + "\u0437\u0430\u0432\u0435\u0440\u0448\u0435\u043d\u0438\u044f "
+                + "\u0430\u043d\u0430\u043b\u0438\u0437\u0430";
+        }
     }
 
     input.addEventListener(
@@ -12228,7 +12301,7 @@ document
         try {
             const response =
                 await fetch(
-                    "/me/summary",
+                    "/me/summary?limit=100",
                     {
                         credentials:
                             "same-origin",
@@ -12770,6 +12843,32 @@ document
 .insight-details {
     font-size: 10.5px !important;
     line-height: 1.7 !important;
+}
+
+</style>
+
+<style id="cs2-upload-busy-state">
+
+.demo-file-picker.is-disabled {
+    opacity: 0.58;
+    cursor: wait;
+    pointer-events: none;
+
+    border-color:
+        rgba(73,168,255,0.20);
+
+    background:
+        rgba(73,168,255,0.025);
+}
+
+.demo-file-picker.is-disabled:hover {
+    transform: none;
+
+    border-color:
+        rgba(73,168,255,0.20);
+
+    background:
+        rgba(73,168,255,0.025);
 }
 
 </style>
