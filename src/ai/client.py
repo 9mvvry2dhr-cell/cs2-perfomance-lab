@@ -5,7 +5,11 @@ from typing import Any, Mapping
 
 from openai import OpenAI
 
-from src.ai.models import MatchAIExplanation
+from src.ai.models import (
+    AIUsage,
+    MatchAIExplanation,
+    MatchAIResponse,
+)
 from src.ai.prompt import build_match_ai_prompt
 
 
@@ -116,6 +120,14 @@ def validate_explanation_grounding(
         allowed_kind=None,
     )
 
+    if (
+        finding_kinds
+        and not explanation.focus
+    ):
+        raise AIResponseValidationError(
+            "focus must not be empty when verified findings exist"
+        )
+
 
 class OpenAIMatchExplainer:
     def __init__(
@@ -151,35 +163,109 @@ class OpenAIMatchExplainer:
             api_key=api_key,
         )
 
-    def explain(
+    def _request(
         self,
         payload: Mapping[str, Any],
-    ) -> MatchAIExplanation:
+    ):
         prompt = build_match_ai_prompt(
             payload
         )
 
         try:
-            response = (
-                self.client.responses.parse(
-                    model=self.model,
-                    input=[
-                        {
-                            "role": "system",
-                            "content": prompt.instructions,
-                        },
-                        {
-                            "role": "user",
-                            "content": prompt.input_text,
-                        },
-                    ],
-                    text_format=MatchAIExplanation,
-                )
+            return self.client.responses.parse(
+                model=self.model,
+                input=[
+                    {
+                        "role": "system",
+                        "content": prompt.instructions,
+                    },
+                    {
+                        "role": "user",
+                        "content": prompt.input_text,
+                    },
+                ],
+                text_format=MatchAIExplanation,
             )
         except Exception as exc:
             raise AIProviderError(
                 "OpenAI request failed"
             ) from exc
+
+    @staticmethod
+    def _usage_from_response(
+        response,
+    ) -> AIUsage:
+        usage = getattr(
+            response,
+            "usage",
+            None,
+        )
+
+        if usage is None:
+            return AIUsage()
+
+        input_details = getattr(
+            usage,
+            "input_tokens_details",
+            None,
+        )
+
+        output_details = getattr(
+            usage,
+            "output_tokens_details",
+            None,
+        )
+
+        return AIUsage(
+            input_tokens=int(
+                getattr(
+                    usage,
+                    "input_tokens",
+                    0,
+                )
+                or 0
+            ),
+            cached_input_tokens=int(
+                getattr(
+                    input_details,
+                    "cached_tokens",
+                    0,
+                )
+                or 0
+            ),
+            output_tokens=int(
+                getattr(
+                    usage,
+                    "output_tokens",
+                    0,
+                )
+                or 0
+            ),
+            reasoning_tokens=int(
+                getattr(
+                    output_details,
+                    "reasoning_tokens",
+                    0,
+                )
+                or 0
+            ),
+            total_tokens=int(
+                getattr(
+                    usage,
+                    "total_tokens",
+                    0,
+                )
+                or 0
+            ),
+        )
+
+    def explain_with_usage(
+        self,
+        payload: Mapping[str, Any],
+    ) -> MatchAIResponse:
+        response = self._request(
+            payload
+        )
 
         explanation = (
             response.output_parsed
@@ -195,4 +281,25 @@ class OpenAIMatchExplainer:
             payload,
         )
 
-        return explanation
+        return MatchAIResponse(
+            **explanation.model_dump(),
+            usage=self._usage_from_response(
+                response
+            ),
+        )
+
+    def explain(
+        self,
+        payload: Mapping[str, Any],
+    ) -> MatchAIExplanation:
+        result = self.explain_with_usage(
+            payload
+        )
+
+        return MatchAIExplanation(
+            **result.model_dump(
+                exclude={
+                    "usage",
+                }
+            )
+        )
