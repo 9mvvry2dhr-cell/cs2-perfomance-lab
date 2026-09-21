@@ -211,6 +211,10 @@ class MatchPlayerModel(Base):
             "position",
             name="uq_match_players_match_position",
         ),
+        CheckConstraint(
+            "result IN ('win', 'loss', 'draw', 'unknown')",
+            name="ck_match_players_result",
+        ),
     )
 
     id: Mapped[int] = mapped_column(
@@ -243,6 +247,13 @@ class MatchPlayerModel(Base):
     name: Mapped[str] = mapped_column(
         String(128),
         nullable=False,
+    )
+
+    result: Mapped[str] = mapped_column(
+        String(16),
+        nullable=False,
+        default="unknown",
+        server_default="unknown",
     )
 
     # PlayerStats
