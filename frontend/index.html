@@ -12571,26 +12571,17 @@ document
         );
     }
 
-    function matchSignature(match) {
-        const s =
-            match.stats || {};
-
-        return [
-            match.map_name || "",
-            match.score_ct ?? "",
-            match.score_t ?? "",
-            s.rounds_played ?? "",
-            s.kills ?? "",
-            s.deaths ?? "",
-            s.assists ?? "",
-            s.headshots ?? "",
-            s.damage ?? "",
-            s.kast_rounds ?? "",
-            s.entry_kills ?? "",
-            s.entry_deaths ?? "",
-            s.trade_kills ?? "",
-            s.clutches_won ?? ""
-        ].join("|");
+    function matchIdentity(match) {
+        /*
+         * A match is identified by its persisted match_id.
+         *
+         * Never deduplicate by statistical values: two genuinely
+         * different matches can have the same map, score and player
+         * stat line. The backend already guarantees match_id identity.
+         */
+        return String(
+            match.match_id || ""
+        );
     }
 
     function uniqueMatches(matches) {
@@ -12609,16 +12600,20 @@ document
             )
             .filter(
                 match => {
-                    const signature =
-                        matchSignature(match);
+                    const identity =
+                        matchIdentity(match);
+
+                    if (!identity) {
+                        return true;
+                    }
 
                     if (
-                        seen.has(signature)
+                        seen.has(identity)
                     ) {
                         return false;
                     }
 
-                    seen.add(signature);
+                    seen.add(identity);
                     return true;
                 }
             );
