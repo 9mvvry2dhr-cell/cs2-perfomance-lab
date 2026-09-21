@@ -175,7 +175,7 @@ class OpenAIMatchExplainerTest(unittest.TestCase):
             )
 
 
-    def test_focus_must_be_grounded_in_weakness(self):
+    def test_focus_may_use_verified_strength(self):
         payload = self._payload()
 
         payload["verified_findings"].append(
@@ -189,12 +189,12 @@ class OpenAIMatchExplainerTest(unittest.TestCase):
             }
         )
 
-        bad = self._valid_explanation().model_copy(
+        explanation = self._valid_explanation().model_copy(
             update={
                 "focus": [
                     AIExplanationItem(
-                        title="Wrong focus",
-                        text="Wrong focus",
+                        title="Preserve repeatable strength",
+                        text="Review when this strength appeared and whether it repeats.",
                         evidence_codes=[
                             "TEST_STRENGTH"
                         ],
@@ -203,13 +203,10 @@ class OpenAIMatchExplainerTest(unittest.TestCase):
             }
         )
 
-        with self.assertRaises(
-            AIResponseValidationError
-        ):
-            validate_explanation_grounding(
-                bad,
-                payload,
-            )
+        validate_explanation_grounding(
+            explanation,
+            payload,
+        )
 
 
     def test_empty_evidence_codes_are_rejected(self):
