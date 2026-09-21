@@ -110,6 +110,25 @@ class MatchAIPayloadTest(unittest.TestCase):
         )
 
 
+    def test_payload_uses_verified_player_result(self):
+        analysis = replace(
+            make_analysis(),
+            player_results={
+                "76561198055629469": "win",
+            },
+        )
+
+        payload = build_match_ai_payload(
+            analysis,
+            steam_id="76561198055629469",
+        )
+
+        self.assertEqual(
+            payload["match"]["player_result"],
+            "win",
+        )
+
+
     def test_payload_does_not_expose_steam_id_or_match_id(self):
         analysis = make_analysis()
 
