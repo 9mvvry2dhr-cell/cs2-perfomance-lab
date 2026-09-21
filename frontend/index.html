@@ -5687,6 +5687,261 @@ table {
 </style>
 
 
+<style id="cs2-ai-coach-nav-v1">
+
+.ai-coach-nav {
+    margin:
+        17px
+        0
+        0;
+    padding-top:
+        15px;
+    border-top:
+        1px solid
+        rgba(125,171,210,0.10);
+}
+
+.ai-coach-button {
+    position: relative;
+    min-height: 43px;
+    border-color:
+        rgba(240,165,47,0.18) !important;
+    color:
+        #dbe9f4 !important;
+    background:
+        linear-gradient(
+            90deg,
+            rgba(240,165,47,0.075),
+            rgba(73,168,255,0.055)
+        ) !important;
+}
+
+.ai-coach-button::before {
+    content: "";
+    position: absolute;
+    inset:
+        8px
+        auto
+        8px
+        0;
+    width: 2px;
+    border-radius: 0 2px 2px 0;
+    background:
+        linear-gradient(
+            180deg,
+            #ffc44f,
+            #49a8ff
+        );
+    opacity: 0.86;
+}
+
+.ai-coach-button:hover {
+    color:
+        #ffffff !important;
+    border-color:
+        rgba(240,165,47,0.34) !important;
+    background:
+        linear-gradient(
+            90deg,
+            rgba(240,165,47,0.12),
+            rgba(73,168,255,0.08)
+        ) !important;
+}
+
+.ai-coach-button.active {
+    border-color:
+        rgba(240,165,47,0.42) !important;
+    background:
+        linear-gradient(
+            90deg,
+            rgba(240,165,47,0.16),
+            rgba(73,168,255,0.10)
+        ) !important;
+    box-shadow:
+        0 0 22px
+        rgba(73,168,255,0.055) !important;
+}
+
+.ai-coach-button.active::before {
+    width: 3px;
+    opacity: 1;
+}
+
+.ai-coach-badge {
+    margin-left: auto;
+    padding:
+        3px
+        6px;
+    border:
+        1px solid
+        rgba(240,165,47,0.24);
+    border-radius: 999px;
+    color:
+        #f6bd4b;
+    background:
+        rgba(240,165,47,0.075);
+    font-size: 7px;
+    font-weight: 900;
+    letter-spacing: 0.10em;
+}
+
+.ai-coach-nav + .side-label {
+    margin-top:
+        24px !important;
+}
+
+.ai-coach-page {
+    padding:
+        28px;
+    border:
+        1px solid
+        rgba(125,171,210,0.13);
+    border-radius:
+        16px;
+    background:
+        linear-gradient(
+            145deg,
+            rgba(9,24,39,0.97),
+            rgba(6,17,28,0.97)
+        );
+    box-shadow:
+        0 18px 55px
+        rgba(0,0,0,0.16);
+}
+
+.ai-coach-page-head {
+    max-width:
+        720px;
+}
+
+.ai-coach-page-kicker {
+    color:
+        #6f8ca3;
+    font-size:
+        9px;
+    font-weight:
+        850;
+    letter-spacing:
+        0.12em;
+}
+
+.ai-coach-page-title {
+    margin:
+        8px
+        0
+        8px;
+    color:
+        #f5f9fc;
+    font-size:
+        28px;
+    line-height:
+        1.12;
+    letter-spacing:
+        -0.025em;
+}
+
+.ai-coach-page-text {
+    margin: 0;
+    max-width:
+        650px;
+    color:
+        #8fa5b8;
+    font-size:
+        13px;
+    line-height:
+        1.65;
+}
+
+.ai-coach-empty {
+    margin-top:
+        24px;
+    min-height:
+        190px;
+    padding:
+        24px;
+    display:
+        grid;
+    grid-template-columns:
+        42px
+        minmax(0, 1fr);
+    gap:
+        16px;
+    align-items:
+        start;
+    border:
+        1px solid
+        rgba(73,168,255,0.12);
+    border-radius:
+        14px;
+    background:
+        linear-gradient(
+            135deg,
+            rgba(73,168,255,0.045),
+            rgba(240,165,47,0.025)
+        );
+}
+
+.ai-coach-empty-icon {
+    width:
+        42px;
+    height:
+        42px;
+    display:
+        grid;
+    place-items:
+        center;
+    border:
+        1px solid
+        rgba(240,165,47,0.20);
+    border-radius:
+        12px;
+    color:
+        #f3b947;
+    background:
+        rgba(240,165,47,0.06);
+    font-size:
+        18px;
+}
+
+.ai-coach-empty-title {
+    margin-top:
+        2px;
+    color:
+        #eaf4fb;
+    font-size:
+        15px;
+    font-weight:
+        800;
+}
+
+.ai-coach-empty-text {
+    margin-top:
+        8px;
+    max-width:
+        760px;
+    color:
+        #7890a4;
+    font-size:
+        11px;
+    line-height:
+        1.7;
+}
+
+@media (max-width: 760px) {
+    .ai-coach-page {
+        padding:
+            20px;
+    }
+
+    .ai-coach-empty {
+        grid-template-columns:
+            1fr;
+    }
+}
+
+</style>
+
+
 <style id="cs2-upload-error-visible-v1">
 
 #uploadStatus.visible[data-state="error"] {
@@ -5792,6 +6047,31 @@ CS2 Performance Lab
 </button>
 
 
+</div>
+
+
+<div class="ai-coach-nav">
+<button
+class="nav-button ai-coach-button"
+type="button"
+>
+
+<svg
+viewBox="0 0 24 24"
+fill="none"
+stroke="currentColor"
+stroke-width="1.7"
+>
+<path d="M12 3l1.35 3.65L17 8l-3.65 1.35L12 13l-1.35-3.65L7 8l3.65-1.35L12 3z"/>
+<path d="M18.5 13l.8 2.2 2.2.8-2.2.8-.8 2.2-.8-2.2-2.2-.8 2.2-.8.8-2.2z"/>
+<path d="M6 14l.65 1.85L8.5 16.5l-1.85.65L6 19l-.65-1.85-1.85-.65 1.85-.65L6 14z"/>
+</svg>
+
+<span>Тренер AI</span>
+
+<span class="ai-coach-badge">AI</span>
+
+</button>
 </div>
 
 
@@ -6034,6 +6314,46 @@ Ancient
 
 
 <!-- NAV SECTIONS V2 -->
+
+<section
+class="ai-coach-page"
+id="aiCoachPage"
+hidden
+>
+    <div class="ai-coach-page-head">
+        <div class="ai-coach-page-kicker">
+            CS2 PERFORMANCE LAB · AI
+        </div>
+
+        <h1 class="ai-coach-page-title">
+            Тренер AI
+        </h1>
+
+        <p class="ai-coach-page-text">
+            Здесь будет персональный разбор твоих матчей
+            на основе проверенных метрик и findings.
+        </p>
+    </div>
+
+    <div class="ai-coach-empty">
+        <div class="ai-coach-empty-icon">
+            ✦
+        </div>
+
+        <div>
+            <div class="ai-coach-empty-title">
+                Разговор с твоими данными
+            </div>
+
+            <div class="ai-coach-empty-text">
+                AI не пересчитывает статистику и не придумывает причины.
+                Он объясняет уже проверенные данные, выделяет подтверждённые
+                сильные и слабые стороны и помогает выбрать, что разбирать дальше.
+            </div>
+        </div>
+    </div>
+</section>
+
 
 <section
 class="section-placeholder"
@@ -10727,6 +11047,11 @@ document
             "\u0421\u0442\u0430\u0442\u0438\u0441\u0442\u0438\u043a\u0430"
         );
 
+    const aiCoachNav =
+        findNav(
+            "\u0422\u0440\u0435\u043d\u0435\u0440 AI"
+        );
+
 
     const placeholder =
         document.getElementById(
@@ -10756,6 +11081,11 @@ document
     const playerHistoryBody =
         document.getElementById(
             "playerHistoryBody"
+        );
+
+    const aiCoachPage =
+        document.getElementById(
+            "aiCoachPage"
         );
 
 
@@ -10838,6 +11168,11 @@ document
         playerHistory.hidden =
             true;
 
+        if (aiCoachPage) {
+            aiCoachPage.hidden =
+                true;
+        }
+
         placeholder.hidden =
             false;
 
@@ -10863,6 +11198,11 @@ document
         playerHistory.hidden =
             true;
 
+        if (aiCoachPage) {
+            aiCoachPage.hidden =
+                true;
+        }
+
         restoreAnalysisPage();
 
         setActive(
@@ -10881,6 +11221,11 @@ document
         placeholder.hidden =
             true;
 
+        if (aiCoachPage) {
+            aiCoachPage.hidden =
+                true;
+        }
+
         playerHistory.hidden =
             false;
 
@@ -10890,6 +11235,30 @@ document
 
         loadPlayerHistory();
     }
+
+
+    function openAICoach() {
+        hideAnalysisPage();
+
+        placeholder.hidden =
+            true;
+
+        playerHistory.hidden =
+            true;
+
+        if (aiCoachPage) {
+            aiCoachPage.hidden =
+                false;
+        }
+
+        setActive(
+            aiCoachNav
+        );
+    }
+
+
+    window.cs2OpenAICoach =
+        openAICoach;
 
 
     function bind(
@@ -10922,6 +11291,12 @@ document
     bind(
         playersNav,
         openPlayers
+    );
+
+
+    bind(
+        aiCoachNav,
+        openAICoach
     );
 
 
