@@ -204,11 +204,11 @@ class AnalysisJobRepository:
             or 0
         )
 
-    def has_completed_file_for_owner(
+    def get_completed_file_for_owner(
         self,
         owner_steam_id: str,
         file_sha256: str,
-    ) -> bool:
+    ) -> AnalysisJob | None:
         owner_steam_id = (
             owner_steam_id.strip()
         )
@@ -229,7 +229,7 @@ class AnalysisJobRepository:
 
         stmt = (
             select(
-                AnalysisJobModel.id
+                AnalysisJobModel
             )
             .where(
                 AnalysisJobModel.owner_steam_id
@@ -239,11 +239,34 @@ class AnalysisJobRepository:
                 AnalysisJobModel.status
                 == "completed",
             )
+            .order_by(
+                AnalysisJobModel.finished_at.desc(),
+                AnalysisJobModel.created_at.desc(),
+            )
             .limit(1)
         )
 
+        model = self.session.scalar(
+            stmt
+        )
+
+        if model is None:
+            return None
+
+        return self._to_domain(
+            model
+        )
+
+    def has_completed_file_for_owner(
+        self,
+        owner_steam_id: str,
+        file_sha256: str,
+    ) -> bool:
         return (
-            self.session.scalar(stmt)
+            self.get_completed_file_for_owner(
+                owner_steam_id,
+                file_sha256,
+            )
             is not None
         )
 
