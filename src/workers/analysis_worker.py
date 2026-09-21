@@ -59,6 +59,10 @@ def analyze_demo_file(
             player.steam_id
             for player in match.players
         ],
+        side_events=parser.side_events,
+        survival_events=parser.survival_events,
+        kast_events=parser.kast_events,
+        entry_events=parser.entry_events,
     )
 
     splits_seconds = (

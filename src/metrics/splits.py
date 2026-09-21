@@ -338,6 +338,11 @@ def detect_player_round_damage(
 def calculate_split_metrics(
     parser: RawDemoParser,
     player_steam_ids: List[str],
+    *,
+    side_events=None,
+    survival_events=None,
+    kast_events=None,
+    entry_events=None,
 ):
     """
     Calculate verified CT/T split counts.
@@ -405,10 +410,11 @@ def calculate_split_metrics(
 
     stage_started = time.perf_counter()
 
-    side_events = detect_player_round_sides(
-        parser,
-        list(player_ids),
-    )
+    if side_events is None:
+        side_events = detect_player_round_sides(
+            parser,
+            list(player_ids),
+        )
 
     logger.info(
         "SPLIT_STAGE sides=%.2fs",
@@ -442,10 +448,11 @@ def calculate_split_metrics(
 
     stage_started = time.perf_counter()
 
-    survival_events = detect_survival_rounds(
-        parser,
-        list(player_ids),
-    )
+    if survival_events is None:
+        survival_events = detect_survival_rounds(
+            parser,
+            list(player_ids),
+        )
 
     logger.info(
         "SPLIT_STAGE survival=%.2fs",
@@ -478,10 +485,11 @@ def calculate_split_metrics(
 
     stage_started = time.perf_counter()
 
-    kast_events = detect_kast_rounds(
-        parser,
-        list(player_ids),
-    )
+    if kast_events is None:
+        kast_events = detect_kast_rounds(
+            parser,
+            list(player_ids),
+        )
 
     logger.info(
         "SPLIT_STAGE kast=%.2fs",
@@ -550,9 +558,10 @@ def calculate_split_metrics(
 
     stage_started = time.perf_counter()
 
-    entry_events = detect_entry_events(
-        parser
-    )
+    if entry_events is None:
+        entry_events = detect_entry_events(
+            parser
+        )
 
     logger.info(
         "SPLIT_STAGE entry=%.2fs",

@@ -7,12 +7,18 @@ from demoparser2 import DemoParser as RawDemoParser
 
 from src.parsing.dto import ParsedMatch, ParsedPlayer, ParsedRound
 from src.metrics.utility import calculate_utility_metrics
-from src.metrics.entry import calculate_entry_metrics
+from src.metrics.entry import (
+    detect_entry_events,
+)
 from src.metrics.clutch import calculate_clutches
 from src.metrics.trade import calculate_trade_metrics
-from src.metrics.kast import calculate_kast_metrics
+from src.metrics.kast import (
+    detect_kast_rounds,
+)
 from src.metrics.multikill import calculate_multikill_metrics
-from src.metrics.survival import calculate_survival_metrics
+from src.metrics.survival import (
+    detect_survival_rounds,
+)
 from src.metrics.splits import detect_player_round_sides
 
 
@@ -38,6 +44,11 @@ class DemoParser:
 
         self.file_path = file_path
         self.raw_parser = RawDemoParser(file_path)
+
+        self.side_events = None
+        self.entry_events = None
+        self.kast_events = None
+        self.survival_events = None
 
     # ------------------------------------------------------------------
     # PUBLIC API
@@ -493,6 +504,8 @@ class DemoParser:
             player_ids,
         )
 
+        self.side_events = side_events
+
         rounds_by_player = {
             steam_id: 0
             for steam_id in player_ids
@@ -577,8 +590,8 @@ class DemoParser:
         try:
             entry_stats = _timed_metric(
                 "entry",
-                calculate_entry_metrics,
-                self.raw_parser,
+                self._calculate_entry_from_events,
+                steam_ids,
             )
 
         except Exception as exc:
@@ -629,8 +642,7 @@ class DemoParser:
         try:
             kast_stats = _timed_metric(
                 "kast",
-                calculate_kast_metrics,
-                self.raw_parser,
+                self._calculate_kast_from_events,
                 steam_ids,
             )
 
@@ -661,8 +673,7 @@ class DemoParser:
         try:
             survival_stats = _timed_metric(
                 "survival",
-                calculate_survival_metrics,
-                self.raw_parser,
+                self._calculate_survival_from_events,
                 steam_ids,
             )
 
@@ -1104,6 +1115,83 @@ class DemoParser:
             return "T"
 
         return "UNKNOWN"
+
+    def _calculate_entry_from_events(
+        self,
+        steam_ids,
+    ):
+        events = detect_entry_events(
+            self.raw_parser
+        )
+
+        self.entry_events = events
+
+        stats = {}
+
+        for event in events:
+            for steam_id in (
+                event.attacker,
+                event.victim,
+            ):
+                if steam_id not in stats:
+                    stats[steam_id] = {
+                        "entry_kills": 0,
+                        "entry_deaths": 0,
+                    }
+
+            stats[
+                event.attacker
+            ]["entry_kills"] += 1
+
+            stats[
+                event.victim
+            ]["entry_deaths"] += 1
+
+        return stats
+
+    def _calculate_kast_from_events(
+        self,
+        steam_ids,
+    ):
+        events = detect_kast_rounds(
+            self.raw_parser,
+            steam_ids,
+        )
+
+        self.kast_events = events
+
+        stats = {
+            steam_id: 0
+            for steam_id in steam_ids
+        }
+
+        for event in events:
+            if event.steam_id in stats:
+                stats[event.steam_id] += 1
+
+        return stats
+
+    def _calculate_survival_from_events(
+        self,
+        steam_ids,
+    ):
+        events = detect_survival_rounds(
+            self.raw_parser,
+            steam_ids,
+        )
+
+        self.survival_events = events
+
+        stats = {
+            steam_id: 0
+            for steam_id in steam_ids
+        }
+
+        for event in events:
+            if event.steam_id in stats:
+                stats[event.steam_id] += 1
+
+        return stats
 
     @staticmethod
     def _safe_int(
