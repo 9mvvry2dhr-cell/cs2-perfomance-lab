@@ -10510,6 +10510,140 @@ renderMapArt(
 }
 
 
+function uploadDemoForm(
+    formData,
+    filename
+) {
+    return new Promise(
+        (
+            resolve,
+            reject
+        ) => {
+            const request =
+                new XMLHttpRequest();
+
+            request.open(
+                "POST",
+                "/analysis-jobs"
+            );
+
+            request.withCredentials =
+                true;
+
+            request.responseType =
+                "json";
+
+            request.setRequestHeader(
+                "Accept",
+                "application/json"
+            );
+
+            request.upload.addEventListener(
+                "progress",
+                event => {
+                    if (
+                        !event.lengthComputable
+                        || event.total <= 0
+                    ) {
+                        setUploadStatus(
+                            `Загружаем ${filename}…`
+                        );
+
+                        return;
+                    }
+
+                    const percent =
+                        Math.min(
+                            100,
+                            Math.max(
+                                0,
+                                Math.round(
+                                    (
+                                        event.loaded
+                                        / event.total
+                                    )
+                                    * 100
+                                )
+                            )
+                        );
+
+                    setUploadStatus(
+                        `Загружаем ${filename}: ${percent}%`
+                    );
+                }
+            );
+
+            request.addEventListener(
+                "load",
+                () => {
+                    if (
+                        request.status >= 200
+                        && request.status < 300
+                    ) {
+                        resolve(
+                            request.response
+                        );
+
+                        return;
+                    }
+
+                    const body =
+                        request.response
+                        || {};
+
+                    let detail =
+                        body.detail
+                        || body.error
+                        || request.statusText
+                        || "Ошибка загрузки демки.";
+
+                    if (
+                        detail
+                        === "This demo has already been analyzed"
+                    ) {
+                        detail =
+                            "Эта демка уже проанализирована.";
+                    }
+
+                    reject(
+                        new Error(
+                            detail
+                        )
+                    );
+                }
+            );
+
+            request.addEventListener(
+                "error",
+                () => {
+                    reject(
+                        new Error(
+                            "Соединение оборвалось во время загрузки демки. "
+                            + "Попробуй ещё раз; если повторяется — сообщи нам."
+                        )
+                    );
+                }
+            );
+
+            request.addEventListener(
+                "abort",
+                () => {
+                    reject(
+                        new Error(
+                            "Загрузка демки была прервана."
+                        )
+                    );
+                }
+            );
+
+            request.send(
+                formData
+            );
+        }
+    );
+}
+
+
 demoUploadForm.addEventListener(
     "submit",
     async event => {
@@ -10585,25 +10719,11 @@ demoUploadForm.addEventListener(
                 file
             );
 
-            const response =
-                await fetch(
-                    "/analysis-jobs",
-                    {
-                        method: "POST",
-                        body: formData
-                    }
-                );
-
-            if (!response.ok) {
-                throw new Error(
-                    await readApiError(
-                        response
-                    )
-                );
-            }
-
             const createdJob =
-                await response.json();
+                await uploadDemoForm(
+                    formData,
+                    file.name
+                );
 
             window.cs2CurrentAnalysisJobId =
                 createdJob.id;
