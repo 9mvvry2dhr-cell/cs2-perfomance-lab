@@ -8,7 +8,9 @@ from src.ai.client import (
 )
 from src.ai.models import (
     AIExplanationItem,
+    AIUsage,
     MatchAIExplanation,
+    MatchAIResponse,
 )
 from src.api.app import app
 from src.api.dependencies import (
@@ -44,13 +46,22 @@ class StubExplainer:
         self.error = error
         self.payloads = []
 
-    def explain(self, payload):
+    def explain_with_usage(self, payload):
         self.payloads.append(payload)
 
         if self.error is not None:
             raise self.error
 
-        return self.result
+        return MatchAIResponse(
+            **self.result.model_dump(),
+            usage=AIUsage(
+                input_tokens=3000,
+                cached_input_tokens=0,
+                output_tokens=800,
+                reasoning_tokens=250,
+                total_tokens=3800,
+            ),
+        )
 
 
 def make_explanation():
@@ -119,6 +130,16 @@ class MatchAIEndpointTest(unittest.TestCase):
         self.assertEqual(
             response.json()["weaknesses"][0]["evidence_codes"],
             ["SIDE_PERFORMANCE_GAP"],
+        )
+
+        self.assertEqual(
+            response.json()["usage"]["input_tokens"],
+            3000,
+        )
+
+        self.assertEqual(
+            response.json()["usage"]["reasoning_tokens"],
+            250,
         )
 
         self.assertEqual(
