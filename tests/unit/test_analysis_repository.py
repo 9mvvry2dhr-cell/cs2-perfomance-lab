@@ -391,6 +391,99 @@ class AnalysisRepositoryTest(unittest.TestCase):
         )
 
 
+    def test_player_history_keeps_distinct_matches_with_identical_stats(self):
+        base = make_analysis()
+
+        first = replace(
+            base,
+            match_id="identical-stats-001",
+        )
+
+        second = replace(
+            base,
+            match_id="identical-stats-002",
+        )
+
+        self.repository.save_analysis(
+            first
+        )
+
+        self.repository.save_analysis(
+            second
+        )
+
+        first_model = self.session.get(
+            MatchModel,
+            first.match_id,
+        )
+
+        second_model = self.session.get(
+            MatchModel,
+            second.match_id,
+        )
+
+        first_model.created_at = datetime(
+            2026,
+            9,
+            10,
+            12,
+            0,
+            tzinfo=timezone.utc,
+        )
+
+        second_model.created_at = datetime(
+            2026,
+            9,
+            11,
+            12,
+            0,
+            tzinfo=timezone.utc,
+        )
+
+        self.session.commit()
+
+        history = (
+            self.repository
+            .get_player_match_history(
+                "76561198055629469",
+                limit=20,
+            )
+        )
+
+        self.assertEqual(
+            [
+                item.match_id
+                for item in history
+            ],
+            [
+                second.match_id,
+                first.match_id,
+            ],
+        )
+
+        summary = (
+            self.repository
+            .get_player_history_summary(
+                "76561198055629469",
+                limit=20,
+            )
+        )
+
+        self.assertIsNotNone(
+            summary
+        )
+
+        self.assertEqual(
+            summary.matches_analyzed,
+            2,
+        )
+
+        self.assertEqual(
+            summary.stats.kills,
+            48,
+        )
+
+
     def test_player_match_history_respects_limit(self):
         _, second = self._save_history_pair()
 
