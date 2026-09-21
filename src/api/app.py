@@ -27,7 +27,7 @@ from src.ai.client import (
     AIResponseValidationError,
     OpenAIMatchExplainer,
 )
-from src.ai.models import MatchAIExplanation
+from src.ai.models import MatchAIResponse
 from src.ai.payload import build_match_ai_payload
 from src.auth.steam_openid import (
     SteamOpenIDError,
@@ -454,7 +454,7 @@ def get_match_analysis(
 
 @app.post(
     "/matches/{match_id}/ai-explanation",
-    response_model=MatchAIExplanation,
+    response_model=MatchAIResponse,
 )
 def explain_match_with_ai(
     match_id: str,
@@ -470,7 +470,7 @@ def explain_match_with_ai(
         CurrentUser,
         Depends(get_current_user),
     ],
-) -> MatchAIExplanation:
+) -> MatchAIResponse:
     analysis = repository.get_analysis(
         match_id
     )
@@ -503,7 +503,7 @@ def explain_match_with_ai(
     )
 
     try:
-        return explainer.explain(
+        return explainer.explain_with_usage(
             payload
         )
     except AIResponseValidationError as exc:
