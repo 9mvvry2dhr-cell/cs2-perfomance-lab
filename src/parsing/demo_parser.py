@@ -536,13 +536,32 @@ class DemoParser:
             for player in players
         ]
 
+        def _timed_metric(
+            name,
+            func,
+            *args,
+        ):
+            started = time.perf_counter()
+
+            try:
+                return func(*args)
+
+            finally:
+                logger.info(
+                    "ADVANCED_STAGE %s=%.2fs",
+                    name,
+                    time.perf_counter() - started,
+                )
+
         # --------------------------------------------------------------
         # Utility
         # --------------------------------------------------------------
 
         try:
-            utility_stats = calculate_utility_metrics(
-                self.raw_parser
+            utility_stats = _timed_metric(
+                "utility",
+                calculate_utility_metrics,
+                self.raw_parser,
             )
 
         except Exception as exc:
@@ -556,8 +575,10 @@ class DemoParser:
         # --------------------------------------------------------------
 
         try:
-            entry_stats = calculate_entry_metrics(
-                self.raw_parser
+            entry_stats = _timed_metric(
+                "entry",
+                calculate_entry_metrics,
+                self.raw_parser,
             )
 
         except Exception as exc:
@@ -571,9 +592,11 @@ class DemoParser:
         # --------------------------------------------------------------
 
         try:
-            clutch_stats = calculate_clutches(
+            clutch_stats = _timed_metric(
+                "clutch",
+                calculate_clutches,
                 self.raw_parser,
-                steam_ids
+                steam_ids,
             )
 
         except Exception as exc:
@@ -587,7 +610,9 @@ class DemoParser:
         # --------------------------------------------------------------
 
         try:
-            trade_kills, traded_deaths = calculate_trade_metrics(
+            trade_kills, traded_deaths = _timed_metric(
+                "trade",
+                calculate_trade_metrics,
                 self.raw_parser,
                 steam_ids,
             )
@@ -602,7 +627,9 @@ class DemoParser:
         # KAST
 
         try:
-            kast_stats = calculate_kast_metrics(
+            kast_stats = _timed_metric(
+                "kast",
+                calculate_kast_metrics,
                 self.raw_parser,
                 steam_ids,
             )
@@ -616,7 +643,9 @@ class DemoParser:
         # Multikill
 
         try:
-            multikill_stats = calculate_multikill_metrics(
+            multikill_stats = _timed_metric(
+                "multikill",
+                calculate_multikill_metrics,
                 self.raw_parser,
                 steam_ids,
             )
@@ -630,7 +659,9 @@ class DemoParser:
         # Survival
 
         try:
-            survival_stats = calculate_survival_metrics(
+            survival_stats = _timed_metric(
+                "survival",
+                calculate_survival_metrics,
                 self.raw_parser,
                 steam_ids,
             )
