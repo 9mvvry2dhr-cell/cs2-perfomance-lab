@@ -552,6 +552,9 @@ def get_player_match_history(
         .get_player_match_history(
             steam_id,
             limit=limit,
+            owner_steam_id=(
+                current_user.steam_id
+            ),
         )
     )
 
@@ -594,6 +597,9 @@ def get_player_history_summary(
         .get_player_history_summary(
             steam_id,
             limit=limit,
+            owner_steam_id=(
+                current_user.steam_id
+            ),
         )
     )
 
@@ -635,6 +641,7 @@ def get_my_match_history(
     history = repository.get_player_match_history(
         current_user.steam_id,
         limit=limit,
+        owner_steam_id=current_user.steam_id,
     )
 
     return [
@@ -668,6 +675,7 @@ def get_my_history_summary(
     summary = repository.get_player_history_summary(
         current_user.steam_id,
         limit=limit,
+        owner_steam_id=current_user.steam_id,
     )
 
     if summary is None:
