@@ -33,6 +33,8 @@ class MatchAIPayloadTest(unittest.TestCase):
                 "rounds_played": 24,
                 "score_ct": 13,
                 "score_t": 11,
+                "score_semantics": "ct_t_side_round_totals",
+                "player_result": "unknown",
             },
         )
 
