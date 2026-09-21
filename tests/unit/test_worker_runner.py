@@ -3,6 +3,7 @@ from datetime import datetime, timedelta, timezone
 from unittest.mock import Mock, patch
 
 from src.workers.runner import (
+    DEFAULT_STALE_SECONDS,
     process_next_job,
     run_forever,
 )
@@ -11,6 +12,14 @@ from src.workers.runner import (
 class WorkerRunnerTest(
     unittest.TestCase
 ):
+    def test_default_stale_timeout_is_three_minutes(
+        self,
+    ):
+        self.assertEqual(
+            DEFAULT_STALE_SECONDS,
+            180.0,
+        )
+
     def test_process_next_job_requeues_stale_jobs_before_processing(
         self,
     ):
