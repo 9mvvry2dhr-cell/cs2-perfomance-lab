@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from sqlalchemy import select
+from sqlalchemy import exists, select
 from sqlalchemy.orm import Session, selectinload
 
 from src.database.models import (
@@ -394,6 +394,7 @@ class AnalysisRepository:
         steam_id: str,
         *,
         limit: int = 20,
+        owner_steam_id: str | None = None,
     ) -> list[PlayerMatchHistoryItem]:
         """
         Load the newest valid persisted matches for one player.
@@ -410,6 +411,35 @@ class AnalysisRepository:
         if limit < 1 or limit > 100:
             raise ValueError(
                 "limit must be between 1 and 100"
+            )
+
+        owner_filter = None
+
+        if owner_steam_id is not None:
+            owner_steam_id = (
+                owner_steam_id.strip()
+            )
+
+            if not owner_steam_id:
+                raise ValueError(
+                    "owner_steam_id must not be empty"
+                )
+
+            from src.database.models import (
+                AnalysisJobModel,
+            )
+
+            owner_filter = exists(
+                select(
+                    AnalysisJobModel.id
+                ).where(
+                    AnalysisJobModel.match_id
+                    == MatchModel.match_id,
+                    AnalysisJobModel.owner_steam_id
+                    == owner_steam_id,
+                    AnalysisJobModel.status
+                    == "completed",
+                )
             )
 
         stmt = (
@@ -433,6 +463,12 @@ class AnalysisRepository:
                 MatchModel.analysis_version
                 == ANALYSIS_VERSION,
                 MatchModel.is_valid.is_(True),
+                *(
+                    [owner_filter]
+                    if owner_filter
+                    is not None
+                    else []
+                ),
             )
             .order_by(
                 MatchModel.created_at.desc(),
@@ -549,10 +585,12 @@ class AnalysisRepository:
         steam_id: str,
         *,
         limit: int = 10,
+        owner_steam_id: str | None = None,
     ) -> PlayerHistorySummary | None:
         history = self.get_player_match_history(
             steam_id,
             limit=limit,
+            owner_steam_id=owner_steam_id,
         )
 
         return build_player_history_summary(
