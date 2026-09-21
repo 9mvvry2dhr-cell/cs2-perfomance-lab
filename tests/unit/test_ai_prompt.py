@@ -88,6 +88,25 @@ class MatchAIPromptTest(unittest.TestCase):
                 )
 
 
+    def test_prompt_forbids_team_result_inference_from_ct_t_score(self):
+        prompt = self._prompt()
+
+        self.assertIn(
+            "do NOT tell you whether the player's team won or lost",
+            prompt.instructions,
+        )
+
+        self.assertIn(
+            'match.player_result explicitly says "win" or "loss"',
+            prompt.instructions,
+        )
+
+        self.assertIn(
+            'match.player_result is "unknown"',
+            prompt.instructions,
+        )
+
+
     def test_input_contains_exact_verified_payload(self):
         analysis = make_analysis()
 
