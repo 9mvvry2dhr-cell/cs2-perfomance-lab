@@ -61,6 +61,7 @@ class StubAnalysisRepository:
         steam_id: str,
         *,
         limit: int = 20,
+        owner_steam_id: str | None = None,
     ):
         if self.error is not None:
             raise self.error
@@ -72,6 +73,7 @@ class StubAnalysisRepository:
         steam_id: str,
         *,
         limit: int = 10,
+        owner_steam_id: str | None = None,
     ):
         if self.error is not None:
             raise self.error
