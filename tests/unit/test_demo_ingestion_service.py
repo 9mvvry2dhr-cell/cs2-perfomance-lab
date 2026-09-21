@@ -10,7 +10,6 @@ from src.ingestion.service import (
     AnalysisAlreadyActiveError,
     AnalysisQueueFullError,
     DemoIngestionService,
-    DuplicateDemoError,
 )
 from src.ingestion.storage import (
     LocalDemoStorage,
@@ -26,6 +25,7 @@ class StubJobRepository:
         active_jobs=0,
         owner_active_jobs=0,
         completed_duplicate=False,
+        completed_job=None,
     ):
         self.result = result
         self.error = error
@@ -36,6 +36,7 @@ class StubJobRepository:
         self.completed_duplicate = (
             completed_duplicate
         )
+        self.completed_job = completed_job
         self.calls = []
 
     def count_active_jobs(
@@ -49,12 +50,31 @@ class StubJobRepository:
     ):
         return self.owner_active_jobs
 
+    def get_completed_file_for_owner(
+        self,
+        owner_steam_id,
+        file_sha256,
+    ):
+        if self.completed_job is not None:
+            return self.completed_job
+
+        if self.completed_duplicate:
+            return object()
+
+        return None
+
     def has_completed_file_for_owner(
         self,
         owner_steam_id,
         file_sha256,
     ):
-        return self.completed_duplicate
+        return (
+            self.get_completed_file_for_owner(
+                owner_steam_id,
+                file_sha256,
+            )
+            is not None
+        )
 
     def create_job(
         self,
@@ -229,11 +249,13 @@ class DemoIngestionServiceTest(
             [],
         )
 
-    def test_ingest_rejects_completed_duplicate_and_deletes_file(
+    def test_ingest_returns_completed_duplicate_and_deletes_new_file(
         self,
     ):
+        completed_job = object()
+
         repository = StubJobRepository(
-            completed_duplicate=True,
+            completed_job=completed_job,
         )
 
         service = DemoIngestionService(
@@ -241,16 +263,18 @@ class DemoIngestionServiceTest(
             job_repository=repository,
         )
 
-        with self.assertRaises(
-            DuplicateDemoError
-        ):
-            service.ingest(
-                owner_steam_id="76561198055629469",
-                original_filename="duplicate.dem",
-                source=BytesIO(
-                    b"demo-content"
-                ),
-            )
+        result = service.ingest(
+            owner_steam_id="76561198055629469",
+            original_filename="duplicate.dem",
+            source=BytesIO(
+                b"demo-content"
+            ),
+        )
+
+        self.assertIs(
+            result,
+            completed_job,
+        )
 
         self.assertEqual(
             repository.calls,
