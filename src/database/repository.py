@@ -50,6 +50,12 @@ class AnalysisRepository:
                 analysis.match_id,
             )
 
+            existing_created_at = (
+                existing.created_at
+                if existing is not None
+                else None
+            )
+
             if existing is not None:
                 self.session.delete(existing)
                 self.session.flush()
@@ -66,6 +72,14 @@ class AnalysisRepository:
                 validation_error=analysis.validation_error,
                 analysis_version=ANALYSIS_VERSION,
                 findings_version=FINDINGS_VERSION,
+                **(
+                    {
+                        "created_at": existing_created_at,
+                    }
+                    if existing_created_at
+                    is not None
+                    else {}
+                ),
             )
 
             for player_position, player in enumerate(
@@ -77,6 +91,12 @@ class AnalysisRepository:
                     position=player_position,
                     steam_id=player.steam_id,
                     name=player.name,
+                    result=(
+                        analysis.player_results.get(
+                            player.steam_id,
+                            "unknown",
+                        )
+                    ),
                     rounds_played=stats.rounds_played,
                     kills=stats.kills,
                     deaths=stats.deaths,
@@ -361,6 +381,12 @@ class AnalysisRepository:
                 match_model.validation_error
             ),
             players=players,
+            player_results={
+                player_model.steam_id:
+                player_model.result
+                for player_model
+                in match_model.players
+            },
         )
 
     def get_player_match_history(
