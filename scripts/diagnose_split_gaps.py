@@ -140,18 +140,31 @@ def main() -> int:
     death_rounds = defaultdict(list)
     independent_kills = []
     production_missed_kills = []
+    outside_round_events = []
 
     for _, row in official.iterrows():
         tick = safe_int(row.get("tick"), -1)
         round_context = find_round(tick, rounds)
-        if round_context is None:
-            continue
-        round_num = round_context.round_num
 
         attacker_norm = normalize_sid(row.get("attacker_steamid"))
         victim_norm = normalize_sid(row.get("user_steamid"))
         attacker_raw = str(row.get("attacker_steamid", ""))
         victim_raw = str(row.get("user_steamid", ""))
+
+        if round_context is None:
+            if attacker_norm in mismatched or victim_norm in mismatched:
+                outside_round_events.append(
+                    {
+                        "tick": tick,
+                        "attacker": attacker_norm,
+                        "victim": victim_norm,
+                        "attacker_team": normalized_teams.get((tick, attacker_norm), 0),
+                        "victim_team": normalized_teams.get((tick, victim_norm), 0),
+                    }
+                )
+            continue
+
+        round_num = round_context.round_num
 
         if victim_norm in mismatched:
             death_rounds[victim_norm].append(
@@ -234,6 +247,22 @@ def main() -> int:
                     f"raw_in_players={item['raw_in_players']} "
                     f"raw_side={item['raw_side']} norm_side={item['norm_side']}"
                 )
+
+    print()
+    print("OUTSIDE CANONICAL ROUND EVENTS")
+    print("-" * 110)
+
+    if not outside_round_events:
+        print("No official kill/death events involving mismatched players outside canonical rounds.")
+    else:
+        for item in outside_round_events:
+            print(
+                f"tick={item['tick']} "
+                f"attacker={names.get(item['attacker'], item['attacker'])!r} "
+                f"({item['attacker']}) team={item['attacker_team']}  "
+                f"victim={names.get(item['victim'], item['victim'])!r} "
+                f"({item['victim']}) team={item['victim_team']}"
+            )
 
     print()
     print("KILL DIAGNOSTICS")
