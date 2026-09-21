@@ -40,6 +40,8 @@ def build_match_ai_payload(
     - it only serializes already verified analysis data;
     - SteamID is used only to select the player and is not sent in payload;
     - deterministic findings and their evidence are passed verbatim;
+    - score_ct/score_t are side round totals, not the player's team result;
+    - player_result stays unknown until the parser persists team identity;
     - no free-form diagnosis is generated here.
     """
 
@@ -74,6 +76,8 @@ def build_match_ai_payload(
             "rounds_played": analysis.rounds_played,
             "score_ct": analysis.score_ct,
             "score_t": analysis.score_t,
+            "score_semantics": "ct_t_side_round_totals",
+            "player_result": "unknown",
         },
         "verified_metrics": {
             "overall": overall,
