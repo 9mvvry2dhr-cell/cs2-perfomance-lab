@@ -609,7 +609,17 @@ def calculate_split_metrics(
             ] += 1
 
     # --------------------------------------------------------------
-    # Death events
+    # Scoreboard K / D split
+    #
+    # Kills and deaths must reconcile with the final scoreboard.
+    # CS2 can emit player_death events between round_end and the
+    # next round_start. The scoreboard still counts those events,
+    # so K/D side attribution uses team_num at the event tick.
+    #
+    # For a victim whose event-tick team snapshot is unavailable,
+    # fall back to the verified freeze-end side of the canonical
+    # round. Enemy kills still fail closed when the event-tick team
+    # relation cannot be verified.
     # --------------------------------------------------------------
 
     stage_started = time.perf_counter()
@@ -658,13 +668,29 @@ def calculate_split_metrics(
         kind="stable",
     )
 
-    death_ticks = [
+    match_start_tick = (
+        rounds[0].start_tick
+    )
+
+    match_end_tick = (
+        rounds[-1].end_tick
+    )
+
+    death_ticks = sorted({
         safe_int(
-            tick,
+            row.get("tick"),
             default=-1,
         )
-        for tick in df_deaths["tick"]
-    ]
+        for _, row in df_deaths.iterrows()
+        if (
+            match_start_tick
+            <= safe_int(
+                row.get("tick"),
+                default=-1,
+            )
+            <= match_end_tick
+        )
+    })
 
     logger.info(
         "SPLIT_STAGE death_events=%.2fs",
@@ -683,8 +709,6 @@ def calculate_split_metrics(
         time.perf_counter() - stage_started,
     )
 
-    dead_player_rounds = set()
-
     for _, row in df_deaths.iterrows():
 
         tick = safe_int(
@@ -692,20 +716,11 @@ def calculate_split_metrics(
             default=-1,
         )
 
-        if tick < 0:
+        if (
+            tick < match_start_tick
+            or tick > match_end_tick
+        ):
             continue
-
-        round_context = find_round(
-            tick,
-            rounds,
-        )
-
-        if round_context is None:
-            continue
-
-        round_num = (
-            round_context.round_num
-        )
 
         attacker = str(
             row.get(
@@ -721,34 +736,46 @@ def calculate_split_metrics(
             )
         )
 
+        round_context = find_round(
+            tick,
+            rounds,
+        )
+
         # ----------------------------------------------------------
         # Death
         #
-        # Any real death breaks survival and counts as a death,
-        # including teamkill or suicide.
-        # Count at most one death per player-round.
+        # Scoreboard deaths are event-level, not player-round-level.
+        # This intentionally includes valid deaths in the short gap
+        # between canonical rounds.
         # ----------------------------------------------------------
 
-        victim_side = (
-            side_by_round_player.get(
-                (
-                    round_num,
-                    victim,
-                )
+        victim_team = team_state.get(
+            (
+                tick,
+                victim,
             )
         )
 
-        death_key = (
-            round_num,
-            victim,
-        )
+        if victim_team == 2:
+            victim_side = "T"
+        elif victim_team == 3:
+            victim_side = "CT"
+        elif round_context is not None:
+            victim_side = (
+                side_by_round_player.get(
+                    (
+                        round_context.round_num,
+                        victim,
+                    )
+                )
+            )
+        else:
+            victim_side = None
 
         if (
             valid_sid(victim)
             and victim in metrics
             and victim_side in {"CT", "T"}
-            and death_key
-            not in dead_player_rounds
         ):
             metrics[
                 victim
@@ -758,24 +785,26 @@ def calculate_split_metrics(
                 "deaths"
             ] += 1
 
-            dead_player_rounds.add(
-                death_key
-            )
-
         # ----------------------------------------------------------
         # Kill
         #
-        # Only confirmed enemy kills count.
+        # Only confirmed enemy kills count. Side comes from the same
+        # event-tick team state used to verify the enemy relation.
         # ----------------------------------------------------------
 
-        attacker_side = (
-            side_by_round_player.get(
-                (
-                    round_num,
-                    attacker,
-                )
+        attacker_team = team_state.get(
+            (
+                tick,
+                attacker,
             )
         )
+
+        if attacker_team == 2:
+            attacker_side = "T"
+        elif attacker_team == 3:
+            attacker_side = "CT"
+        else:
+            attacker_side = None
 
         if (
             attacker not in metrics
