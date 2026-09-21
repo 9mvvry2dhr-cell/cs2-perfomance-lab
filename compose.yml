@@ -51,10 +51,13 @@ services:
     depends_on:
       migrate:
         condition: service_completed_successfully
+      worker:
+        condition: service_started
 
   worker:
     build:
       context: .
+    restart: unless-stopped
     command:
       - python
       - -m

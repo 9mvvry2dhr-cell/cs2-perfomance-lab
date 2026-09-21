@@ -516,6 +516,7 @@ body {
     height: 68px;
 
     display: grid;
+    overflow: hidden;
 
     place-items: center;
 
@@ -8649,10 +8650,68 @@ function renderPlayer(
             ".avatar"
         );
 
-    avatar.textContent =
-        player.name
-            .slice(0, 1)
-            .toUpperCase();
+    const currentUser =
+        window.CS2_CURRENT_USER || {};
+
+    const isCurrentUser =
+        String(
+            currentUser.steamId || ""
+        ) === String(
+            player.steam_id || ""
+        );
+
+    const steamDisplayName =
+        isCurrentUser
+            ? String(
+                window.CS2_STEAM_DISPLAY_NAME
+                || ""
+            ).trim()
+            : "";
+
+    const steamAvatarUrl =
+        isCurrentUser
+            ? String(
+                window.CS2_STEAM_AVATAR_URL
+                || ""
+            ).trim()
+            : "";
+
+    const displayName =
+        steamDisplayName
+        || player.name;
+
+    avatar.replaceChildren();
+
+    if (steamAvatarUrl) {
+        const avatarImage =
+            document.createElement(
+                "img"
+            );
+
+        avatarImage.src =
+            steamAvatarUrl;
+
+        avatarImage.alt =
+            displayName;
+
+        avatarImage.style.width =
+            "100%";
+
+        avatarImage.style.height =
+            "100%";
+
+        avatarImage.style.objectFit =
+            "cover";
+
+        avatar.appendChild(
+            avatarImage
+        );
+    } else {
+        avatar.textContent =
+            displayName
+                .slice(0, 1)
+                .toUpperCase();
+    }
 
     const playerName =
         document.querySelector(
@@ -8663,7 +8722,7 @@ function renderPlayer(
 
     playerName.appendChild(
         document.createTextNode(
-            `${player.name} `
+            `${displayName} `
         )
     );
 
@@ -9180,7 +9239,10 @@ demoUploadForm.addEventListener(
 
         if (!file) {
             setUploadStatus(
-                "Сначала выбери .dem файл.",
+                "\u0421\u043d\u0430\u0447\u0430\u043b\u0430 "
+                + "\u0432\u044b\u0431\u0435\u0440\u0438 "
+                + ".dem "
+                + "\u0444\u0430\u0439\u043b.",
                 "error"
             );
 
@@ -9193,8 +9255,11 @@ demoUploadForm.addEventListener(
                 .endsWith(".dem")
         ) {
             setUploadStatus(
-                "Нужен файл "
-                + "с расширением .dem.",
+                "\u041d\u0443\u0436\u0435\u043d "
+                + "\u0444\u0430\u0439\u043b "
+                + "\u0441 "
+                + "\u0440\u0430\u0441\u0448\u0438\u0440\u0435\u043d\u0438\u0435\u043c "
+                + ".dem.",
                 "error"
             );
 
@@ -9212,7 +9277,7 @@ demoUploadForm.addEventListener(
         );
 
         setUploadStatus(
-            `Загружаем ${file.name}…`
+            `\u0417\u0430\u0433\u0440\u0443\u0436\u0430\u0435\u043c ${file.name}\u2026`
         );
 
         try {
@@ -9229,7 +9294,7 @@ demoUploadForm.addEventListener(
                     "/analysis-jobs",
                     {
                         method: "POST",
-                        body: formData,
+                        body: formData
                     }
                 );
 
@@ -9248,9 +9313,9 @@ demoUploadForm.addEventListener(
                 createdJob.id;
 
             setUploadStatus(
-                "Демо принята. "
-                + "Job создан, "
-                + "ждём worker…"
+                "\u0414\u0435\u043c\u043e "
+                + "\u043f\u0440\u0438\u043d\u044f\u0442\u0430. "
+                + "\u0416\u0434\u0451\u043c worker\u2026"
             );
 
             const completedJob =
@@ -9266,6 +9331,15 @@ demoUploadForm.addEventListener(
             renderMatchAnalysis(
                 analysis
             );
+
+            if (
+                typeof window
+                    .cs2RefreshSidebarProfile
+                === "function"
+            ) {
+                await window
+                    .cs2RefreshSidebarProfile();
+            }
 
             showAnalysisState();
 
@@ -9283,26 +9357,23 @@ demoUploadForm.addEventListener(
             window.cs2CurrentAnalysisJobId =
                 null;
 
-            const playerCount =
-                analysis.players.length;
-
             setUploadStatus(
-                `Готово: `
-                + `${analysis.map_name} · `
+                "\u0413\u043e\u0442\u043e\u0432\u043e: "
+                + `${analysis.map_name} \u00b7 `
                 + `${analysis.score_ct}:`
-                + `${analysis.score_t} · `
-                + `${analysis.rounds_played} `
-                + `раундов · `
-                + `${playerCount} `
-                + `игроков. `
-                + `Реальные данные `
-                + `матча получены.`,
+                + `${analysis.score_t}`,
                 "success"
             );
 
-            console.log(
-                "Match analysis:",
-                analysis
+            demoFile.value = "";
+
+            demoFile.dispatchEvent(
+                new Event(
+                    "change",
+                    {
+                        bubbles: true
+                    }
+                )
             );
 
         } catch (error) {
@@ -9320,11 +9391,14 @@ demoUploadForm.addEventListener(
             }
 
             setUploadStatus(
-                `Ошибка: ${error.message}`,
+                `\u041e\u0448\u0438\u0431\u043a\u0430: ${error.message}`,
                 "error"
             );
 
         } finally {
+            window.cs2CurrentAnalysisJobId =
+                null;
+
             demoUploadButton.disabled =
                 false;
 
@@ -10932,7 +11006,9 @@ document
 <script id="cs2-upload-dropzone-js">
 (function () {
     const input =
-        document.getElementById("demoFile");
+        document.getElementById(
+            "demoFile"
+        );
 
     const zone =
         document.getElementById(
@@ -10944,19 +11020,13 @@ document
     }
 
     function refreshZone() {
-        const file =
-            input.files
-            && input.files[0];
-
         zone.classList.toggle(
             "has-file",
-            Boolean(file)
+            Boolean(
+                input.files
+                && input.files[0]
+            )
         );
-
-        zone.textContent =
-            file
-                ? file.name
-                : "???????? .dem ????";
     }
 
     input.addEventListener(
@@ -10967,35 +11037,39 @@ document
     [
         "dragenter",
         "dragover"
-    ].forEach(type => {
-        zone.addEventListener(
-            type,
-            event => {
-                event.preventDefault();
-                event.stopPropagation();
+    ].forEach(
+        type => {
+            zone.addEventListener(
+                type,
+                event => {
+                    event.preventDefault();
+                    event.stopPropagation();
 
-                zone.classList.add(
-                    "is-dragover"
-                );
-            }
-        );
-    });
+                    zone.classList.add(
+                        "is-dragover"
+                    );
+                }
+            );
+        }
+    );
 
     [
         "dragleave",
         "dragend"
-    ].forEach(type => {
-        zone.addEventListener(
-            type,
-            event => {
-                event.preventDefault();
+    ].forEach(
+        type => {
+            zone.addEventListener(
+                type,
+                event => {
+                    event.preventDefault();
 
-                zone.classList.remove(
-                    "is-dragover"
-                );
-            }
-        );
-    });
+                    zone.classList.remove(
+                        "is-dragover"
+                    );
+                }
+            );
+        }
+    );
 
     zone.addEventListener(
         "drop",
@@ -11009,8 +11083,7 @@ document
 
             const file =
                 event.dataTransfer
-                && event.dataTransfer.files
-                && event.dataTransfer.files[0];
+                ?.files?.[0];
 
             if (!file) {
                 return;
@@ -11021,11 +11094,13 @@ document
                     .toLowerCase()
                     .endsWith(".dem")
             ) {
-                zone.textContent =
-                    "????? ???? ??????? .dem";
-
-                zone.classList.remove(
-                    "has-file"
+                setUploadStatus(
+                    "\u041d\u0443\u0436\u0435\u043d "
+                    + "\u0444\u0430\u0439\u043b "
+                    + "\u0441 "
+                    + "\u0440\u0430\u0441\u0448\u0438\u0440\u0435\u043d\u0438\u0435\u043c "
+                    + ".dem.",
+                    "error"
                 );
 
                 return;
@@ -11034,7 +11109,9 @@ document
             const transfer =
                 new DataTransfer();
 
-            transfer.items.add(file);
+            transfer.items.add(
+                file
+            );
 
             input.files =
                 transfer.files;
@@ -11119,10 +11196,14 @@ document
 <script>
 (function () {
     const input =
-        document.getElementById("demoFile");
+        document.getElementById(
+            "demoFile"
+        );
 
     const zone =
-        document.getElementById("demoFilePicker");
+        document.getElementById(
+            "demoFilePicker"
+        );
 
     if (!input || !zone) {
         return;
@@ -11130,24 +11211,30 @@ document
 
     function renderDropzone() {
         const file =
-            input.files &&
-            input.files.length
+            input.files
+            && input.files.length
                 ? input.files[0]
                 : null;
 
         zone.replaceChildren();
 
         const icon =
-            document.createElement("span");
+            document.createElement(
+                "span"
+            );
 
         icon.className =
             "demo-drop-icon";
 
         icon.textContent =
-            file ? "\u2713" : "\u2193";
+            file
+                ? "\u2713"
+                : "\u2193";
 
         const title =
-            document.createElement("span");
+            document.createElement(
+                "span"
+            );
 
         title.className =
             "demo-drop-title";
@@ -11158,7 +11245,9 @@ document
                 : "\u041f\u0435\u0440\u0435\u0442\u0430\u0449\u0438 .dem \u0441\u044e\u0434\u0430";
 
         const sub =
-            document.createElement("span");
+            document.createElement(
+                "span"
+            );
 
         sub.className =
             "demo-drop-sub";
@@ -11516,6 +11605,11 @@ document
                     me.avatar_url || ""
                 ).trim();
 
+            if (avatarUrl) {
+                window.CS2_STEAM_AVATAR_URL =
+                    avatarUrl;
+            }
+
             if (steamName) {
                 window.CS2_STEAM_DISPLAY_NAME =
                     steamName;
@@ -11638,6 +11732,30 @@ document
     line-height: 1;
 }
 
+.current-user-mini-stat-trend {
+    min-height: 10px;
+    margin-top: 5px;
+
+    color: #668094;
+
+    font-size: 7.5px;
+    font-weight: 800;
+
+    line-height: 1;
+}
+
+.current-user-mini-stat-trend.is-up {
+    color: #58d69b;
+}
+
+.current-user-mini-stat-trend.is-down {
+    color: #ff7c83;
+}
+
+.current-user-mini-stat-trend.is-flat {
+    color: #668094;
+}
+
 .current-user-mini-footer {
     margin-top: 9px;
 
@@ -11716,9 +11834,22 @@ document
         value.textContent =
             "\u2014";
 
+        const trend =
+            document.createElement("div");
+
+        trend.className =
+            "current-user-mini-stat-trend";
+
+        trend.id =
+            valueId + "Trend";
+
+        trend.textContent =
+            "";
+
         item.append(
             label,
-            value
+            value,
+            trend
         );
 
         return item;
@@ -11761,8 +11892,8 @@ document
         "\u043f\u043e \u0438\u0441\u0442\u043e\u0440\u0438\u0438";
 
     footer.append(
-        matches,
-        caption
+        caption,
+        matches
     );
 
     const actions =
@@ -11785,6 +11916,312 @@ document
             stats,
             footer
         );
+    }
+
+    function matchSignature(match) {
+        const s =
+            match.stats || {};
+
+        return [
+            match.map_name || "",
+            match.score_ct ?? "",
+            match.score_t ?? "",
+            s.rounds_played ?? "",
+            s.kills ?? "",
+            s.deaths ?? "",
+            s.assists ?? "",
+            s.headshots ?? "",
+            s.damage ?? "",
+            s.kast_rounds ?? "",
+            s.entry_kills ?? "",
+            s.entry_deaths ?? "",
+            s.trade_kills ?? "",
+            s.clutches_won ?? ""
+        ].join("|");
+    }
+
+    function uniqueMatches(matches) {
+        const seen =
+            new Set();
+
+        return [...matches]
+            .sort(
+                (a, b) =>
+                    new Date(
+                        b.analyzed_at || 0
+                    )
+                    - new Date(
+                        a.analyzed_at || 0
+                    )
+            )
+            .filter(
+                match => {
+                    const signature =
+                        matchSignature(match);
+
+                    if (
+                        seen.has(signature)
+                    ) {
+                        return false;
+                    }
+
+                    seen.add(signature);
+                    return true;
+                }
+            );
+    }
+
+    function aggregateWindow(matches) {
+        const totals = {
+            rounds: 0,
+            kills: 0,
+            deaths: 0,
+            damage: 0,
+            kastRounds: 0
+        };
+
+        matches.forEach(
+            match => {
+                const s =
+                    match.stats || {};
+
+                totals.rounds +=
+                    Number(
+                        s.rounds_played
+                        || 0
+                    );
+
+                totals.kills +=
+                    Number(
+                        s.kills
+                        || 0
+                    );
+
+                totals.deaths +=
+                    Number(
+                        s.deaths
+                        || 0
+                    );
+
+                totals.damage +=
+                    Number(
+                        s.damage
+                        || 0
+                    );
+
+                totals.kastRounds +=
+                    Number(
+                        s.kast_rounds
+                        || 0
+                    );
+            }
+        );
+
+        return {
+            kd:
+                totals.deaths > 0
+                    ? totals.kills
+                        / totals.deaths
+                    : totals.kills,
+
+            adr:
+                totals.rounds > 0
+                    ? totals.damage
+                        / totals.rounds
+                    : 0,
+
+            kast:
+                totals.rounds > 0
+                    ? (
+                        totals.kastRounds
+                        / totals.rounds
+                    ) * 100
+                    : 0
+        };
+    }
+
+    function renderTrend(
+        elementId,
+        delta,
+        digits,
+        suffix = ""
+    ) {
+        const element =
+            document.getElementById(
+                elementId
+            );
+
+        if (!element) {
+            return;
+        }
+
+        const epsilon =
+            digits === 2
+                ? 0.005
+                : 0.05;
+
+        element.classList.remove(
+            "is-up",
+            "is-down",
+            "is-flat"
+        );
+
+        if (
+            Math.abs(delta)
+            < epsilon
+        ) {
+            element.textContent =
+                "\u2192 0"
+                + suffix;
+
+            element.classList.add(
+                "is-flat"
+            );
+
+            return;
+        }
+
+        const up =
+            delta > 0;
+
+        element.textContent =
+            (up ? "\u2191 +" : "\u2193 ")
+            + delta.toFixed(digits)
+            + suffix;
+
+        element.classList.add(
+            up
+                ? "is-up"
+                : "is-down"
+        );
+    }
+
+    async function loadTrend() {
+        try {
+            const response =
+                await fetch(
+                    "/me/matches?limit=100",
+                    {
+                        credentials:
+                            "same-origin",
+
+                        cache:
+                            "no-store",
+
+                        headers: {
+                            Accept:
+                                "application/json"
+                        }
+                    }
+                );
+
+            if (!response.ok) {
+                return;
+            }
+
+            const matches =
+                await response.json();
+
+            const unique =
+                uniqueMatches(matches);
+
+            const matchesElement =
+                document.getElementById(
+                    "sidebarProfileMatches"
+                );
+
+            if (matchesElement) {
+                const count =
+                    unique.length;
+
+                const word =
+                    count % 10 === 1
+                    && count % 100 !== 11
+                        ? "\u043c\u0430\u0442\u0447"
+                        : (
+                            [2, 3, 4].includes(
+                                count % 10
+                            )
+                            && ![12, 13, 14].includes(
+                                count % 100
+                            )
+                                ? "\u043c\u0430\u0442\u0447\u0430"
+                                : "\u043c\u0430\u0442\u0447\u0435\u0439"
+                        );
+
+                matchesElement.textContent =
+                    `${count} ${word}`;
+            }
+
+            const trendElements = [
+                document.getElementById(
+                    "sidebarProfileKdTrend"
+                ),
+                document.getElementById(
+                    "sidebarProfileAdrTrend"
+                ),
+                document.getElementById(
+                    "sidebarProfileKastTrend"
+                )
+            ].filter(Boolean);
+
+            if (
+                unique.length < 10
+            ) {
+                const missing =
+                    10 - unique.length;
+
+                trendElements.forEach(
+                    element => {
+                        element.textContent =
+                            `\u0435\u0449\u0451 ${missing} \u0434\u043e \u0442\u0440\u0435\u043d\u0434\u0430`;
+
+                        element.classList.remove(
+                            "is-up",
+                            "is-down",
+                            "is-flat"
+                        );
+                    }
+                );
+
+                return;
+            }
+
+            const recent =
+                aggregateWindow(
+                    unique.slice(0, 5)
+                );
+
+            const previous =
+                aggregateWindow(
+                    unique.slice(5, 10)
+                );
+
+            renderTrend(
+                "sidebarProfileKdTrend",
+                recent.kd
+                    - previous.kd,
+                2
+            );
+
+            renderTrend(
+                "sidebarProfileAdrTrend",
+                recent.adr
+                    - previous.adr,
+                1
+            );
+
+            renderTrend(
+                "sidebarProfileKastTrend",
+                recent.kast
+                    - previous.kast,
+                1,
+                "%"
+            );
+
+        } catch (_) {
+            /* Trend is optional; keep card usable. */
+        }
     }
 
     async function loadSummary() {
@@ -11884,7 +12321,15 @@ document
         }
     }
 
-    loadSummary();
+    async function refreshSidebarProfile() {
+        await loadSummary();
+        await loadTrend();
+    }
+
+    window.cs2RefreshSidebarProfile =
+        refreshSidebarProfile;
+
+    refreshSidebarProfile();
 })();
 </script>
 
@@ -12034,6 +12479,300 @@ document
     }
 })();
 </script>
+
+
+<style id="cs2-profile-air-polish-v1">
+
+.current-user-card {
+    padding: 16px !important;
+}
+
+.current-user-profile-head {
+    gap: 13px !important;
+}
+
+.current-user-name {
+    font-size: 15px !important;
+    line-height: 1.3 !important;
+}
+
+.current-user-connection {
+    margin-top: 4px !important;
+    font-size: 9.5px !important;
+    line-height: 1.35 !important;
+}
+
+.current-user-steam {
+    margin-top: 5px !important;
+    font-size: 9px !important;
+    line-height: 1.45 !important;
+}
+
+.current-user-mini-stats {
+    margin-top: 15px !important;
+    padding-top: 14px !important;
+    gap: 8px !important;
+}
+
+.current-user-mini-stat {
+    padding: 10px 8px !important;
+    border-radius: 10px !important;
+}
+
+.current-user-mini-stat-label {
+    font-size: 8px !important;
+    line-height: 1.2 !important;
+}
+
+.current-user-mini-stat-value {
+    margin-top: 6px !important;
+    font-size: 15px !important;
+    line-height: 1.05 !important;
+}
+
+.current-user-mini-stat-trend {
+    min-height: 11px !important;
+    margin-top: 6px !important;
+    font-size: 8px !important;
+    line-height: 1.15 !important;
+}
+
+.current-user-mini-footer {
+    margin-top: 12px !important;
+    font-size: 9px !important;
+    line-height: 1.35 !important;
+}
+
+.current-user-auth-actions {
+    margin-top: 15px !important;
+    padding-top: 14px !important;
+}
+
+.steam-logout-button {
+    min-height: 40px !important;
+    font-size: 11px !important;
+}
+
+</style>
+
+
+<style id="cs2-global-type-air-v1">
+
+/* ===== MAIN TYPOGRAPHY AIR ===== */
+
+.section-title {
+    margin-top: 20px !important;
+    margin-bottom: 10px !important;
+
+    font-size: 18px !important;
+    line-height: 1.3 !important;
+}
+
+.section-title small {
+    font-size: 10px !important;
+    line-height: 1.4 !important;
+}
+
+
+/* Main analysis metric cards */
+
+.metric-label {
+    font-size: 9.5px !important;
+    line-height: 1.35 !important;
+}
+
+.metric-value {
+    margin-top: 6px !important;
+
+    font-size: 26px !important;
+    line-height: 1.08 !important;
+}
+
+
+/* ===== PROFILE / HISTORY ===== */
+
+.player-history {
+    padding: 24px !important;
+}
+
+.player-history-eyebrow {
+    font-size: 10.5px !important;
+    line-height: 1.4 !important;
+}
+
+.player-history-title {
+    margin-top: 7px !important;
+
+    font-size: 20px !important;
+    line-height: 1.3 !important;
+}
+
+.player-history-meta {
+    font-size: 11.5px !important;
+    line-height: 1.6 !important;
+}
+
+
+/* Summary cards */
+
+.player-history-summary {
+    gap: 12px !important;
+    margin-top: 20px !important;
+}
+
+.player-history-metric {
+    padding: 16px !important;
+}
+
+.player-history-metric-label {
+    font-size: 10.5px !important;
+    line-height: 1.35 !important;
+}
+
+.player-history-metric-value {
+    margin-top: 7px !important;
+
+    font-size: 20px !important;
+    line-height: 1.15 !important;
+}
+
+
+/* Signals */
+
+.player-history-panel {
+    padding: 17px !important;
+}
+
+.player-history-panel-title {
+    margin-bottom: 11px !important;
+
+    font-size: 11.5px !important;
+    line-height: 1.4 !important;
+}
+
+.player-history-signal {
+    padding: 10px 0 !important;
+}
+
+.player-history-signal-name {
+    font-size: 12.5px !important;
+    line-height: 1.5 !important;
+}
+
+.player-history-signal-count {
+    font-size: 11.5px !important;
+}
+
+
+/* Match history rows */
+
+.player-history-matches-title {
+    margin-bottom: 10px !important;
+
+    font-size: 11.5px !important;
+}
+
+.player-history-match {
+    gap: 16px !important;
+
+    padding:
+        13px
+        12px !important;
+}
+
+.player-history-map {
+    font-size: 12.5px !important;
+    line-height: 1.35 !important;
+}
+
+.player-history-stats,
+.player-history-match-line {
+    font-size: 11.5px !important;
+    line-height: 1.45 !important;
+}
+
+.player-history-date {
+    font-size: 10.5px !important;
+}
+
+.player-history-badges {
+    margin-top: 7px !important;
+}
+
+.player-history-badge {
+    padding:
+        4px
+        8px !important;
+
+    font-size: 9.5px !important;
+}
+
+
+/* ===== RIGHT GAME PROFILE ===== */
+
+.player-game-profile {
+    padding: 17px !important;
+}
+
+.player-game-profile-title {
+    margin-bottom: 14px !important;
+
+    font-size: 11.5px !important;
+    line-height: 1.4 !important;
+}
+
+.player-game-profile-grid {
+    gap: 11px !important;
+}
+
+.player-game-profile-item {
+    min-height: 84px !important;
+
+    padding: 13px !important;
+}
+
+.player-game-profile-label {
+    font-size: 9.5px !important;
+    line-height: 1.35 !important;
+}
+
+.player-game-profile-value {
+    margin-top: 7px !important;
+
+    font-size: 19px !important;
+    line-height: 1.15 !important;
+}
+
+.player-game-profile-sub {
+    margin-top: 5px !important;
+
+    font-size: 9.5px !important;
+    line-height: 1.55 !important;
+}
+
+.player-game-profile-note {
+    margin-top: 14px !important;
+    padding-top: 12px !important;
+
+    font-size: 9.5px !important;
+    line-height: 1.6 !important;
+}
+
+
+/* ===== SMALL CONTENT TEXT ===== */
+
+.section-placeholder-text,
+.player-history-loading {
+    font-size: 12.5px !important;
+    line-height: 1.7 !important;
+}
+
+.insight-details {
+    font-size: 10.5px !important;
+    line-height: 1.7 !important;
+}
+
+</style>
 
 </body>
 </html>
