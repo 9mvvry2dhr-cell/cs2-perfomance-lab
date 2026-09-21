@@ -139,30 +139,45 @@ def build_expected(demo_parser, match, rounds):
     deaths["_event_order"] = range(len(deaths))
     deaths = deaths.sort_values(["tick", "_event_order"], kind="stable")
 
+    match_start_tick = rounds[0].start_tick
+    match_end_tick = rounds[-1].end_tick
+
     death_ticks = [
         safe_int(row.get("tick"), -1)
         for _, row in deaths.iterrows()
-        if find_round(row.get("tick"), rounds) is not None
+        if (
+            match_start_tick
+            <= safe_int(row.get("tick"), -1)
+            <= match_end_tick
+        )
     ]
     teams = independent_team_state(raw, death_ticks)
-    counted_deaths = set()
 
     for _, row in deaths.iterrows():
         tick = safe_int(row.get("tick"), -1)
-        round_context = find_round(tick, rounds)
-        if round_context is None:
+        if tick < match_start_tick or tick > match_end_tick:
             continue
 
-        round_num = round_context.round_num
+        round_context = find_round(tick, rounds)
         attacker = normalize_sid(row.get("attacker_steamid"))
         victim = normalize_sid(row.get("user_steamid"))
 
         if victim in expected:
-            side = side_map.get((round_num, victim))
-            death_key = (round_num, victim)
-            if side in {"CT", "T"} and death_key not in counted_deaths:
-                expected[victim][side]["deaths"] += 1
-                counted_deaths.add(death_key)
+            victim_team = teams.get((tick, victim), 0)
+
+            if victim_team == 2:
+                victim_side = "T"
+            elif victim_team == 3:
+                victim_side = "CT"
+            elif round_context is not None:
+                victim_side = side_map.get(
+                    (round_context.round_num, victim)
+                )
+            else:
+                victim_side = None
+
+            if victim_side in {"CT", "T"}:
+                expected[victim][victim_side]["deaths"] += 1
 
         if attacker is None or victim is None or attacker == victim:
             continue
@@ -176,8 +191,8 @@ def build_expected(demo_parser, match, rounds):
         ):
             continue
 
-        side = side_map.get((round_num, attacker))
-        if attacker in expected and side in {"CT", "T"}:
+        side = "T" if attacker_team == 2 else "CT"
+        if attacker in expected:
             expected[attacker][side]["kills"] += 1
 
     end_ticks = [round_data.end_tick for round_data in rounds]
