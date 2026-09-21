@@ -19,22 +19,33 @@ from tests.unit.test_analysis_repository import make_analysis
 
 
 class FakeResponses:
-    def __init__(self, parsed):
+    def __init__(
+        self,
+        parsed,
+        usage=None,
+    ):
         self.parsed = parsed
+        self.usage = usage
         self.calls = []
 
     def parse(self, **kwargs):
         self.calls.append(kwargs)
 
         return SimpleNamespace(
-            output_parsed=self.parsed
+            output_parsed=self.parsed,
+            usage=self.usage,
         )
 
 
 class FakeClient:
-    def __init__(self, parsed):
+    def __init__(
+        self,
+        parsed,
+        usage=None,
+    ):
         self.responses = FakeResponses(
-            parsed
+            parsed,
+            usage=usage,
         )
 
 
@@ -229,6 +240,77 @@ class OpenAIMatchExplainerTest(unittest.TestCase):
                 bad,
                 self._payload(),
             )
+
+
+    def test_focus_is_required_when_findings_exist(self):
+        bad = self._valid_explanation().model_copy(
+            update={
+                "focus": [],
+            }
+        )
+
+        with self.assertRaises(
+            AIResponseValidationError
+        ):
+            validate_explanation_grounding(
+                bad,
+                self._payload(),
+            )
+
+
+    def test_explain_with_usage_reports_response_usage(self):
+        explanation = self._valid_explanation()
+
+        usage = SimpleNamespace(
+            input_tokens=3120,
+            input_tokens_details=SimpleNamespace(
+                cached_tokens=120,
+            ),
+            output_tokens=910,
+            output_tokens_details=SimpleNamespace(
+                reasoning_tokens=310,
+            ),
+            total_tokens=4030,
+        )
+
+        client = FakeClient(
+            explanation,
+            usage=usage,
+        )
+
+        explainer = OpenAIMatchExplainer(
+            client=client,
+            model="test-model",
+        )
+
+        result = explainer.explain_with_usage(
+            self._payload()
+        )
+
+        self.assertEqual(
+            result.usage.input_tokens,
+            3120,
+        )
+
+        self.assertEqual(
+            result.usage.cached_input_tokens,
+            120,
+        )
+
+        self.assertEqual(
+            result.usage.output_tokens,
+            910,
+        )
+
+        self.assertEqual(
+            result.usage.reasoning_tokens,
+            310,
+        )
+
+        self.assertEqual(
+            result.usage.total_tokens,
+            4030,
+        )
 
 
     def test_missing_api_key_is_rejected_without_network_client(self):
