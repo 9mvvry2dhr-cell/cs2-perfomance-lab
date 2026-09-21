@@ -1,3 +1,6 @@
+import logging
+import time
+
 from dataclasses import dataclass
 from typing import List
 
@@ -24,6 +27,9 @@ from src.metrics.kast import (
 from src.metrics.entry import (
     detect_entry_events,
 )
+
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass(frozen=True)
@@ -383,16 +389,30 @@ def calculate_split_metrics(
     if not player_ids:
         return metrics
 
+    stage_started = time.perf_counter()
+
     rounds = build_round_contexts(
         parser
+    )
+
+    logger.info(
+        "SPLIT_STAGE contexts=%.2fs",
+        time.perf_counter() - stage_started,
     )
 
     if not rounds:
         return metrics
 
+    stage_started = time.perf_counter()
+
     side_events = detect_player_round_sides(
         parser,
         list(player_ids),
+    )
+
+    logger.info(
+        "SPLIT_STAGE sides=%.2fs",
+        time.perf_counter() - stage_started,
     )
 
     side_by_round_player = {
@@ -420,9 +440,16 @@ def calculate_split_metrics(
     # Survival
     # --------------------------------------------------------------
 
+    stage_started = time.perf_counter()
+
     survival_events = detect_survival_rounds(
         parser,
         list(player_ids),
+    )
+
+    logger.info(
+        "SPLIT_STAGE survival=%.2fs",
+        time.perf_counter() - stage_started,
     )
 
     for event in survival_events:
@@ -449,9 +476,16 @@ def calculate_split_metrics(
     # KAST
     # --------------------------------------------------------------
 
+    stage_started = time.perf_counter()
+
     kast_events = detect_kast_rounds(
         parser,
         list(player_ids),
+    )
+
+    logger.info(
+        "SPLIT_STAGE kast=%.2fs",
+        time.perf_counter() - stage_started,
     )
 
     for event in kast_events:
@@ -478,9 +512,16 @@ def calculate_split_metrics(
     # Damage
     # --------------------------------------------------------------
 
+    stage_started = time.perf_counter()
+
     damage_events = detect_player_round_damage(
         parser,
         list(player_ids),
+    )
+
+    logger.info(
+        "SPLIT_STAGE damage=%.2fs",
+        time.perf_counter() - stage_started,
     )
 
     for event in damage_events:
@@ -507,8 +548,15 @@ def calculate_split_metrics(
     # Entry
     # --------------------------------------------------------------
 
+    stage_started = time.perf_counter()
+
     entry_events = detect_entry_events(
         parser
+    )
+
+    logger.info(
+        "SPLIT_STAGE entry=%.2fs",
+        time.perf_counter() - stage_started,
     )
 
     for event in entry_events:
@@ -554,6 +602,8 @@ def calculate_split_metrics(
     # --------------------------------------------------------------
     # Death events
     # --------------------------------------------------------------
+
+    stage_started = time.perf_counter()
 
     try:
         events = parser.parse_events(
@@ -607,9 +657,21 @@ def calculate_split_metrics(
         for tick in df_deaths["tick"]
     ]
 
+    logger.info(
+        "SPLIT_STAGE death_events=%.2fs",
+        time.perf_counter() - stage_started,
+    )
+
+    stage_started = time.perf_counter()
+
     team_state = build_team_state(
         parser,
         death_ticks,
+    )
+
+    logger.info(
+        "SPLIT_STAGE team_state=%.2fs",
+        time.perf_counter() - stage_started,
     )
 
     dead_player_rounds = set()

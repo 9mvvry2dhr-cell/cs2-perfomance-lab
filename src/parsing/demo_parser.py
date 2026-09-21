@@ -1,4 +1,6 @@
+import logging
 import os
+import time
 from typing import List
 
 from demoparser2 import DemoParser as RawDemoParser
@@ -12,6 +14,9 @@ from src.metrics.kast import calculate_kast_metrics
 from src.metrics.multikill import calculate_multikill_metrics
 from src.metrics.survival import calculate_survival_metrics
 from src.metrics.splits import detect_player_round_sides
+
+
+logger = logging.getLogger(__name__)
 
 
 class DemoParser:
@@ -51,7 +56,14 @@ class DemoParser:
         # Header
         # --------------------------------------------------------------
 
+        stage_started = time.perf_counter()
+
         header = self.raw_parser.parse_header()
+
+        logger.info(
+            "PARSER_STAGE header=%.2fs",
+            time.perf_counter() - stage_started,
+        )
 
         map_name = (
             str(header.get("map_name", "unknown"))
@@ -63,7 +75,15 @@ class DemoParser:
         # Rounds
         # --------------------------------------------------------------
 
+        stage_started = time.perf_counter()
+
         rounds = self._parse_rounds()
+
+        logger.info(
+            "PARSER_STAGE rounds=%.2fs",
+            time.perf_counter() - stage_started,
+        )
+
         rounds_played = len(rounds)
 
         # --------------------------------------------------------------
@@ -73,8 +93,15 @@ class DemoParser:
         # scoreboard counters, а не считаем вручную по событиям.
         # --------------------------------------------------------------
 
+        stage_started = time.perf_counter()
+
         players = self._parse_players(
             rounds=rounds
+        )
+
+        logger.info(
+            "PARSER_STAGE players=%.2fs",
+            time.perf_counter() - stage_started,
         )
 
         # --------------------------------------------------------------
@@ -89,6 +116,8 @@ class DemoParser:
         # team_rounds_total на финальном игровом состоянии.
         # --------------------------------------------------------------
 
+        stage_started = time.perf_counter()
+
         (
             score_ct,
             score_t,
@@ -97,6 +126,11 @@ class DemoParser:
             score_error,
         ) = self._parse_final_score(
             rounds=rounds
+        )
+
+        logger.info(
+            "PARSER_STAGE score=%.2fs",
+            time.perf_counter() - stage_started,
         )
 
         # --------------------------------------------------------------
@@ -131,9 +165,16 @@ class DemoParser:
         # Advanced metrics
         # --------------------------------------------------------------
 
+        stage_started = time.perf_counter()
+
         self._enrich_player_metrics(
             players=players,
             rounds_played=rounds_played
+        )
+
+        logger.info(
+            "PARSER_STAGE advanced=%.2fs",
+            time.perf_counter() - stage_started,
         )
 
         # --------------------------------------------------------------
