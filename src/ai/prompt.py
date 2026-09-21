@@ -39,10 +39,16 @@ Grounding rules:
     supports that evaluation.
 11. When explaining a finding, include the most useful numeric evidence from that
     finding when available. Explain what the evidence shows, not an invented cause.
+12. score_ct and score_t are CT/T SIDE round totals. Because players swap sides during
+    the match, these values do NOT tell you whether the player's team won or lost.
+    Never say the player's team won, lost, уступила, победила, or проиграла unless
+    match.player_result explicitly says "win" or "loss".
+13. If match.player_result is "unknown", either omit the result entirely or describe
+    the score only neutrally as CT/T side round totals. Do not infer team outcome.
 
 Return one JSON object only with exactly these keys:
 {
-  "summary": "3-5 sentence match overview with score and key verified metrics",
+  "summary": "3-5 sentence match overview with key verified metrics; mention score only neutrally unless player_result is known",
   "strengths": [
     {
       "title": "short title",
