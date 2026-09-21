@@ -158,8 +158,16 @@ def main() -> int:
                         "tick": tick,
                         "attacker": attacker_norm,
                         "victim": victim_norm,
+                        "attacker_raw": row.get("attacker_steamid"),
+                        "victim_raw": row.get("user_steamid"),
                         "attacker_team": normalized_teams.get((tick, attacker_norm), 0),
                         "victim_team": normalized_teams.get((tick, victim_norm), 0),
+                        "production_attacker_team": production_teams.get(
+                            (tick, str(row.get("attacker_steamid", "")))
+                        ),
+                        "production_victim_team": production_teams.get(
+                            (tick, str(row.get("user_steamid", "")))
+                        ),
                     }
                 )
             continue
@@ -259,9 +267,15 @@ def main() -> int:
             print(
                 f"tick={item['tick']} "
                 f"attacker={names.get(item['attacker'], item['attacker'])!r} "
-                f"({item['attacker']}) team={item['attacker_team']}  "
+                f"({item['attacker']}) team={item['attacker_team']} "
+                f"prod_team={item['production_attacker_team']} "
+                f"raw={item['attacker_raw']!r} "
+                f"type={type(item['attacker_raw']).__name__}  "
                 f"victim={names.get(item['victim'], item['victim'])!r} "
-                f"({item['victim']}) team={item['victim_team']}"
+                f"({item['victim']}) team={item['victim_team']} "
+                f"prod_team={item['production_victim_team']} "
+                f"raw={item['victim_raw']!r} "
+                f"type={type(item['victim_raw']).__name__}"
             )
 
     print()
