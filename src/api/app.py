@@ -57,6 +57,7 @@ from src.domain.identity import CurrentUser
 from src.ingestion.service import (
     AnalysisQueueFullError,
     DemoIngestionService,
+    DuplicateDemoError,
 )
 from src.ingestion.storage import (
     DemoStorageFullError,
@@ -316,6 +317,12 @@ def create_analysis_job(
             original_filename=filename,
             source=file.file,
         )
+
+    except DuplicateDemoError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=str(exc),
+        ) from exc
 
     except AnalysisQueueFullError as exc:
         raise HTTPException(

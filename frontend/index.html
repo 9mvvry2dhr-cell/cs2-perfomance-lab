@@ -5686,7 +5686,15 @@ table {
 
 </style>
 
-</head>
+
+<style id="cs2-upload-error-visible-v1">
+
+#uploadStatus.visible[data-state="error"] {
+    display: block !important;
+}
+
+</style>
+\n</head>
 
 
 <body>
@@ -6991,11 +6999,21 @@ async function readApiError(
         const body =
             await response.json();
 
-        return (
+        const detail =
             body.detail
             || body.error
-            || JSON.stringify(body)
-        );
+            || JSON.stringify(body);
+
+        if (
+            detail
+            === "This demo has already been analyzed"
+        ) {
+            return (
+                "??? ????? ??? ????????????????."
+            );
+        }
+
+        return detail;
     } catch {
         return (
             response.statusText

@@ -305,6 +305,56 @@ class AnalysisJobRepositoryTest(
                 "   "
             )
 
+    def test_has_completed_file_for_owner_matches_owner_and_sha(
+        self,
+    ):
+        created = self._create_job()
+
+        self.assertFalse(
+            self.repository
+            .has_completed_file_for_owner(
+                TEST_STEAM_ID,
+                "a" * 64,
+            )
+        )
+
+        self._create_match(
+            "a" * 64
+        )
+
+        self.repository.mark_processing(
+            created.id
+        )
+
+        self.repository.mark_completed(
+            created.id,
+            match_id="a" * 64,
+        )
+
+        self.assertTrue(
+            self.repository
+            .has_completed_file_for_owner(
+                TEST_STEAM_ID,
+                "a" * 64,
+            )
+        )
+
+        self.assertFalse(
+            self.repository
+            .has_completed_file_for_owner(
+                OTHER_STEAM_ID,
+                "a" * 64,
+            )
+        )
+
+        self.assertFalse(
+            self.repository
+            .has_completed_file_for_owner(
+                TEST_STEAM_ID,
+                "b" * 64,
+            )
+        )
+
     def test_claim_next_job_returns_none_when_queue_empty(
         self,
     ):

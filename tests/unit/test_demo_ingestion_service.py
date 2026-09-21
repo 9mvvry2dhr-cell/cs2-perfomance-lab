@@ -7,6 +7,7 @@ from src.ingestion.service import (
     AnalysisAlreadyActiveError,
     AnalysisQueueFullError,
     DemoIngestionService,
+    DuplicateDemoError,
 )
 from src.ingestion.storage import (
     LocalDemoStorage,
@@ -21,12 +22,16 @@ class StubJobRepository:
         error=None,
         active_jobs=0,
         owner_active_jobs=0,
+        completed_duplicate=False,
     ):
         self.result = result
         self.error = error
         self.active_jobs = active_jobs
         self.owner_active_jobs = (
             owner_active_jobs
+        )
+        self.completed_duplicate = (
+            completed_duplicate
         )
         self.calls = []
 
@@ -40,6 +45,13 @@ class StubJobRepository:
         owner_steam_id,
     ):
         return self.owner_active_jobs
+
+    def has_completed_file_for_owner(
+        self,
+        owner_steam_id,
+        file_sha256,
+    ):
+        return self.completed_duplicate
 
     def create_job(
         self,
@@ -163,6 +175,39 @@ class DemoIngestionServiceTest(
             service.ingest(
                 owner_steam_id="76561198055629469",
                 original_filename="second.dem",
+                source=BytesIO(
+                    b"demo-content"
+                ),
+            )
+
+        self.assertEqual(
+            repository.calls,
+            [],
+        )
+
+        self.assertEqual(
+            list(self.root.iterdir()),
+            [],
+        )
+
+    def test_ingest_rejects_completed_duplicate_and_deletes_file(
+        self,
+    ):
+        repository = StubJobRepository(
+            completed_duplicate=True,
+        )
+
+        service = DemoIngestionService(
+            storage=self.storage,
+            job_repository=repository,
+        )
+
+        with self.assertRaises(
+            DuplicateDemoError
+        ):
+            service.ingest(
+                owner_steam_id="76561198055629469",
+                original_filename="duplicate.dem",
                 source=BytesIO(
                     b"demo-content"
                 ),

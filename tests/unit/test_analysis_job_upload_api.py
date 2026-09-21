@@ -13,6 +13,7 @@ from src.domain.jobs import AnalysisJob
 from src.ingestion.service import (
     AnalysisAlreadyActiveError,
     AnalysisQueueFullError,
+    DuplicateDemoError,
 )
 from src.ingestion.storage import (
     DemoStorageFullError,
@@ -251,6 +252,46 @@ class AnalysisJobUploadApiTest(
                 "detail": (
                     "An analysis is already active "
                     "for this Steam account"
+                )
+            },
+        )
+
+    def test_upload_rejects_already_analyzed_demo(
+        self,
+    ):
+        service = StubIngestionService(
+            error=DuplicateDemoError(
+                "This demo has already been analyzed"
+            )
+        )
+
+        app.dependency_overrides[
+            get_demo_ingestion_service
+        ] = lambda: service
+
+        client = TestClient(app)
+
+        response = client.post(
+            "/analysis-jobs",
+            files={
+                "file": (
+                    "duplicate.dem",
+                    b"content",
+                    "application/octet-stream",
+                )
+            },
+        )
+
+        self.assertEqual(
+            response.status_code,
+            409,
+        )
+
+        self.assertEqual(
+            response.json(),
+            {
+                "detail": (
+                    "This demo has already been analyzed"
                 )
             },
         )

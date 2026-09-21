@@ -156,6 +156,49 @@ class AnalysisJobRepository:
             or 0
         )
 
+    def has_completed_file_for_owner(
+        self,
+        owner_steam_id: str,
+        file_sha256: str,
+    ) -> bool:
+        owner_steam_id = (
+            owner_steam_id.strip()
+        )
+
+        file_sha256 = (
+            file_sha256.strip()
+        )
+
+        if not owner_steam_id:
+            raise ValueError(
+                "owner_steam_id must not be empty"
+            )
+
+        if not file_sha256:
+            raise ValueError(
+                "file_sha256 must not be empty"
+            )
+
+        stmt = (
+            select(
+                AnalysisJobModel.id
+            )
+            .where(
+                AnalysisJobModel.owner_steam_id
+                == owner_steam_id,
+                AnalysisJobModel.file_sha256
+                == file_sha256,
+                AnalysisJobModel.status
+                == "completed",
+            )
+            .limit(1)
+        )
+
+        return (
+            self.session.scalar(stmt)
+            is not None
+        )
+
     def requeue_stale_processing_jobs(
         self,
         *,

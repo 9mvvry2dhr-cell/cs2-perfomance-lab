@@ -27,6 +27,12 @@ class AnalysisAlreadyActiveError(
     pass
 
 
+class DuplicateDemoError(
+    RuntimeError
+):
+    pass
+
+
 class DemoIngestionService:
     _admission_lock = Lock()
     def __init__(
@@ -89,6 +95,18 @@ class DemoIngestionService:
             )
 
             try:
+                if (
+                    self.job_repository
+                    .has_completed_file_for_owner(
+                        owner_steam_id,
+                        stored.file_sha256,
+                    )
+                ):
+                    raise DuplicateDemoError(
+                        "This demo has already "
+                        "been analyzed"
+                    )
+
                 return self.job_repository.create_job(
                     owner_steam_id=owner_steam_id,
                     original_filename=(
