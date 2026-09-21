@@ -267,10 +267,26 @@ class DemoParser:
         if not side_events:
             return results
 
-        final_round_num = max(
-            event.round_num
-            for event in side_events
+        final_round_num = len(
+            rounds
         )
+
+        latest_side_round = max(
+            (
+                event.round_num
+                for event in side_events
+            ),
+            default=0,
+        )
+
+        # The side detector uses canonical 1..N round numbering.
+        # If its latest verified roster does not reach the match's
+        # final confirmed round, we cannot safely infer the result.
+        if (
+            latest_side_round
+            != final_round_num
+        ):
+            return results
 
         final_side_by_player = {
             event.steam_id: event.side
