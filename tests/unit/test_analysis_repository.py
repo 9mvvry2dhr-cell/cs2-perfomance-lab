@@ -6,6 +6,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
 from src.database.models import (
+    AnalysisJobModel,
     Base,
     MatchModel,
 )
@@ -429,6 +430,74 @@ class AnalysisRepositoryTest(unittest.TestCase):
         self.session.commit()
 
         return first, second
+
+
+    def test_owner_scoped_history_hides_other_users_uploads(self):
+        base = make_analysis()
+
+        owned = replace(
+            base,
+            match_id="owned-history-match",
+            map_name="de_mirage",
+        )
+
+        foreign = replace(
+            base,
+            match_id="foreign-history-match",
+            map_name="de_ancient",
+        )
+
+        self.repository.save_analysis(
+            owned
+        )
+
+        self.repository.save_analysis(
+            foreign
+        )
+
+        self.session.add_all(
+            [
+                AnalysisJobModel(
+                    status="completed",
+                    owner_steam_id="76561198055629469",
+                    original_filename="owned.dem",
+                    storage_key="owned.dem",
+                    file_sha256="a" * 64,
+                    match_id=owned.match_id,
+                ),
+                AnalysisJobModel(
+                    status="completed",
+                    owner_steam_id="76561198000000002",
+                    original_filename="foreign.dem",
+                    storage_key="foreign.dem",
+                    file_sha256="b" * 64,
+                    match_id=foreign.match_id,
+                ),
+            ]
+        )
+
+        self.session.commit()
+
+        history = (
+            self.repository
+            .get_player_match_history(
+                "76561198055629469",
+                owner_steam_id=(
+                    "76561198055629469"
+                ),
+                limit=20,
+            )
+        )
+
+        self.assertEqual(
+            [
+                item.match_id
+                for item in history
+            ],
+            [
+                owned.match_id,
+            ],
+        )
 
 
     def test_player_match_history_is_newest_first(self):
