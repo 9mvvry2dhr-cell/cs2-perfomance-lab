@@ -5,6 +5,11 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
 <title>CS2 Performance Lab</title>
+<link
+    rel="icon"
+    type="image/png"
+    href="/assets/cs2pl-mark.png"
+>
 
 <style>
 
@@ -5130,6 +5135,557 @@ does not slide underneath the replacement icon.
 }
 </style>
 
+
+<!-- CS2 TYPOGRAPHY EXPERIMENT V1 -->
+<link
+    rel="preconnect"
+    href="https://fonts.googleapis.com"
+>
+<link
+    rel="preconnect"
+    href="https://fonts.gstatic.com"
+    crossorigin
+>
+<link
+    href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Sora:wght@500;600;700&display=swap"
+    rel="stylesheet"
+>
+<!-- END TYPOGRAPHY FONT LOAD -->
+
+<style id="cs2-font-experiment-v1">
+
+/* =========================================================
+   TYPOGRAPHY EXPERIMENT
+   Manrope = interface / readable text
+   Sora = headings / key numbers
+   ========================================================= */
+
+body,
+button,
+input,
+select,
+textarea {
+    font-family:
+        "Manrope",
+        "Segoe UI",
+        system-ui,
+        sans-serif;
+}
+
+
+/* ---------- HEADINGS ---------- */
+
+.brand-title,
+.auth-landing-title,
+.upload-title,
+.section-title,
+.finding-title,
+.player-history-title,
+.map-info strong,
+.map-showcase-name {
+    font-family:
+        "Sora",
+        "Manrope",
+        sans-serif;
+
+    font-weight:
+        650;
+}
+
+
+/* Brand should still feel deliberate, not loud */
+
+.brand-title {
+    font-weight:
+        700;
+
+    letter-spacing:
+        -0.025em;
+}
+
+
+/* ---------- BIG NUMBERS ---------- */
+
+.metric-value,
+.player-history-metric-value,
+.player-game-profile-value,
+.current-user-mini-stat-value,
+.small-value,
+.auth-preview-metrics strong {
+    font-family:
+        "Sora",
+        "Manrope",
+        sans-serif;
+
+    font-weight:
+        650;
+
+    font-variant-numeric:
+        tabular-nums;
+
+    letter-spacing:
+        -0.025em;
+}
+
+
+/* Main K/D / ADR / KAST can carry a little more weight */
+
+.metric-value {
+    font-weight:
+        700;
+}
+
+
+/* ---------- UI LABELS ---------- */
+
+.metric-label,
+.player-history-metric-label,
+.player-game-profile-label,
+.player-history-panel-title,
+.player-history-matches-title,
+.side-label,
+.eyebrow,
+.next-title,
+.auth-preview-head,
+.auth-capability > span {
+    font-family:
+        "Manrope",
+        sans-serif;
+
+    font-weight:
+        650;
+
+    letter-spacing:
+        0.07em;
+}
+
+
+/* ---------- NORMAL CONTENT ---------- */
+
+.nav-button,
+.current-user-name,
+.player-history-map,
+.player-history-match-line,
+.player-history-signal-name,
+.player-game-profile-sub,
+.player-game-profile-note,
+.finding-sub,
+.next-text,
+.demo-drop-title,
+.demo-drop-sub {
+    font-family:
+        "Manrope",
+        sans-serif;
+}
+
+
+/* Calm the UI down a little */
+
+.nav-button {
+    font-weight:
+        600;
+}
+
+.current-user-name {
+    font-weight:
+        700 !important;
+}
+
+.upload-title {
+    font-weight:
+        650;
+}
+
+.player-history-title {
+    font-weight:
+        650;
+}
+
+.player-history-map {
+    font-weight:
+        600;
+}
+
+.demo-drop-title {
+    font-weight:
+        600;
+}
+
+.demo-upload-button,
+.steam-logout-button,
+.steam-auth-link {
+    font-family:
+        "Manrope",
+        sans-serif;
+
+    font-weight:
+        700;
+}
+
+
+/* ---------- NUMERIC CONSISTENCY ---------- */
+
+.player-history-match-line,
+.player-history-meta,
+.player-history-signal-count,
+.player-history-date,
+table {
+    font-variant-numeric:
+        tabular-nums;
+}
+
+</style>
+<!-- END CS2 TYPOGRAPHY EXPERIMENT V1 -->
+
+
+<style id="cs2-font-polish-v2">
+
+/* =========================================================
+   TYPOGRAPHY POLISH V2
+   calmer headings / clearer secondary text
+   ========================================================= */
+
+
+/* ---------- SECTION LABELS ---------- */
+
+.player-history-eyebrow,
+.player-history-panel-title,
+.player-history-matches-title,
+.player-game-profile-title,
+.side-label,
+.metric-label,
+.player-history-metric-label,
+.player-game-profile-label,
+.next-title,
+.eyebrow {
+    font-weight: 600 !important;
+
+    letter-spacing:
+        0.075em !important;
+}
+
+
+/* Slightly more air in major profile section labels */
+
+.player-history-panel-title,
+.player-history-matches-title,
+.player-game-profile-title {
+    letter-spacing:
+        0.055em !important;
+}
+
+
+/* ---------- MAIN HEADINGS ---------- */
+
+.upload-title,
+.player-history-title,
+.section-title,
+.finding-title {
+    font-weight:
+        600 !important;
+
+    letter-spacing:
+        -0.022em !important;
+}
+
+
+/* ---------- MATCH HISTORY ---------- */
+
+.player-history-map {
+    font-weight:
+        600 !important;
+
+    letter-spacing:
+        -0.015em !important;
+}
+
+.player-history-match-line {
+    color:
+        #9cb3c5 !important;
+
+    font-weight:
+        500 !important;
+}
+
+.player-history-date {
+    color:
+        #6387a3 !important;
+
+    font-weight:
+        500 !important;
+}
+
+
+/* ---------- SECONDARY / SUPPORTING TEXT ---------- */
+
+.player-history-meta,
+.player-game-profile-sub,
+.player-game-profile-note,
+.finding-sub,
+.next-text,
+.metric-note,
+.current-user-steam,
+.demo-drop-sub {
+    color:
+        #7892a7 !important;
+
+    font-weight:
+        500 !important;
+}
+
+
+/* The game profile footer was a little too dim */
+
+.player-game-profile-note {
+    color:
+        #6f8ca3 !important;
+}
+
+
+/* ---------- NUMBERS ---------- */
+
+.metric-value,
+.player-history-metric-value,
+.player-game-profile-value,
+.current-user-mini-stat-value,
+.small-value {
+    font-weight:
+        650 !important;
+
+    letter-spacing:
+        -0.03em !important;
+}
+
+
+/* Main analysis KPIs can stay strongest */
+
+.metrics .metric-value {
+    font-weight:
+        700 !important;
+}
+
+
+/* ---------- SIDEBAR ---------- */
+
+.nav-button {
+    font-weight:
+        550 !important;
+
+    letter-spacing:
+        -0.01em !important;
+}
+
+.nav-button.active {
+    font-weight:
+        650 !important;
+}
+
+.current-user-name {
+    font-weight:
+        650 !important;
+}
+
+.current-user-mini-stat-label {
+    font-weight:
+        600 !important;
+
+    letter-spacing:
+        0.045em !important;
+}
+
+
+/* ---------- BUTTONS ---------- */
+
+.demo-upload-button,
+.steam-logout-button,
+.steam-auth-link {
+    font-weight:
+        650 !important;
+
+    letter-spacing:
+        0.01em !important;
+}
+
+
+/* ---------- BRAND ---------- */
+
+.brand-title {
+    font-weight:
+        700 !important;
+
+    letter-spacing:
+        -0.03em !important;
+}
+
+/* remove a little visual noise without losing identity */
+.brand-title {
+    text-shadow:
+        0 0 7px
+        rgba(73,168,255,0.14),
+
+        0 0 16px
+        rgba(73,168,255,0.06) !important;
+}
+
+</style>
+
+
+<style id="cs2-brand-mark-v1">
+
+.brand-logo {
+    width: 44px !important;
+    height: 44px !important;
+    flex: 0 0 44px !important;
+    padding: 2px !important;
+
+    border: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+}
+
+.brand-logo img {
+    width: 100%;
+    height: 100%;
+    display: block;
+    object-fit: contain;
+}
+
+</style>
+
+<style id="cs2-font-readability-v3">
+
+.player-history-match-line {
+    color: #a6bdce !important;
+    font-size: 12px !important;
+}
+
+.player-history-date {
+    color: #7198b5 !important;
+    font-size: 11px !important;
+}
+
+.player-game-profile-sub,
+.player-game-profile-note,
+.metric-note,
+.current-user-steam,
+.finding-sub,
+.next-text {
+    color: #829caf !important;
+}
+
+.player-game-profile-sub,
+.player-game-profile-note {
+    font-size: 10px !important;
+}
+
+</style>
+
+
+<style id="cs2-slogan-polish-v1">
+
+.slogan {
+    margin: 14px 8px 20px !important;
+    padding: 4px 0 4px 11px !important;
+
+    border: 0 !important;
+    border-left:
+        2px solid
+        rgba(73,168,255,0.55) !important;
+
+    border-radius: 0 !important;
+
+    background: transparent !important;
+    box-shadow: none !important;
+}
+
+.slogan strong {
+    margin: 0 !important;
+
+    color: #8fa7ba !important;
+
+    font-family:
+        "Manrope",
+        sans-serif !important;
+
+    font-size: 10.5px !important;
+    font-weight: 550 !important;
+
+    line-height: 1.45 !important;
+
+    white-space: normal !important;
+
+    text-shadow: none !important;
+}
+
+</style>
+
+
+<style id="cs2-slogan-polish-v2">
+
+.slogan {
+    margin: 14px 8px 20px !important;
+    padding: 8px 10px 8px 12px !important;
+
+    border: 0 !important;
+    border-left:
+        2px solid
+        rgba(73,168,255,0.78) !important;
+
+    border-radius:
+        0 8px 8px 0 !important;
+
+    background:
+        linear-gradient(
+            90deg,
+            rgba(73,168,255,0.07),
+            rgba(73,168,255,0.015)
+        ) !important;
+
+    box-shadow:
+        inset 1px 0 0
+        rgba(73,168,255,0.16) !important;
+}
+
+.slogan strong {
+    color:
+        #a9bfd0 !important;
+
+    font-size:
+        10.5px !important;
+
+    font-weight:
+        600 !important;
+
+    letter-spacing:
+        -0.005em !important;
+
+    text-shadow:
+        0 0 10px
+        rgba(73,168,255,0.08) !important;
+}
+
+</style>
+
+
+<style id="cs2-slogan-polish-v3">
+
+.slogan {
+    border-left:
+        2px solid
+        rgba(73,168,255,0.66) !important;
+}
+
+.slogan strong {
+    color:
+        #b4c6d4 !important;
+
+    text-shadow:
+        0 0 8px
+        rgba(73,168,255,0.055) !important;
+}
+
+</style>
+
 </head>
 
 
@@ -5145,7 +5701,10 @@ does not slide underneath the replacement icon.
 <div class="brand">
 
 <div class="brand-logo">
-CS
+<img
+    src="/assets/cs2pl-mark.png"
+    alt="CS2 Performance Lab"
+>
 </div>
 
 <div>
