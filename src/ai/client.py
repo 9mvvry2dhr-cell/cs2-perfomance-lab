@@ -20,6 +20,10 @@ class AIResponseValidationError(RuntimeError):
     pass
 
 
+class AIProviderError(RuntimeError):
+    pass
+
+
 def _finding_kinds(
     payload: Mapping[str, Any],
 ) -> dict[str, str]:
@@ -155,22 +159,27 @@ class OpenAIMatchExplainer:
             payload
         )
 
-        response = (
-            self.client.responses.parse(
-                model=self.model,
-                input=[
-                    {
-                        "role": "system",
-                        "content": prompt.instructions,
-                    },
-                    {
-                        "role": "user",
-                        "content": prompt.input_text,
-                    },
-                ],
-                text_format=MatchAIExplanation,
+        try:
+            response = (
+                self.client.responses.parse(
+                    model=self.model,
+                    input=[
+                        {
+                            "role": "system",
+                            "content": prompt.instructions,
+                        },
+                        {
+                            "role": "user",
+                            "content": prompt.input_text,
+                        },
+                    ],
+                    text_format=MatchAIExplanation,
+                )
             )
-        )
+        except Exception as exc:
+            raise AIProviderError(
+                "OpenAI request failed"
+            ) from exc
 
         explanation = (
             response.output_parsed
