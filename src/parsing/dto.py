@@ -65,3 +65,7 @@ class ParsedMatch:
 
     is_valid: bool = True
     validation_error: Optional[str] = None
+
+    player_results: Dict[str, str] = field(
+        default_factory=dict
+    )
