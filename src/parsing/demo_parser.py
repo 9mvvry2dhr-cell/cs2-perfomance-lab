@@ -3,7 +3,7 @@ import os
 import time
 from typing import List
 
-from demoparser2 import DemoParser as RawDemoParser
+from src.parsing.cached_raw_parser import CachedRawDemoParser
 
 from src.parsing.dto import ParsedMatch, ParsedPlayer, ParsedRound
 from src.metrics.utility import calculate_utility_metrics
@@ -43,7 +43,7 @@ class DemoParser:
             )
 
         self.file_path = file_path
-        self.raw_parser = RawDemoParser(file_path)
+        self.raw_parser = CachedRawDemoParser(file_path)
 
         self.side_events = None
         self.entry_events = None
