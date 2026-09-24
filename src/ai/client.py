@@ -174,6 +174,7 @@ class OpenAIMatchExplainer:
         try:
             return self.client.responses.parse(
                 model=self.model,
+                store=False,
                 input=[
                     {
                         "role": "system",

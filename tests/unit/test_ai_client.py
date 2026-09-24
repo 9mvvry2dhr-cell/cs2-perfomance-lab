@@ -117,6 +117,11 @@ class OpenAIMatchExplainerTest(unittest.TestCase):
         )
 
         self.assertIs(
+            call["store"],
+            False,
+        )
+
+        self.assertIs(
             call["text_format"],
             MatchAIExplanation,
         )
