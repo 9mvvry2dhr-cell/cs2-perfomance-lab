@@ -6393,6 +6393,77 @@ table {
 
 </style>
 
+
+<style id="cs2-legal-footer-v1">
+
+.legal-footer {
+    max-width: 1450px;
+    margin:
+        28px
+        auto
+        0;
+    padding:
+        18px
+        4px
+        0;
+
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+
+    border-top:
+        1px solid
+        rgba(125, 171, 210, 0.10);
+
+    color: #587287;
+    font-size: 10px;
+    line-height: 1.5;
+}
+
+.legal-footer-copy {
+    white-space: nowrap;
+}
+
+.legal-footer-links {
+    display: flex;
+    align-items: center;
+    gap: 8px 14px;
+    flex-wrap: wrap;
+}
+
+.legal-footer a {
+    color: #6f8ca3;
+    text-decoration: none;
+
+    transition:
+        color 160ms ease;
+}
+
+.legal-footer a:hover {
+    color: #dbe9f4;
+}
+
+@media (max-width: 760px) {
+    .legal-footer {
+        margin-top: 20px;
+        padding-top: 16px;
+
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .legal-footer-links {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 7px;
+    }
+}
+
+</style>
+
 </head>
 
 
@@ -7650,6 +7721,32 @@ CT / T сравнение
 </div><!-- analysisView -->
 
 </div>
+
+
+<footer
+    class="legal-footer"
+    aria-label="Юридическая информация"
+>
+
+    <div class="legal-footer-copy">
+        © 2026 CS2 Performance Lab
+    </div>
+
+    <nav class="legal-footer-links">
+        <a href="/privacy/">
+            Политика ПД
+        </a>
+
+        <a href="/terms/">
+            Пользовательское соглашение
+        </a>
+
+        <a href="/data-deletion/">
+            Удаление данных
+        </a>
+    </nav>
+
+</footer>
 
 </main>
 
