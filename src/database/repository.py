@@ -32,6 +32,18 @@ from src.domain.insights import (
 ANALYSIS_VERSION = "v1"
 
 
+def _anonymous_player_steam_id(
+    position: int,
+) -> str:
+    return f"anon:{position}"
+
+
+def _anonymous_player_name(
+    position: int,
+) -> str:
+    return f"Player {position + 1}"
+
+
 class AnalysisRepository:
     def __init__(self, session: Session):
         self.session = session
@@ -121,16 +133,29 @@ class AnalysisRepository:
             ):
                 stats = player.stats
 
+                # Identity from the demo is needed only while the
+                # analysis is in memory. Persist positional anonymous
+                # labels instead of Steam IDs / nicknames.
+                player_result = (
+                    analysis.player_results.get(
+                        player.steam_id,
+                        "unknown",
+                    )
+                )
+
                 player_model = MatchPlayerModel(
                     position=player_position,
-                    steam_id=player.steam_id,
-                    name=player.name,
-                    result=(
-                        analysis.player_results.get(
-                            player.steam_id,
-                            "unknown",
+                    steam_id=(
+                        _anonymous_player_steam_id(
+                            player_position
                         )
                     ),
+                    name=(
+                        _anonymous_player_name(
+                            player_position
+                        )
+                    ),
+                    result=player_result,
                     rounds_played=stats.rounds_played,
                     kills=stats.kills,
                     deaths=stats.deaths,
@@ -556,88 +581,58 @@ class AnalysisRepository:
                 "limit must be between 1 and 100"
             )
 
-        if owner_steam_id is not None:
-            owner_steam_id = (
-                owner_steam_id.strip()
+        effective_owner_steam_id = (
+            owner_steam_id
+            if owner_steam_id is not None
+            else steam_id
+        ).strip()
+
+        if not effective_owner_steam_id:
+            raise ValueError(
+                "owner_steam_id must not be empty"
             )
 
-            if not owner_steam_id:
-                raise ValueError(
-                    "owner_steam_id must not be empty"
-                )
-
-            stmt = (
-                select(
-                    MatchPlayerModel,
-                    MatchModel,
-                )
-                .join(
-                    MatchModel,
-                    MatchPlayerModel.match_id
-                    == MatchModel.match_id,
-                )
-                .join(
-                    UserMatchModel,
+        stmt = (
+            select(
+                MatchPlayerModel,
+                MatchModel,
+            )
+            .join(
+                MatchModel,
+                MatchPlayerModel.match_id
+                == MatchModel.match_id,
+            )
+            .join(
+                UserMatchModel,
+                (
                     (
-                        (
-                            UserMatchModel.match_id
-                            == MatchPlayerModel.match_id
-                        )
-                        & (
-                            UserMatchModel.player_position
-                            == MatchPlayerModel.position
-                        )
-                    ),
-                )
-                .options(
-                    selectinload(
-                        MatchPlayerModel.findings
+                        UserMatchModel.match_id
+                        == MatchPlayerModel.match_id
                     )
-                )
-                .where(
-                    UserMatchModel.owner_steam_id
-                    == owner_steam_id,
-                    MatchModel.analysis_version
-                    == ANALYSIS_VERSION,
-                    MatchModel.is_valid.is_(True),
-                )
-                .order_by(
-                    MatchModel.created_at.desc(),
-                    MatchModel.match_id.desc(),
-                )
-                .limit(limit)
-            )
-        else:
-            # Temporary legacy fallback for internal callers.
-            # Authenticated API paths use user_matches.
-            stmt = (
-                select(
-                    MatchPlayerModel,
-                    MatchModel,
-                )
-                .join(
-                    MatchModel,
-                    MatchPlayerModel.match_id
-                    == MatchModel.match_id,
-                )
-                .options(
-                    selectinload(
-                        MatchPlayerModel.findings
+                    & (
+                        UserMatchModel.player_position
+                        == MatchPlayerModel.position
                     )
-                )
-                .where(
-                    MatchPlayerModel.steam_id
-                    == steam_id,
-                    MatchModel.analysis_version
-                    == ANALYSIS_VERSION,
-                    MatchModel.is_valid.is_(True),
-                )
-                .order_by(
-                    MatchModel.created_at.desc(),
-                    MatchModel.match_id.desc(),
-                )
-                .limit(limit)
+                ),
             )
+            .options(
+                selectinload(
+                    MatchPlayerModel.findings
+                )
+            )
+            .where(
+                UserMatchModel.owner_steam_id
+                == effective_owner_steam_id,
+                MatchModel.analysis_version
+                == ANALYSIS_VERSION,
+                MatchModel.is_valid.is_(True),
+            )
+            .order_by(
+                MatchModel.created_at.desc(),
+                MatchModel.match_id.desc(),
+            )
+            .limit(limit)
+        )
 
         rows = self.session.execute(
             stmt

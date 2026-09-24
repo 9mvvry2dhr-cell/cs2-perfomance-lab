@@ -2,13 +2,14 @@ import unittest
 from dataclasses import replace
 from datetime import datetime, timezone
 
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, select
 from sqlalchemy.orm import sessionmaker
 
 from src.database.models import (
     AnalysisJobModel,
     Base,
     MatchModel,
+    MatchPlayerModel,
     UserMatchModel,
     UserModel,
 )
@@ -133,6 +134,37 @@ def make_analysis(
     )
 
 
+def anonymized_persisted_analysis(
+    analysis: MatchAnalysis,
+) -> MatchAnalysis:
+    players = [
+        replace(
+            player,
+            steam_id=f"anon:{position}",
+            name=f"Player {position + 1}",
+        )
+        for position, player
+        in enumerate(analysis.players)
+    ]
+
+    player_results = {
+        f"anon:{position}": (
+            analysis.player_results.get(
+                player.steam_id,
+                "unknown",
+            )
+        )
+        for position, player
+        in enumerate(analysis.players)
+    }
+
+    return replace(
+        analysis,
+        players=players,
+        player_results=player_results,
+    )
+
+
 class AnalysisRepositoryTest(unittest.TestCase):
     def setUp(self):
         self.engine = create_engine(
@@ -174,7 +206,9 @@ class AnalysisRepositoryTest(unittest.TestCase):
 
         self.assertEqual(
             actual,
-            expected,
+            anonymized_persisted_analysis(
+                expected
+            ),
         )
 
     def test_player_result_round_trip_is_persisted(self):
@@ -196,8 +230,59 @@ class AnalysisRepositoryTest(unittest.TestCase):
         self.assertEqual(
             actual.player_results,
             {
+                "anon:0": "win",
+            },
+        )
+
+
+    def test_save_analysis_does_not_persist_demo_identity(self):
+        analysis = replace(
+            make_analysis(
+                player_name="real-demo-nickname"
+            ),
+            player_results={
                 "76561198055629469": "win",
             },
+        )
+
+        self.repository.save_analysis(
+            analysis
+        )
+
+        stored = self.session.scalar(
+            select(
+                MatchPlayerModel
+            ).where(
+                MatchPlayerModel.match_id
+                == analysis.match_id
+            )
+        )
+
+        self.assertIsNotNone(stored)
+
+        self.assertEqual(
+            stored.steam_id,
+            "anon:0",
+        )
+
+        self.assertEqual(
+            stored.name,
+            "Player 1",
+        )
+
+        self.assertEqual(
+            stored.result,
+            "win",
+        )
+
+        self.assertNotEqual(
+            stored.steam_id,
+            "76561198055629469",
+        )
+
+        self.assertNotEqual(
+            stored.name,
+            "real-demo-nickname",
         )
 
 
@@ -229,7 +314,9 @@ class AnalysisRepositoryTest(unittest.TestCase):
 
         self.assertEqual(
             actual,
-            second,
+            anonymized_persisted_analysis(
+                second
+            ),
         )
 
 
@@ -461,8 +548,19 @@ class AnalysisRepositoryTest(unittest.TestCase):
                 for player in actual.players
             ],
             [
-                "76561198055629469",
-                "76561198000000002",
+                "anon:0",
+                "anon:1",
+            ],
+        )
+
+        self.assertEqual(
+            [
+                player.name
+                for player in actual.players
+            ],
+            [
+                "Player 1",
+                "Player 2",
             ],
         )
 
@@ -480,12 +578,25 @@ class AnalysisRepositoryTest(unittest.TestCase):
 
         self.assertEqual(
             actual,
-            expected,
+            anonymized_persisted_analysis(
+                expected
+            ),
         )
 
 
     def _save_history_pair(self):
         base = make_analysis()
+
+        owner_steam_id = (
+            "76561198055629469"
+        )
+
+        self.session.add(
+            UserModel(
+                steam_id=owner_steam_id,
+            )
+        )
+        self.session.commit()
 
         first = replace(
             base,
@@ -521,6 +632,18 @@ class AnalysisRepositoryTest(unittest.TestCase):
 
         self.repository.save_analysis(
             second
+        )
+
+        self.repository.link_user_match(
+            owner_steam_id=owner_steam_id,
+            match_id=first.match_id,
+            player_position=0,
+        )
+
+        self.repository.link_user_match(
+            owner_steam_id=owner_steam_id,
+            match_id=second.match_id,
+            player_position=0,
         )
 
         first_model = self.session.get(
@@ -661,6 +784,17 @@ class AnalysisRepositoryTest(unittest.TestCase):
     def test_player_history_keeps_distinct_matches_with_identical_stats(self):
         base = make_analysis()
 
+        owner_steam_id = (
+            "76561198055629469"
+        )
+
+        self.session.add(
+            UserModel(
+                steam_id=owner_steam_id,
+            )
+        )
+        self.session.commit()
+
         first = replace(
             base,
             match_id="identical-stats-001",
@@ -677,6 +811,18 @@ class AnalysisRepositoryTest(unittest.TestCase):
 
         self.repository.save_analysis(
             second
+        )
+
+        self.repository.link_user_match(
+            owner_steam_id=owner_steam_id,
+            match_id=first.match_id,
+            player_position=0,
+        )
+
+        self.repository.link_user_match(
+            owner_steam_id=owner_steam_id,
+            match_id=second.match_id,
+            player_position=0,
         )
 
         first_model = self.session.get(
