@@ -112,12 +112,28 @@ class StubJobRepository:
 class StubAnalysisRepository:
     def __init__(self):
         self.saved = None
+        self.user_match_links = []
 
     def save_analysis(
         self,
         analysis,
     ):
         self.saved = analysis
+
+    def link_user_match(
+        self,
+        *,
+        owner_steam_id,
+        match_id,
+        player_position,
+    ):
+        self.user_match_links.append(
+            (
+                owner_steam_id,
+                match_id,
+                player_position,
+            )
+        )
 
 
 class AnalysisWorkerTest(
@@ -221,6 +237,17 @@ class AnalysisWorkerTest(
         self.assertEqual(
             analyses.saved,
             expected_saved,
+        )
+
+        self.assertEqual(
+            analyses.user_match_links,
+            [
+                (
+                    TEST_STEAM_ID,
+                    self.stored.file_sha256,
+                    0,
+                )
+            ],
         )
 
         self.assertFalse(

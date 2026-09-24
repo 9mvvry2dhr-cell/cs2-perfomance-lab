@@ -9,6 +9,8 @@ from src.database.models import (
     AnalysisJobModel,
     Base,
     MatchModel,
+    UserMatchModel,
+    UserModel,
 )
 from src.database.repository import AnalysisRepository
 from src.domain.analysis import (
@@ -228,6 +230,128 @@ class AnalysisRepositoryTest(unittest.TestCase):
         self.assertEqual(
             actual,
             second,
+        )
+
+
+    def test_get_user_match_position(self):
+        analysis = make_analysis()
+
+        owner_steam_id = (
+            "76561198055629469"
+        )
+
+        self.session.add(
+            UserModel(
+                steam_id=owner_steam_id,
+            )
+        )
+        self.session.commit()
+
+        self.repository.save_analysis(
+            analysis
+        )
+
+        self.repository.link_user_match(
+            owner_steam_id=owner_steam_id,
+            match_id=analysis.match_id,
+            player_position=0,
+        )
+
+        position = (
+            self.repository
+            .get_user_match_position(
+                owner_steam_id=owner_steam_id,
+                match_id=analysis.match_id,
+            )
+        )
+
+        self.assertEqual(
+            position,
+            0,
+        )
+
+        missing = (
+            self.repository
+            .get_user_match_position(
+                owner_steam_id=owner_steam_id,
+                match_id="missing-match",
+            )
+        )
+
+        self.assertIsNone(
+            missing
+        )
+
+
+    def test_reanalysis_preserves_user_match_link(self):
+        analysis = make_analysis()
+
+        owner_steam_id = (
+            "76561198055629469"
+        )
+
+        self.session.add(
+            UserModel(
+                steam_id=owner_steam_id,
+            )
+        )
+        self.session.commit()
+
+        self.repository.save_analysis(
+            analysis
+        )
+
+        self.repository.link_user_match(
+            owner_steam_id=owner_steam_id,
+            match_id=analysis.match_id,
+            player_position=0,
+        )
+
+        original_link = self.session.get(
+            UserMatchModel,
+            (
+                owner_steam_id,
+                analysis.match_id,
+            ),
+        )
+
+        self.assertIsNotNone(
+            original_link
+        )
+
+        original_created_at = (
+            original_link.created_at
+        )
+
+        updated = make_analysis(
+            player_name="kbn_san_updated",
+            score_ct=14,
+        )
+
+        self.repository.save_analysis(
+            updated
+        )
+
+        preserved_link = self.session.get(
+            UserMatchModel,
+            (
+                owner_steam_id,
+                analysis.match_id,
+            ),
+        )
+
+        self.assertIsNotNone(
+            preserved_link
+        )
+
+        self.assertEqual(
+            preserved_link.player_position,
+            0,
+        )
+
+        self.assertEqual(
+            preserved_link.created_at,
+            original_created_at,
         )
 
 
@@ -457,26 +581,27 @@ class AnalysisRepositoryTest(unittest.TestCase):
 
         self.session.add_all(
             [
-                AnalysisJobModel(
-                    status="completed",
-                    owner_steam_id="76561198055629469",
-                    original_filename="owned.dem",
-                    storage_key="owned.dem",
-                    file_sha256="a" * 64,
-                    match_id=owned.match_id,
+                UserModel(
+                    steam_id="76561198055629469",
                 ),
-                AnalysisJobModel(
-                    status="completed",
-                    owner_steam_id="76561198000000002",
-                    original_filename="foreign.dem",
-                    storage_key="foreign.dem",
-                    file_sha256="b" * 64,
-                    match_id=foreign.match_id,
+                UserModel(
+                    steam_id="76561198000000002",
                 ),
             ]
         )
-
         self.session.commit()
+
+        self.repository.link_user_match(
+            owner_steam_id="76561198055629469",
+            match_id=owned.match_id,
+            player_position=0,
+        )
+
+        self.repository.link_user_match(
+            owner_steam_id="76561198000000002",
+            match_id=foreign.match_id,
+            player_position=0,
+        )
 
         history = (
             self.repository

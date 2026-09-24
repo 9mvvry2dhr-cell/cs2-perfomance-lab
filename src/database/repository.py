@@ -9,6 +9,7 @@ from src.database.models import (
     MatchModel,
     MatchPlayerModel,
     PlayerSideStatsModel,
+    UserMatchModel,
 )
 from src.domain.analysis import (
     MatchAnalysis,
@@ -57,7 +58,39 @@ class AnalysisRepository:
                 else None
             )
 
+            existing_user_matches = []
+
             if existing is not None:
+                user_match_models = list(
+                    self.session.scalars(
+                        select(
+                            UserMatchModel
+                        ).where(
+                            UserMatchModel.match_id
+                            == analysis.match_id
+                        )
+                    ).all()
+                )
+
+                existing_user_matches = [
+                    (
+                        item.owner_steam_id,
+                        item.player_position,
+                        item.created_at,
+                    )
+                    for item in user_match_models
+                ]
+
+                # Delete ownership links explicitly before replacing
+                # the match. Do not rely on database-specific FK
+                # cascade behaviour (SQLite tests may not enable it).
+                for item in user_match_models:
+                    self.session.delete(
+                        item
+                    )
+
+                self.session.flush()
+
                 self.session.delete(existing)
                 self.session.flush()
 
@@ -185,11 +218,120 @@ class AnalysisRepository:
                 )
 
             self.session.add(match_model)
+            self.session.flush()
+
+            for (
+                owner_steam_id,
+                player_position,
+                created_at,
+            ) in existing_user_matches:
+                self.session.add(
+                    UserMatchModel(
+                        owner_steam_id=owner_steam_id,
+                        match_id=analysis.match_id,
+                        player_position=player_position,
+                        created_at=created_at,
+                    )
+                )
+
             self.session.commit()
 
         except Exception:
             self.session.rollback()
             raise
+
+    def link_user_match(
+        self,
+        *,
+        owner_steam_id: str,
+        match_id: str,
+        player_position: int,
+    ) -> None:
+        """
+        Persist the authenticated user's position in one match.
+
+        The link intentionally uses player_position instead of a
+        persisted player Steam ID so match_players can later be
+        anonymized without breaking ownership/history.
+        """
+        owner_steam_id = owner_steam_id.strip()
+        match_id = match_id.strip()
+
+        if not owner_steam_id:
+            raise ValueError(
+                "owner_steam_id must not be empty"
+            )
+
+        if not match_id:
+            raise ValueError(
+                "match_id must not be empty"
+            )
+
+        if player_position < 0:
+            raise ValueError(
+                "player_position must be >= 0"
+            )
+
+        stmt = select(
+            UserMatchModel
+        ).where(
+            UserMatchModel.owner_steam_id
+            == owner_steam_id,
+            UserMatchModel.match_id
+            == match_id,
+        )
+
+        existing = self.session.scalar(
+            stmt
+        )
+
+        if existing is None:
+            self.session.add(
+                UserMatchModel(
+                    owner_steam_id=owner_steam_id,
+                    match_id=match_id,
+                    player_position=player_position,
+                )
+            )
+        else:
+            existing.player_position = (
+                player_position
+            )
+
+        self.session.commit()
+
+    def get_user_match_position(
+        self,
+        *,
+        owner_steam_id: str,
+        match_id: str,
+    ) -> int | None:
+        owner_steam_id = owner_steam_id.strip()
+        match_id = match_id.strip()
+
+        if not owner_steam_id:
+            raise ValueError(
+                "owner_steam_id must not be empty"
+            )
+
+        if not match_id:
+            raise ValueError(
+                "match_id must not be empty"
+            )
+
+        stmt = select(
+            UserMatchModel.player_position
+        ).where(
+            UserMatchModel.owner_steam_id
+            == owner_steam_id,
+            UserMatchModel.match_id
+            == match_id,
+        )
+
+        return self.session.scalar(
+            stmt
+        )
+
 
     def get_analysis(
         self,
@@ -414,8 +556,6 @@ class AnalysisRepository:
                 "limit must be between 1 and 100"
             )
 
-        owner_filter = None
-
         if owner_steam_id is not None:
             owner_steam_id = (
                 owner_steam_id.strip()
@@ -426,53 +566,78 @@ class AnalysisRepository:
                     "owner_steam_id must not be empty"
                 )
 
-            owner_filter = exists(
+            stmt = (
                 select(
-                    AnalysisJobModel.id
-                ).where(
-                    AnalysisJobModel.match_id
+                    MatchPlayerModel,
+                    MatchModel,
+                )
+                .join(
+                    MatchModel,
+                    MatchPlayerModel.match_id
                     == MatchModel.match_id,
-                    AnalysisJobModel.owner_steam_id
+                )
+                .join(
+                    UserMatchModel,
+                    (
+                        (
+                            UserMatchModel.match_id
+                            == MatchPlayerModel.match_id
+                        )
+                        & (
+                            UserMatchModel.player_position
+                            == MatchPlayerModel.position
+                        )
+                    ),
+                )
+                .options(
+                    selectinload(
+                        MatchPlayerModel.findings
+                    )
+                )
+                .where(
+                    UserMatchModel.owner_steam_id
                     == owner_steam_id,
-                    AnalysisJobModel.status
-                    == "completed",
+                    MatchModel.analysis_version
+                    == ANALYSIS_VERSION,
+                    MatchModel.is_valid.is_(True),
                 )
-            )
-
-        stmt = (
-            select(
-                MatchPlayerModel,
-                MatchModel,
-            )
-            .join(
-                MatchModel,
-                MatchPlayerModel.match_id
-                == MatchModel.match_id,
-            )
-            .options(
-                selectinload(
-                    MatchPlayerModel.findings
+                .order_by(
+                    MatchModel.created_at.desc(),
+                    MatchModel.match_id.desc(),
                 )
+                .limit(limit)
             )
-            .where(
-                MatchPlayerModel.steam_id
-                == steam_id,
-                MatchModel.analysis_version
-                == ANALYSIS_VERSION,
-                MatchModel.is_valid.is_(True),
-                *(
-                    [owner_filter]
-                    if owner_filter
-                    is not None
-                    else []
-                ),
+        else:
+            # Temporary legacy fallback for internal callers.
+            # Authenticated API paths use user_matches.
+            stmt = (
+                select(
+                    MatchPlayerModel,
+                    MatchModel,
+                )
+                .join(
+                    MatchModel,
+                    MatchPlayerModel.match_id
+                    == MatchModel.match_id,
+                )
+                .options(
+                    selectinload(
+                        MatchPlayerModel.findings
+                    )
+                )
+                .where(
+                    MatchPlayerModel.steam_id
+                    == steam_id,
+                    MatchModel.analysis_version
+                    == ANALYSIS_VERSION,
+                    MatchModel.is_valid.is_(True),
+                )
+                .order_by(
+                    MatchModel.created_at.desc(),
+                    MatchModel.match_id.desc(),
+                )
+                .limit(limit)
             )
-            .order_by(
-                MatchModel.created_at.desc(),
-                MatchModel.match_id.desc(),
-            )
-            .limit(limit)
-        )
 
         rows = self.session.execute(
             stmt

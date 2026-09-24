@@ -23,8 +23,31 @@ from tests.unit.test_analysis_repository import make_analysis
 
 
 class StubRepository:
-    def __init__(self, analysis=None):
+    def __init__(
+        self,
+        analysis=None,
+        user_match_position=0,
+    ):
         self.analysis = analysis
+        self.user_match_position = (
+            user_match_position
+        )
+        self.position_requests = []
+
+    def get_user_match_position(
+        self,
+        *,
+        owner_steam_id,
+        match_id,
+    ):
+        self.position_requests.append(
+            (
+                owner_steam_id,
+                match_id,
+            )
+        )
+
+        return self.user_match_position
 
     def get_analysis(self, match_id):
         if (
@@ -108,11 +131,13 @@ class MatchAIEndpointTest(unittest.TestCase):
             result=make_explanation()
         )
 
-        app.dependency_overrides[
-            get_analysis_repository
-        ] = lambda: StubRepository(
+        repository = StubRepository(
             analysis
         )
+
+        app.dependency_overrides[
+            get_analysis_repository
+        ] = lambda: repository
 
         app.dependency_overrides[
             get_match_ai_explainer
@@ -125,6 +150,16 @@ class MatchAIEndpointTest(unittest.TestCase):
         self.assertEqual(
             response.status_code,
             200,
+        )
+
+        self.assertEqual(
+            repository.position_requests,
+            [
+                (
+                    "76561198055629469",
+                    analysis.match_id,
+                )
+            ],
         )
 
         self.assertEqual(
@@ -156,20 +191,17 @@ class MatchAIEndpointTest(unittest.TestCase):
             encoded,
         )
 
-    def test_hides_match_when_current_user_did_not_play(self):
+    def test_hides_match_without_user_match_link(self):
         analysis = make_analysis()
 
-        app.dependency_overrides[
-            get_current_user
-        ] = lambda: CurrentUser(
-            steam_id="99999999999999999"
+        repository = StubRepository(
+            analysis,
+            user_match_position=None,
         )
 
         app.dependency_overrides[
             get_analysis_repository
-        ] = lambda: StubRepository(
-            analysis
-        )
+        ] = lambda: repository
 
         app.dependency_overrides[
             get_match_ai_explainer
@@ -185,6 +217,7 @@ class MatchAIEndpointTest(unittest.TestCase):
             response.status_code,
             404,
         )
+
 
     def test_provider_failure_returns_502(self):
         analysis = make_analysis()

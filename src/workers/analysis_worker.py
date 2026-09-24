@@ -395,18 +395,25 @@ class AnalysisWorker:
                 demo_path
             )
 
-            if (
-                job.owner_steam_id is not None
-                and not any(
-                    player.steam_id
-                    == job.owner_steam_id
-                    for player in analysis.players
+            owner_player_position = None
+
+            if job.owner_steam_id is not None:
+                owner_player_position = next(
+                    (
+                        position
+                        for position, player
+                        in enumerate(analysis.players)
+                        if player.steam_id
+                        == job.owner_steam_id
+                    ),
+                    None,
                 )
-            ):
-                raise DemoOwnerNotFoundError(
-                    "Authenticated Steam account "
-                    "was not found in demo"
-                )
+
+                if owner_player_position is None:
+                    raise DemoOwnerNotFoundError(
+                        "Authenticated Steam account "
+                        "was not found in demo"
+                    )
 
             # Uploaded demos need a stable identity independent
             # of the user-provided filename. The content hash is
@@ -420,6 +427,16 @@ class AnalysisWorker:
             self.analysis_repository.save_analysis(
                 analysis
             )
+
+            if (
+                job.owner_steam_id is not None
+                and owner_player_position is not None
+            ):
+                self.analysis_repository.link_user_match(
+                    owner_steam_id=job.owner_steam_id,
+                    match_id=analysis.match_id,
+                    player_position=owner_player_position,
+                )
 
             completed_job = (
                 self.job_repository

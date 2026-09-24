@@ -414,32 +414,37 @@ def get_match_analysis(
         Depends(get_current_user),
     ],
 ) -> MatchAnalysisResponse:
-    analysis = repository.get_analysis(
-        match_id
-    )
-
-    if analysis is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Match not found",
+    player_position = (
+        repository.get_user_match_position(
+            owner_steam_id=current_user.steam_id,
+            match_id=match_id,
         )
-
-    player = next(
-        (
-            item
-            for item in analysis.players
-            if item.steam_id
-            == current_user.steam_id
-        ),
-        None,
     )
 
-    if player is None:
+    if player_position is None:
         # Do not reveal whether another user's match exists.
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Match not found",
         )
+
+    analysis = repository.get_analysis(
+        match_id
+    )
+
+    if (
+        analysis is None
+        or player_position < 0
+        or player_position >= len(analysis.players)
+    ):
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Match not found",
+        )
+
+    player = analysis.players[
+        player_position
+    ]
 
     owned_analysis = replace(
         analysis,
@@ -471,35 +476,40 @@ def explain_match_with_ai(
         Depends(get_current_user),
     ],
 ) -> MatchAIResponse:
+    player_position = (
+        repository.get_user_match_position(
+            owner_steam_id=current_user.steam_id,
+            match_id=match_id,
+        )
+    )
+
+    if player_position is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Match not found",
+        )
+
     analysis = repository.get_analysis(
         match_id
     )
 
-    if analysis is None:
+    if (
+        analysis is None
+        or player_position < 0
+        or player_position >= len(analysis.players)
+    ):
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Match not found",
         )
 
-    player = next(
-        (
-            item
-            for item in analysis.players
-            if item.steam_id
-            == current_user.steam_id
-        ),
-        None,
-    )
-
-    if player is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Match not found",
-        )
+    player = analysis.players[
+        player_position
+    ]
 
     payload = build_match_ai_payload(
         analysis,
-        steam_id=current_user.steam_id,
+        steam_id=player.steam_id,
     )
 
     try:

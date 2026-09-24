@@ -31,9 +31,13 @@ class StubAnalysisRepository:
         error=None,
         history=None,
         summary=None,
+        user_match_position=0,
     ):
         self.analysis = analysis
         self.error = error
+        self.user_match_position = (
+            user_match_position
+        )
         self.history = (
             history
             if history is not None
@@ -55,6 +59,17 @@ class StubAnalysisRepository:
             return self.analysis
 
         return None
+
+    def get_user_match_position(
+        self,
+        *,
+        owner_steam_id: str,
+        match_id: str,
+    ):
+        if self.error is not None:
+            raise self.error
+
+        return self.user_match_position
 
     def get_player_match_history(
         self,
@@ -444,25 +459,26 @@ class ApiTest(unittest.TestCase):
         )
 
 
-    def test_match_response_exposes_only_current_user(self):
+    def test_match_response_uses_user_match_position(self):
         expected = make_analysis()
 
-        friend = replace(
+        linked_player = replace(
             expected.players[0],
-            steam_id="99999999999999999",
-            name="friend",
+            steam_id="anon:0",
+            name="Player 1",
         )
 
         analysis = replace(
             expected,
             players=[
-                friend,
+                linked_player,
                 expected.players[0],
             ],
         )
 
         repository = StubAnalysisRepository(
-            analysis=analysis
+            analysis=analysis,
+            user_match_position=0,
         )
 
         app.dependency_overrides[
@@ -491,28 +507,16 @@ class ApiTest(unittest.TestCase):
 
         self.assertEqual(
             players[0]["steam_id"],
-            "76561198055629469",
+            "anon:0",
         )
 
 
-    def test_match_is_hidden_when_current_user_did_not_play(self):
-        expected = make_analysis()
-
-        friend = replace(
-            expected.players[0],
-            steam_id="99999999999999999",
-            name="friend",
-        )
-
-        analysis = replace(
-            expected,
-            players=[
-                friend
-            ],
-        )
+    def test_match_is_hidden_without_user_match_link(self):
+        analysis = make_analysis()
 
         repository = StubAnalysisRepository(
-            analysis=analysis
+            analysis=analysis,
+            user_match_position=None,
         )
 
         app.dependency_overrides[

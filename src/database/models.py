@@ -197,6 +197,61 @@ class MatchModel(Base):
     )
 
 
+
+class UserMatchModel(Base):
+    __tablename__ = "user_matches"
+
+    __table_args__ = (
+        UniqueConstraint(
+            "match_id",
+            "player_position",
+            name="uq_user_matches_match_position",
+        ),
+        CheckConstraint(
+            "player_position >= 0",
+            name="ck_user_matches_player_position",
+        ),
+        Index(
+            "ix_user_matches_match_id",
+            "match_id",
+        ),
+        Index(
+            "ix_user_matches_created_at",
+            "created_at",
+        ),
+    )
+
+    owner_steam_id: Mapped[str] = mapped_column(
+        String(32),
+        ForeignKey(
+            "users.steam_id",
+            ondelete="CASCADE",
+        ),
+        primary_key=True,
+        nullable=False,
+    )
+
+    match_id: Mapped[str] = mapped_column(
+        String(128),
+        ForeignKey(
+            "matches.match_id",
+            ondelete="CASCADE",
+        ),
+        primary_key=True,
+        nullable=False,
+    )
+
+    player_position: Mapped[int] = mapped_column(
+        Integer,
+        nullable=False,
+    )
+
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=False,
+        default=lambda: datetime.now(timezone.utc),
+    )
+
 class MatchPlayerModel(Base):
     __tablename__ = "match_players"
 

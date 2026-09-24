@@ -74,6 +74,7 @@ class DatabaseModelsTest(unittest.TestCase):
                 "findings",
                 "users",
                 "auth_sessions",
+                "user_matches",
             },
         )
 
