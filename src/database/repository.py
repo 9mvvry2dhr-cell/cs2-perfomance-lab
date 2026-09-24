@@ -731,6 +731,9 @@ class AnalysisRepository:
                         ),
                     ),
                     findings=findings,
+                    player_result=(
+                        player_model.result
+                    ),
                 )
             )
 

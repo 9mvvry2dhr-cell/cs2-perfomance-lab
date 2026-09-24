@@ -25,6 +25,8 @@ class PlayerMatchHistoryItem:
     stats: PlayerStats
     findings: list[Finding]
 
+    player_result: str = "unknown"
+
 
 @dataclass(frozen=True)
 class PlayerFindingFrequency:

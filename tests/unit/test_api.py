@@ -259,6 +259,7 @@ class ApiTest(unittest.TestCase):
             player_name=player.name,
             stats=player.stats,
             findings=player.findings,
+            player_result="win",
         )
 
 

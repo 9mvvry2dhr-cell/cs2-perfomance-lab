@@ -9186,6 +9186,57 @@ function formatHistoryMap(
 }
 
 
+function formatHistoryScore(
+    item
+) {
+    const scoreCt =
+        Number(item.score_ct);
+
+    const scoreT =
+        Number(item.score_t);
+
+    if (
+        !Number.isFinite(scoreCt)
+        || !Number.isFinite(scoreT)
+    ) {
+        return "";
+    }
+
+    const result =
+        String(
+            item.player_result
+            || "unknown"
+        );
+
+    if (result === "win") {
+        return (
+            `${Math.max(scoreCt, scoreT)}:`
+            + `${Math.min(scoreCt, scoreT)}`
+            + " · Победа"
+        );
+    }
+
+    if (result === "loss") {
+        return (
+            `${Math.min(scoreCt, scoreT)}:`
+            + `${Math.max(scoreCt, scoreT)}`
+            + " · Поражение"
+        );
+    }
+
+    if (result === "draw") {
+        return (
+            `${scoreCt}:${scoreT}`
+            + " · Ничья"
+        );
+    }
+
+    return (
+        `CT ${scoreCt}:${scoreT} T`
+    );
+}
+
+
 function formatAnalyzedAt(
     value
 ) {
@@ -9624,8 +9675,9 @@ function renderPlayerHistory(
                         item.map_name
                     )
                     + " \u00b7 "
-                    + `${item.score_ct}:`
-                    + `${item.score_t}`
+                    + formatHistoryScore(
+                        item
+                    )
                 )
             );
 

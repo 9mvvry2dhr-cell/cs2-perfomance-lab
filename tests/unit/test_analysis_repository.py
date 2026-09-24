@@ -602,6 +602,9 @@ class AnalysisRepositoryTest(unittest.TestCase):
             base,
             match_id="match-history-001",
             map_name="de_mirage",
+            player_results={
+                "76561198055629469": "win",
+            },
         )
 
         duplicate_finding = replace(
@@ -624,6 +627,9 @@ class AnalysisRepositoryTest(unittest.TestCase):
             players=[
                 second_player
             ],
+            player_results={
+                "76561198055629469": "loss",
+            },
         )
 
         self.repository.save_analysis(
@@ -778,6 +784,16 @@ class AnalysisRepositoryTest(unittest.TestCase):
         self.assertEqual(
             history[0].stats.adr,
             93.4,
+        )
+
+        self.assertEqual(
+            history[0].player_result,
+            "loss",
+        )
+
+        self.assertEqual(
+            history[1].player_result,
+            "win",
         )
 
 

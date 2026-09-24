@@ -126,6 +126,13 @@ class PlayerMatchHistoryResponse(ApiModel):
     stats: PlayerStatsResponse
     findings: list[FindingResponse]
 
+    player_result: Literal[
+        "win",
+        "loss",
+        "draw",
+        "unknown",
+    ] = "unknown"
+
 
 class PlayerFindingFrequencyResponse(ApiModel):
     code: str
