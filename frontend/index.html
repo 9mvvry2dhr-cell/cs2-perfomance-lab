@@ -6805,6 +6805,134 @@ table {
 
 </style>
 
+
+<style id="cs2-landing-final-polish-v1">
+
+/* Landing headline: calmer scale for the longer Russian copy */
+.auth-landing-title {
+    max-width: 680px;
+
+    font-size:
+        clamp(
+            30px,
+            2.45vw,
+            38px
+        ) !important;
+
+    line-height:
+        1.13 !important;
+
+    letter-spacing:
+        -0.035em !important;
+
+    text-wrap:
+        balance;
+}
+
+
+/* Supporting Steam note should be readable, not decorative dust */
+.auth-landing-note {
+    margin-top:
+        10px !important;
+
+    color:
+        #6f8ca3 !important;
+
+    font-size:
+        10.5px !important;
+
+    font-weight:
+        500 !important;
+
+    line-height:
+        1.5 !important;
+}
+
+
+/* Legal footer: still secondary, but actually readable */
+.legal-footer {
+    color:
+        #68859b !important;
+
+    font-size:
+        11.5px !important;
+
+    line-height:
+        1.55 !important;
+}
+
+.legal-footer a,
+.legal-footer-link-button {
+    color:
+        #7896ad !important;
+
+    font-size:
+        11.5px !important;
+}
+
+.legal-footer a:hover,
+.legal-footer-link-button:hover {
+    color:
+        #dbe9f4 !important;
+}
+
+
+/* AI is an authenticated product feature */
+.ai-coach-nav[hidden] {
+    display:
+        none !important;
+}
+
+
+@media (max-width: 760px) {
+    .auth-landing-title {
+        font-size:
+            30px !important;
+
+        line-height:
+            1.16 !important;
+    }
+
+    .auth-landing-note,
+    .legal-footer,
+    .legal-footer a,
+    .legal-footer-link-button {
+        font-size:
+            11px !important;
+    }
+}
+
+</style>
+
+<style id="cs2-cta-final-polish-v1">
+
+.auth-landing-login,
+.project-support-button {
+    border-color: rgba(255, 190, 70, 0.58) !important;
+
+    box-shadow:
+        0 0 0 1px rgba(255, 190, 70, 0.08),
+        0 8px 24px rgba(240, 165, 47, 0.22) !important;
+
+    transition:
+        transform 150ms ease,
+        filter 150ms ease,
+        box-shadow 150ms ease !important;
+}
+
+.auth-landing-login:hover,
+.project-support-button:hover {
+    transform: translateY(-1px);
+
+    filter: brightness(1.07);
+
+    box-shadow:
+        0 0 0 1px rgba(255, 196, 82, 0.14),
+        0 10px 30px rgba(240, 165, 47, 0.32) !important;
+}
+
+</style>
+
 </head>
 
 
@@ -6905,7 +7033,10 @@ CS2 Performance Lab
 </div>
 
 
-<div class="ai-coach-nav">
+<div
+class="ai-coach-nav"
+hidden
+>
 <button
 class="nav-button ai-coach-button"
 type="button"
@@ -7076,9 +7207,7 @@ CS2 PERFORMANCE LAB
 </div>
 
 <h1 class="auth-landing-title">
-Разбери матч.
-Найди то, чего не видно
-в scoreboard.
+Разбери матч. Увидь то, чего не покажет статистика.
 </h1>
 
 <p class="auth-landing-text">
@@ -13035,6 +13164,11 @@ document
             "analysisView"
         );
 
+    const aiCoachNav =
+        document.querySelector(
+            ".ai-coach-nav"
+        );
+
 
     function setAppAuthState(
         loggedIn
@@ -13055,6 +13189,11 @@ document
         if (authLanding) {
             authLanding.hidden =
                 loggedIn;
+        }
+
+        if (aiCoachNav) {
+            aiCoachNav.hidden =
+                !loggedIn;
         }
 
         if (!loggedIn) {
