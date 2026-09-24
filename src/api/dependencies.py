@@ -128,6 +128,10 @@ def get_demo_ingestion_service(
         AnalysisJobRepository,
         Depends(get_analysis_job_repository),
     ],
+    analysis_repository: Annotated[
+        AnalysisRepository,
+        Depends(get_analysis_repository),
+    ],
     storage: Annotated[
         LocalDemoStorage,
         Depends(get_demo_storage),
@@ -143,6 +147,7 @@ def get_demo_ingestion_service(
     return DemoIngestionService(
         storage=storage,
         job_repository=repository,
+        analysis_repository=analysis_repository,
         max_active_jobs=max_active_jobs,
     )
 

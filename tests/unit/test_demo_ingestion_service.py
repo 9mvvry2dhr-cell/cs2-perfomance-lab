@@ -10,6 +10,7 @@ from src.ingestion.service import (
     AnalysisAlreadyActiveError,
     AnalysisQueueFullError,
     DemoIngestionService,
+    DuplicateDemoError,
 )
 from src.ingestion.storage import (
     LocalDemoStorage,
@@ -103,6 +104,33 @@ class StubJobRepository:
         return self.result
 
 
+class StubAnalysisRepository:
+    def __init__(
+        self,
+        *,
+        user_match_position=None,
+    ):
+        self.user_match_position = (
+            user_match_position
+        )
+        self.calls = []
+
+    def get_user_match_position(
+        self,
+        *,
+        owner_steam_id,
+        match_id,
+    ):
+        self.calls.append(
+            {
+                "owner_steam_id": owner_steam_id,
+                "match_id": match_id,
+            }
+        )
+
+        return self.user_match_position
+
+
 class DemoIngestionServiceTest(
     unittest.TestCase
 ):
@@ -134,6 +162,9 @@ class DemoIngestionServiceTest(
         service = DemoIngestionService(
             storage=self.storage,
             job_repository=repository,
+            analysis_repository=(
+                StubAnalysisRepository()
+            ),
         )
 
         result = service.ingest(
@@ -189,6 +220,9 @@ class DemoIngestionServiceTest(
         service = DemoIngestionService(
             storage=self.storage,
             job_repository=repository,
+            analysis_repository=(
+                StubAnalysisRepository()
+            ),
             max_active_jobs=4,
         )
 
@@ -226,6 +260,9 @@ class DemoIngestionServiceTest(
         service = DemoIngestionService(
             storage=self.storage,
             job_repository=repository,
+            analysis_repository=(
+                StubAnalysisRepository()
+            ),
         )
 
         with self.assertRaises(
@@ -249,32 +286,34 @@ class DemoIngestionServiceTest(
             [],
         )
 
-    def test_ingest_returns_completed_duplicate_and_deletes_new_file(
+    def test_ingest_rejects_existing_user_match_and_deletes_new_file(
         self,
     ):
-        completed_job = object()
+        repository = StubJobRepository()
 
-        repository = StubJobRepository(
-            completed_job=completed_job,
+        analysis_repository = (
+            StubAnalysisRepository(
+                user_match_position=0,
+            )
         )
 
         service = DemoIngestionService(
             storage=self.storage,
             job_repository=repository,
+            analysis_repository=analysis_repository,
         )
 
-        result = service.ingest(
-            owner_steam_id="76561198055629469",
-            original_filename="duplicate.dem",
-            source=BytesIO(
-                b"demo-content"
-            ),
-        )
-
-        self.assertIs(
-            result,
-            completed_job,
-        )
+        with self.assertRaisesRegex(
+            DuplicateDemoError,
+            "This demo has already been analyzed",
+        ):
+            service.ingest(
+                owner_steam_id="76561198055629469",
+                original_filename="duplicate.dem",
+                source=BytesIO(
+                    b"demo-content"
+                ),
+            )
 
         self.assertEqual(
             repository.calls,
@@ -282,9 +321,27 @@ class DemoIngestionServiceTest(
         )
 
         self.assertEqual(
+            len(analysis_repository.calls),
+            1,
+        )
+
+        request = analysis_repository.calls[0]
+
+        self.assertEqual(
+            request["owner_steam_id"],
+            "76561198055629469",
+        )
+
+        self.assertEqual(
+            len(request["match_id"]),
+            64,
+        )
+
+        self.assertEqual(
             list(self.root.iterdir()),
             [],
         )
+
 
     def test_ingest_rejects_when_active_job_limit_is_reached(
         self,
@@ -296,6 +353,9 @@ class DemoIngestionServiceTest(
         service = DemoIngestionService(
             storage=self.storage,
             job_repository=repository,
+            analysis_repository=(
+                StubAnalysisRepository()
+            ),
             max_active_jobs=4,
         )
 
@@ -332,6 +392,9 @@ class DemoIngestionServiceTest(
         service = DemoIngestionService(
             storage=self.storage,
             job_repository=repository,
+            analysis_repository=(
+                StubAnalysisRepository()
+            ),
         )
 
         with self.assertRaises(

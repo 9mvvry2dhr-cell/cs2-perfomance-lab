@@ -7,6 +7,7 @@ from src.database.job_repository import (
     ActiveAnalysisJobConflictError,
     AnalysisJobRepository,
 )
+from src.database.repository import AnalysisRepository
 from src.domain.jobs import AnalysisJob
 from src.ingestion.storage import (
     LocalDemoStorage,
@@ -41,6 +42,7 @@ class DemoIngestionService:
         *,
         storage: LocalDemoStorage,
         job_repository: AnalysisJobRepository,
+        analysis_repository: AnalysisRepository,
         max_active_jobs: int = (
             DEFAULT_MAX_ACTIVE_JOBS
         ),
@@ -52,6 +54,9 @@ class DemoIngestionService:
 
         self.storage = storage
         self.job_repository = job_repository
+        self.analysis_repository = (
+            analysis_repository
+        )
         self.max_active_jobs = (
             max_active_jobs
         )
@@ -96,20 +101,18 @@ class DemoIngestionService:
             )
 
             try:
-                completed = (
-                    self.job_repository
-                    .get_completed_file_for_owner(
-                        owner_steam_id,
-                        stored.file_sha256,
+                existing_position = (
+                    self.analysis_repository
+                    .get_user_match_position(
+                        owner_steam_id=owner_steam_id,
+                        match_id=stored.file_sha256,
                     )
                 )
 
-                if completed is not None:
-                    self.storage.delete(
-                        stored.storage_key
+                if existing_position is not None:
+                    raise DuplicateDemoError(
+                        "This demo has already been analyzed"
                     )
-
-                    return completed
 
                 return self.job_repository.create_job(
                     owner_steam_id=owner_steam_id,
