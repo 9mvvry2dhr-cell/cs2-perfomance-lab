@@ -263,6 +263,25 @@ def require_owned_steam_id(
         )
 
 
+def _get_current_steam_player_name(
+    current_user: CurrentUser,
+) -> str | None:
+    api_key = os.getenv(
+        "STEAM_API_KEY",
+        "",
+    ).strip()
+
+    profile = fetch_steam_profile(
+        steam_id=current_user.steam_id,
+        api_key=api_key,
+    )
+
+    if profile is None:
+        return None
+
+    return profile.player_name
+
+
 @app.get(
     "/me",
     response_model=CurrentUserResponse,
@@ -446,10 +465,25 @@ def get_match_analysis(
         player_position
     ]
 
+    steam_player_name = (
+        _get_current_steam_player_name(
+            current_user
+        )
+    )
+
+    public_player = replace(
+        player,
+        steam_id=current_user.steam_id,
+        name=(
+            steam_player_name
+            or player.name
+        ),
+    )
+
     owned_analysis = replace(
         analysis,
         players=[
-            player
+            public_player
         ],
     )
 
@@ -568,9 +602,23 @@ def get_player_match_history(
         )
     )
 
+    steam_player_name = (
+        _get_current_steam_player_name(
+            current_user
+        )
+    )
+
     return [
         PlayerMatchHistoryResponse
-        .model_validate(item)
+        .model_validate(
+            replace(
+                item,
+                player_name=(
+                    steam_player_name
+                    or item.player_name
+                ),
+            )
+        )
         for item in history
     ]
 
@@ -619,9 +667,24 @@ def get_player_history_summary(
             detail="Player history not found",
         )
 
+    steam_player_name = (
+        _get_current_steam_player_name(
+            current_user
+        )
+    )
+
+    public_summary = replace(
+        summary,
+        steam_id=current_user.steam_id,
+        player_name=(
+            steam_player_name
+            or summary.player_name
+        ),
+    )
+
     return (
         PlayerHistorySummaryResponse
-        .model_validate(summary)
+        .model_validate(public_summary)
     )
 
 
@@ -654,9 +717,23 @@ def get_my_match_history(
         owner_steam_id=current_user.steam_id,
     )
 
+    steam_player_name = (
+        _get_current_steam_player_name(
+            current_user
+        )
+    )
+
     return [
         PlayerMatchHistoryResponse
-        .model_validate(item)
+        .model_validate(
+            replace(
+                item,
+                player_name=(
+                    steam_player_name
+                    or item.player_name
+                ),
+            )
+        )
         for item in history
     ]
 
@@ -694,9 +771,24 @@ def get_my_history_summary(
             detail="Player history not found",
         )
 
+    steam_player_name = (
+        _get_current_steam_player_name(
+            current_user
+        )
+    )
+
+    public_summary = replace(
+        summary,
+        steam_id=current_user.steam_id,
+        player_name=(
+            steam_player_name
+            or summary.player_name
+        ),
+    )
+
     return (
         PlayerHistorySummaryResponse
-        .model_validate(summary)
+        .model_validate(public_summary)
     )
 
 

@@ -1,6 +1,8 @@
 import unittest
 from dataclasses import replace
 from datetime import datetime, timezone
+from types import SimpleNamespace
+from unittest.mock import patch
 
 from fastapi.testclient import TestClient
 from sqlalchemy.exc import SQLAlchemyError
@@ -261,7 +263,10 @@ class ApiTest(unittest.TestCase):
 
 
     def test_get_player_matches_returns_history(self):
-        item = self._history_item()
+        item = replace(
+            self._history_item(),
+            player_name="Player 1",
+        )
 
         repository = StubAnalysisRepository(
             history=[
@@ -275,19 +280,30 @@ class ApiTest(unittest.TestCase):
 
         client = TestClient(app)
 
-        response = client.get(
-            "/players/76561198055629469/matches"
-        )
+        with patch(
+            "src.api.app.fetch_steam_profile",
+            return_value=SimpleNamespace(
+                player_name="live-steam-name",
+            ),
+        ):
+            response = client.get(
+                "/players/76561198055629469/matches"
+            )
 
         self.assertEqual(
             response.status_code,
             200,
         )
 
+        expected_item = replace(
+            item,
+            player_name="live-steam-name",
+        )
+
         expected = [
             (
                 PlayerMatchHistoryResponse
-                .model_validate(item)
+                .model_validate(expected_item)
                 .model_dump(mode="json")
             )
         ]
@@ -330,7 +346,10 @@ class ApiTest(unittest.TestCase):
 
 
     def test_get_player_summary_returns_summary(self):
-        item = self._history_item()
+        item = replace(
+            self._history_item(),
+            player_name="Player 1",
+        )
 
         summary = build_player_history_summary(
             "76561198055629469",
@@ -349,18 +368,30 @@ class ApiTest(unittest.TestCase):
 
         client = TestClient(app)
 
-        response = client.get(
-            "/players/76561198055629469/summary"
-        )
+        with patch(
+            "src.api.app.fetch_steam_profile",
+            return_value=SimpleNamespace(
+                player_name="live-steam-name",
+            ),
+        ):
+            response = client.get(
+                "/players/76561198055629469/summary"
+            )
 
         self.assertEqual(
             response.status_code,
             200,
         )
 
+        expected_summary = replace(
+            summary,
+            steam_id="76561198055629469",
+            player_name="live-steam-name",
+        )
+
         expected = (
             PlayerHistorySummaryResponse
-            .model_validate(summary)
+            .model_validate(expected_summary)
             .model_dump(mode="json")
         )
 
@@ -487,9 +518,15 @@ class ApiTest(unittest.TestCase):
 
         client = TestClient(app)
 
-        response = client.get(
-            f"/matches/{analysis.match_id}"
-        )
+        with patch(
+            "src.api.app.fetch_steam_profile",
+            return_value=SimpleNamespace(
+                player_name="live-steam-name",
+            ),
+        ):
+            response = client.get(
+                f"/matches/{analysis.match_id}"
+            )
 
         self.assertEqual(
             response.status_code,
@@ -507,7 +544,12 @@ class ApiTest(unittest.TestCase):
 
         self.assertEqual(
             players[0]["steam_id"],
-            "anon:0",
+            "76561198055629469",
+        )
+
+        self.assertEqual(
+            players[0]["name"],
+            "live-steam-name",
         )
 
 
