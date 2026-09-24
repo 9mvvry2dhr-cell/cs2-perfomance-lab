@@ -6464,6 +6464,347 @@ table {
 
 </style>
 
+
+<style id="cs2-bug-report-v1">
+
+.legal-footer-link-button {
+    margin: 0;
+    padding: 0;
+    border: 0;
+
+    color: #6f8ca3;
+    background: transparent;
+
+    font: inherit;
+    line-height: inherit;
+
+    cursor: pointer;
+
+    transition:
+        color 160ms ease;
+}
+
+.legal-footer-link-button:hover {
+    color: #dbe9f4;
+}
+
+
+.bug-report-modal[hidden] {
+    display: none !important;
+}
+
+.bug-report-modal {
+    position: fixed;
+    inset: 0;
+
+    z-index: 1000;
+
+    padding: 20px;
+
+    display: grid;
+    place-items: center;
+
+    background:
+        rgba(2, 8, 13, 0.78);
+
+    backdrop-filter:
+        blur(8px);
+}
+
+.bug-report-dialog {
+    width:
+        min(
+            520px,
+            calc(100vw - 32px)
+        );
+
+    max-height:
+        calc(100vh - 40px);
+
+    overflow: auto;
+
+    border:
+        1px solid
+        rgba(125,171,210,0.18);
+
+    border-radius: 16px;
+
+    background:
+        linear-gradient(
+            145deg,
+            #0b1c2b,
+            #07121d
+        );
+
+    box-shadow:
+        0 28px 90px
+        rgba(0,0,0,0.46);
+}
+
+.bug-report-head {
+    padding:
+        20px
+        21px
+        16px;
+
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 18px;
+
+    border-bottom:
+        1px solid
+        rgba(125,171,210,0.10);
+}
+
+.bug-report-kicker {
+    color: #658197;
+
+    font-size: 8px;
+    font-weight: 850;
+
+    letter-spacing: 0.12em;
+}
+
+.bug-report-title {
+    margin-top: 5px;
+
+    color: #f2f7fb;
+
+    font-size: 19px;
+    font-weight: 760;
+
+    letter-spacing:
+        -0.02em;
+}
+
+.bug-report-close {
+    width: 32px;
+    height: 32px;
+
+    flex: 0 0 auto;
+
+    display: grid;
+    place-items: center;
+
+    border:
+        1px solid
+        rgba(125,171,210,0.14);
+
+    border-radius: 9px;
+
+    color: #7891a5;
+
+    background:
+        rgba(255,255,255,0.018);
+
+    font-size: 17px;
+
+    cursor: pointer;
+}
+
+.bug-report-close:hover {
+    color: #ffffff;
+
+    border-color:
+        rgba(125,171,210,0.28);
+}
+
+.bug-report-form {
+    padding:
+        20px
+        21px
+        21px;
+
+    display: grid;
+
+    gap: 16px;
+}
+
+.bug-report-field {
+    display: grid;
+
+    gap: 7px;
+}
+
+.bug-report-label {
+    color: #8ca3b5;
+
+    font-size: 9px;
+    font-weight: 750;
+
+    letter-spacing: 0.04em;
+}
+
+.bug-report-select,
+.bug-report-textarea {
+    width: 100%;
+
+    border:
+        1px solid
+        rgba(125,171,210,0.16);
+
+    border-radius: 10px;
+
+    color: #eaf3f9;
+
+    background:
+        #07131e;
+
+    outline: none;
+
+    font: inherit;
+}
+
+.bug-report-select {
+    min-height: 42px;
+
+    padding:
+        0
+        11px;
+}
+
+.bug-report-textarea {
+    min-height: 135px;
+
+    padding:
+        11px
+        12px;
+
+    resize: vertical;
+
+    line-height: 1.55;
+}
+
+.bug-report-select:focus,
+.bug-report-textarea:focus {
+    border-color:
+        rgba(73,168,255,0.48);
+
+    box-shadow:
+        0 0 0 3px
+        rgba(73,168,255,0.06);
+}
+
+.bug-report-context {
+    padding:
+        10px
+        11px;
+
+    border:
+        1px solid
+        rgba(73,168,255,0.10);
+
+    border-radius: 9px;
+
+    color: #678398;
+
+    background:
+        rgba(73,168,255,0.035);
+
+    font-size: 9.5px;
+
+    line-height: 1.55;
+}
+
+.bug-report-status {
+    min-height: 18px;
+
+    color: #70899d;
+
+    font-size: 10px;
+
+    line-height: 1.5;
+}
+
+.bug-report-status[data-state="error"] {
+    color: #ff858b;
+}
+
+.bug-report-status[data-state="success"] {
+    color: #63d7a7;
+}
+
+.bug-report-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 9px;
+}
+
+.bug-report-secondary,
+.bug-report-submit {
+    min-height: 39px;
+
+    padding:
+        0
+        15px;
+
+    border-radius: 9px;
+
+    font-size: 9px;
+    font-weight: 850;
+
+    letter-spacing: 0.05em;
+
+    cursor: pointer;
+}
+
+.bug-report-secondary {
+    border:
+        1px solid
+        rgba(125,171,210,0.15);
+
+    color: #8098ab;
+
+    background:
+        transparent;
+}
+
+.bug-report-submit {
+    border:
+        1px solid
+        rgba(73,168,255,0.32);
+
+    color: #f6fbff;
+
+    background:
+        linear-gradient(
+            135deg,
+            rgba(73,168,255,0.23),
+            rgba(73,168,255,0.10)
+        );
+}
+
+.bug-report-submit:hover:not(:disabled) {
+    border-color:
+        rgba(73,168,255,0.52);
+}
+
+.bug-report-submit:disabled {
+    opacity: 0.48;
+
+    cursor: default;
+}
+
+@media (max-width: 560px) {
+    .bug-report-modal {
+        padding: 12px;
+    }
+
+    .bug-report-dialog {
+        width: 100%;
+    }
+
+    .bug-report-actions {
+        display: grid;
+        grid-template-columns:
+            1fr
+            1fr;
+    }
+}
+
+</style>
+
 </head>
 
 
@@ -7744,9 +8085,155 @@ CT / T сравнение
         <a href="/data-deletion/">
             Удаление данных
         </a>
+
+        <button
+            class="legal-footer-link-button"
+            id="bugReportOpen"
+            type="button"
+        >
+            Сообщить об ошибке
+        </button>
     </nav>
 
 </footer>
+
+
+<div
+    class="bug-report-modal"
+    id="bugReportModal"
+    hidden
+>
+    <div
+        class="bug-report-dialog"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="bugReportTitle"
+    >
+
+        <div class="bug-report-head">
+
+            <div>
+                <div class="bug-report-kicker">
+                    CS2 PERFORMANCE LAB
+                </div>
+
+                <div
+                    class="bug-report-title"
+                    id="bugReportTitle"
+                >
+                    Сообщить об ошибке
+                </div>
+            </div>
+
+            <button
+                class="bug-report-close"
+                id="bugReportClose"
+                type="button"
+                aria-label="Закрыть"
+            >
+                ×
+            </button>
+
+        </div>
+
+
+        <form
+            class="bug-report-form"
+            id="bugReportForm"
+        >
+
+            <label class="bug-report-field">
+
+                <span class="bug-report-label">
+                    КАТЕГОРИЯ
+                </span>
+
+                <select
+                    class="bug-report-select"
+                    id="bugReportCategory"
+                    required
+                >
+                    <option value="analysis">
+                        Анализ
+                    </option>
+
+                    <option value="statistics">
+                        Статистика
+                    </option>
+
+                    <option value="ai">
+                        AI
+                    </option>
+
+                    <option value="ui">
+                        Интерфейс
+                    </option>
+
+                    <option value="other">
+                        Другое
+                    </option>
+                </select>
+
+            </label>
+
+
+            <label class="bug-report-field">
+
+                <span class="bug-report-label">
+                    ЧТО ПРОИЗОШЛО
+                </span>
+
+                <textarea
+                    class="bug-report-textarea"
+                    id="bugReportMessage"
+                    minlength="5"
+                    maxlength="3000"
+                    required
+                    placeholder="Опиши, что произошло и что ты ожидал увидеть."
+                ></textarea>
+
+            </label>
+
+
+            <div
+                class="bug-report-context"
+                id="bugReportContext"
+            >
+                Контекст страницы будет приложен автоматически.
+            </div>
+
+
+            <div
+                class="bug-report-status"
+                id="bugReportStatus"
+                aria-live="polite"
+            ></div>
+
+
+            <div class="bug-report-actions">
+
+                <button
+                    class="bug-report-secondary"
+                    id="bugReportCancel"
+                    type="button"
+                >
+                    ОТМЕНА
+                </button>
+
+                <button
+                    class="bug-report-submit"
+                    id="bugReportSubmit"
+                    type="submit"
+                >
+                    ОТПРАВИТЬ
+                </button>
+
+            </div>
+
+        </form>
+
+    </div>
+</div>
 
 </main>
 
@@ -15203,6 +15690,369 @@ document
         prepareMatch;
 })();
 </script>
+
+
+<script id="cs2-bug-report-js-v1">
+(function () {
+    const openButton =
+        document.getElementById(
+            "bugReportOpen"
+        );
+
+    const modal =
+        document.getElementById(
+            "bugReportModal"
+        );
+
+    const form =
+        document.getElementById(
+            "bugReportForm"
+        );
+
+    const closeButton =
+        document.getElementById(
+            "bugReportClose"
+        );
+
+    const cancelButton =
+        document.getElementById(
+            "bugReportCancel"
+        );
+
+    const category =
+        document.getElementById(
+            "bugReportCategory"
+        );
+
+    const message =
+        document.getElementById(
+            "bugReportMessage"
+        );
+
+    const context =
+        document.getElementById(
+            "bugReportContext"
+        );
+
+    const status =
+        document.getElementById(
+            "bugReportStatus"
+        );
+
+    const submit =
+        document.getElementById(
+            "bugReportSubmit"
+        );
+
+
+    if (
+        !openButton
+        || !modal
+        || !form
+        || !message
+        || !category
+        || !context
+        || !status
+        || !submit
+    ) {
+        return;
+    }
+
+
+    function currentContext() {
+        const jobId =
+            window.cs2CurrentAnalysisJobId
+            ? String(
+                window.cs2CurrentAnalysisJobId
+            )
+            : null;
+
+        /*
+         * During an active analysis there may still be an older
+         * match on screen. Never attach that old match to the new job.
+         */
+        if (jobId) {
+            return {
+                matchId: null,
+                jobId,
+                label:
+                    "К отчёту будет приложен текущий анализ."
+            };
+        }
+
+        const analysis =
+            window.latestMatchAnalysis;
+
+        const matchId =
+            analysis?.match_id
+            ? String(
+                analysis.match_id
+            )
+            : null;
+
+        if (matchId) {
+            const mapName =
+                String(
+                    analysis.map_name
+                    || "текущий матч"
+                );
+
+            return {
+                matchId,
+                jobId: null,
+                label:
+                    "К отчёту будет приложен матч: "
+                    + mapName
+                    + "."
+            };
+        }
+
+        return {
+            matchId: null,
+            jobId: null,
+            label:
+                "Отчёт будет отправлен без привязки к матчу."
+        };
+    }
+
+
+    function setStatus(
+        text,
+        state = ""
+    ) {
+        status.textContent =
+            text || "";
+
+        status.dataset.state =
+            state;
+    }
+
+
+    function openModal() {
+        const details =
+            currentContext();
+
+        context.textContent =
+            details.label;
+
+        setStatus("");
+
+        submit.disabled =
+            false;
+
+        submit.textContent =
+            "ОТПРАВИТЬ";
+
+        modal.hidden =
+            false;
+
+        window.setTimeout(
+            () => {
+                message.focus();
+            },
+            0
+        );
+    }
+
+
+    function closeModal() {
+        modal.hidden =
+            true;
+
+        setStatus("");
+    }
+
+
+    async function readError(
+        response
+    ) {
+        try {
+            const body =
+                await response.json();
+
+            if (
+                typeof body?.detail
+                === "string"
+            ) {
+                return body.detail;
+            }
+        } catch (_) {
+            // Ignore malformed/non-JSON error body.
+        }
+
+        return (
+            "Не удалось отправить сообщение."
+        );
+    }
+
+
+    openButton.addEventListener(
+        "click",
+        openModal
+    );
+
+
+    closeButton?.addEventListener(
+        "click",
+        closeModal
+    );
+
+
+    cancelButton?.addEventListener(
+        "click",
+        closeModal
+    );
+
+
+    modal.addEventListener(
+        "click",
+        event => {
+            if (
+                event.target
+                === modal
+            ) {
+                closeModal();
+            }
+        }
+    );
+
+
+    document.addEventListener(
+        "keydown",
+        event => {
+            if (
+                event.key === "Escape"
+                && !modal.hidden
+            ) {
+                closeModal();
+            }
+        }
+    );
+
+
+    form.addEventListener(
+        "submit",
+        async event => {
+            event.preventDefault();
+
+            const details =
+                currentContext();
+
+            const trimmedMessage =
+                message.value.trim();
+
+            if (
+                trimmedMessage.length
+                < 5
+            ) {
+                setStatus(
+                    "Опиши ошибку чуть подробнее.",
+                    "error"
+                );
+
+                message.focus();
+
+                return;
+            }
+
+            submit.disabled =
+                true;
+
+            submit.textContent =
+                "ОТПРАВЛЯЕМ…";
+
+            setStatus(
+                "Отправляем сообщение…"
+            );
+
+            const payload = {
+                category:
+                    category.value,
+
+                message:
+                    trimmedMessage,
+
+                match_id:
+                    details.matchId,
+
+                job_id:
+                    details.jobId,
+            };
+
+            try {
+                const response =
+                    await fetch(
+                        "/bug-reports",
+                        {
+                            method:
+                                "POST",
+
+                            credentials:
+                                "same-origin",
+
+                            headers: {
+                                "Content-Type":
+                                    "application/json",
+
+                                Accept:
+                                    "application/json",
+                            },
+
+                            body:
+                                JSON.stringify(
+                                    payload
+                                ),
+                        }
+                    );
+
+                if (!response.ok) {
+                    if (
+                        response.status
+                        === 401
+                    ) {
+                        throw new Error(
+                            "Сначала войди через Steam."
+                        );
+                    }
+
+                    throw new Error(
+                        await readError(
+                            response
+                        )
+                    );
+                }
+
+                await response.json();
+
+                setStatus(
+                    "Спасибо. Ошибка отправлена.",
+                    "success"
+                );
+
+                submit.textContent =
+                    "ОТПРАВЛЕНО";
+
+                message.value =
+                    "";
+
+            } catch (error) {
+                setStatus(
+                    error?.message
+                    || "Не удалось отправить сообщение.",
+                    "error"
+                );
+
+                submit.disabled =
+                    false;
+
+                submit.textContent =
+                    "ОТПРАВИТЬ";
+            }
+        }
+    );
+})();
+</script>
+
 
 </body>
 </html>
