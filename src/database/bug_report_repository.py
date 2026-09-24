@@ -1,12 +1,15 @@
 from __future__ import annotations
 
-from sqlalchemy import exists, select
+from datetime import datetime, timedelta, timezone
+
+from sqlalchemy import exists, func, select
 from sqlalchemy.orm import Session
 
 from src.database.models import (
     AnalysisJobModel,
     BugReportModel,
     UserMatchModel,
+    UserModel,
 )
 from src.domain.bug_reports import BugReport
 
@@ -22,10 +25,33 @@ VALID_BUG_REPORT_CATEGORIES = frozenset(
 )
 
 
+BUG_REPORT_RATE_LIMIT = 10
+
+BUG_REPORT_RATE_WINDOW = timedelta(
+    hours=1
+)
+
+
 class BugReportReferenceError(
     ValueError
 ):
     pass
+
+
+class BugReportRateLimitError(
+    ValueError
+):
+    def __init__(
+        self,
+    ):
+        super().__init__(
+            "Bug report rate limit exceeded"
+        )
+
+        self.retry_after_seconds = int(
+            BUG_REPORT_RATE_WINDOW
+            .total_seconds()
+        )
 
 
 class BugReportRepository:
@@ -94,6 +120,54 @@ class BugReportRepository:
 
         if job_id == "":
             job_id = None
+
+        rate_cutoff = (
+            datetime.now(
+                timezone.utc
+            )
+            - BUG_REPORT_RATE_WINDOW
+        )
+
+        # Serialize rate-limit checks per authenticated
+        # user so concurrent requests cannot trivially
+        # bypass the hourly limit on PostgreSQL.
+        self.session.scalar(
+            select(
+                UserModel
+            )
+            .where(
+                UserModel.steam_id
+                == owner_steam_id
+            )
+            .with_for_update()
+        )
+
+        recent_reports = (
+            self.session.scalar(
+                select(
+                    func.count(
+                        BugReportModel.id
+                    )
+                )
+                .where(
+                    BugReportModel.owner_steam_id
+                    == owner_steam_id,
+                    BugReportModel.created_at
+                    >= rate_cutoff,
+                )
+            )
+            or 0
+        )
+
+        if (
+            recent_reports
+            >= BUG_REPORT_RATE_LIMIT
+        ):
+            self.session.rollback()
+
+            raise (
+                BugReportRateLimitError()
+            )
 
         if match_id is not None:
             owned_match = self.session.scalar(

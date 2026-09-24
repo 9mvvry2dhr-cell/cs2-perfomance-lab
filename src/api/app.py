@@ -63,6 +63,7 @@ from src.database.auth_repository import (
     DEFAULT_SESSION_LIFETIME,
 )
 from src.database.bug_report_repository import (
+    BugReportRateLimitError,
     BugReportReferenceError,
     BugReportRepository,
 )
@@ -825,6 +826,22 @@ def create_bug_report(
             match_id=payload.match_id,
             job_id=payload.job_id,
         )
+
+    except BugReportRateLimitError as exc:
+        raise HTTPException(
+            status_code=(
+                status.HTTP_429_TOO_MANY_REQUESTS
+            ),
+            detail=(
+                "Слишком много сообщений "
+                "об ошибках. Попробуй позже."
+            ),
+            headers={
+                "Retry-After": str(
+                    exc.retry_after_seconds
+                ),
+            },
+        ) from exc
 
     except BugReportReferenceError as exc:
         # Do not reveal whether another user's

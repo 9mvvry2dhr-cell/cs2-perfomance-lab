@@ -5,12 +5,15 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
 from src.database.bug_report_repository import (
+    BUG_REPORT_RATE_LIMIT,
+    BugReportRateLimitError,
     BugReportReferenceError,
     BugReportRepository,
 )
 from src.database.models import (
     AnalysisJobModel,
     Base,
+    BugReportModel,
     MatchModel,
     UserMatchModel,
     UserModel,
@@ -234,6 +237,50 @@ class BugReportRepositoryTest(
                 category="analysis",
                 message="Анализ завис на обработке.",
                 job_id="foreign-job",
+            )
+
+    def test_rate_limit_rejects_excess_reports(
+        self,
+    ):
+        now = datetime.now(
+            timezone.utc
+        )
+
+        self.session.add_all(
+            [
+                BugReportModel(
+                    id=(
+                        f"rate-report-{index}"
+                    ),
+                    owner_steam_id=(
+                        self.owner
+                    ),
+                    category="ui",
+                    message=(
+                        "Rate limit test report."
+                    ),
+                    created_at=now,
+                )
+                for index in range(
+                    BUG_REPORT_RATE_LIMIT
+                )
+            ]
+        )
+
+        self.session.commit()
+
+        with self.assertRaises(
+            BugReportRateLimitError
+        ):
+            self.repository.create_report(
+                owner_steam_id=(
+                    self.owner
+                ),
+                category="ui",
+                message=(
+                    "This report must "
+                    "be rate limited."
+                ),
             )
 
     def test_invalid_category_is_rejected(

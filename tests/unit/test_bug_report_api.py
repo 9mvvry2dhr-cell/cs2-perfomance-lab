@@ -9,6 +9,7 @@ from src.api.dependencies import (
     get_current_user,
 )
 from src.database.bug_report_repository import (
+    BugReportRateLimitError,
     BugReportReferenceError,
 )
 from src.domain.bug_reports import BugReport
@@ -170,6 +171,56 @@ class BugReportApiTest(
                 "detail": (
                     "Referenced match or "
                     "analysis job not found"
+                ),
+            },
+        )
+
+    def test_rate_limit_returns_429(
+        self,
+    ):
+        repository = (
+            StubBugReportRepository(
+                error=(
+                    BugReportRateLimitError()
+                )
+            )
+        )
+
+        app.dependency_overrides[
+            get_bug_report_repository
+        ] = lambda: repository
+
+        client = TestClient(app)
+
+        response = client.post(
+            "/bug-reports",
+            json={
+                "category": "ui",
+                "message": (
+                    "Очередной отчёт "
+                    "об ошибке."
+                ),
+            },
+        )
+
+        self.assertEqual(
+            response.status_code,
+            429,
+        )
+
+        self.assertEqual(
+            response.headers[
+                "retry-after"
+            ],
+            "3600",
+        )
+
+        self.assertEqual(
+            response.json(),
+            {
+                "detail": (
+                    "Слишком много сообщений "
+                    "об ошибках. Попробуй позже."
                 ),
             },
         )
