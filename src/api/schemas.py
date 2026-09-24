@@ -3,7 +3,7 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Literal
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class ApiModel(BaseModel):
@@ -42,6 +42,41 @@ class AnalysisJobResponse(ApiModel):
     created_at: datetime
     started_at: datetime | None
     finished_at: datetime | None
+
+
+class BugReportCreateRequest(ApiModel):
+    category: Literal[
+        "analysis",
+        "statistics",
+        "ai",
+        "ui",
+        "other",
+    ]
+
+    message: str = Field(
+        min_length=5,
+        max_length=3000,
+    )
+
+    match_id: str | None = None
+    job_id: str | None = None
+
+
+class BugReportResponse(ApiModel):
+    id: str
+
+    category: Literal[
+        "analysis",
+        "statistics",
+        "ai",
+        "ui",
+        "other",
+    ]
+
+    message: str
+    match_id: str | None
+    job_id: str | None
+    created_at: datetime
 
 
 class FindingResponse(ApiModel):

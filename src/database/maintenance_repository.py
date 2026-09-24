@@ -8,6 +8,7 @@ from sqlalchemy.orm import Session
 from src.database.models import (
     AnalysisJobModel,
     AuthSessionModel,
+    BugReportModel,
     MatchModel,
     UserMatchModel,
 )
@@ -61,6 +62,27 @@ class MaintenanceRepository:
                     ),
                     AnalysisJobModel.finished_at
                     < finished_before,
+                )
+            )
+
+            self.session.commit()
+
+            return int(result.rowcount or 0)
+
+        except Exception:
+            self.session.rollback()
+            raise
+
+    def purge_bug_reports(
+        self,
+        *,
+        created_before: datetime,
+    ) -> int:
+        try:
+            result = self.session.execute(
+                delete(BugReportModel).where(
+                    BugReportModel.created_at
+                    < created_before
                 )
             )
 

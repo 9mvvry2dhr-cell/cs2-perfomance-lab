@@ -23,12 +23,14 @@ logger = logging.getLogger(__name__)
 
 DEFAULT_INTERVAL_SECONDS = 3600.0
 DEFAULT_JOB_RETENTION_DAYS = 30
+DEFAULT_BUG_REPORT_RETENTION_DAYS = 90
 DEFAULT_USER_MATCH_RETENTION_DAYS = 90
 
 
 @dataclass(frozen=True)
 class MaintenanceResult:
     sessions_deleted: int
+    bug_reports_deleted: int
     jobs_deleted: int
     user_matches_deleted: int
     matches_deleted: int
@@ -41,6 +43,9 @@ def run_maintenance_once(
     job_retention_days: int = (
         DEFAULT_JOB_RETENTION_DAYS
     ),
+    bug_report_retention_days: int = (
+        DEFAULT_BUG_REPORT_RETENTION_DAYS
+    ),
     user_match_retention_days: int = (
         DEFAULT_USER_MATCH_RETENTION_DAYS
     ),
@@ -52,6 +57,11 @@ def run_maintenance_once(
     if job_retention_days <= 0:
         raise ValueError(
             "job_retention_days must be positive"
+        )
+
+    if bug_report_retention_days <= 0:
+        raise ValueError(
+            "bug_report_retention_days must be positive"
         )
 
     if user_match_retention_days <= 0:
@@ -72,6 +82,18 @@ def run_maintenance_once(
             repository
             .purge_expired_or_revoked_sessions(
                 now=now
+            )
+        )
+
+        bug_reports_deleted = (
+            repository
+            .purge_bug_reports(
+                created_before=(
+                    now
+                    - timedelta(
+                        days=bug_report_retention_days
+                    )
+                )
             )
         )
 
@@ -106,6 +128,9 @@ def run_maintenance_once(
 
         return MaintenanceResult(
             sessions_deleted=sessions_deleted,
+            bug_reports_deleted=(
+                bug_reports_deleted
+            ),
             jobs_deleted=jobs_deleted,
             user_matches_deleted=(
                 user_matches_deleted
@@ -142,9 +167,10 @@ def run_forever(
 
             logger.info(
                 "Maintenance completed: "
-                "sessions=%s jobs=%s "
-                "user_matches=%s matches=%s",
+                "sessions=%s bug_reports=%s "
+                "jobs=%s user_matches=%s matches=%s",
                 result.sessions_deleted,
+                result.bug_reports_deleted,
                 result.jobs_deleted,
                 result.user_matches_deleted,
                 result.matches_deleted,
@@ -183,6 +209,15 @@ def main() -> None:
         )
     )
 
+    bug_report_retention_days = int(
+        os.environ.get(
+            "BUG_REPORT_RETENTION_DAYS",
+            str(
+                DEFAULT_BUG_REPORT_RETENTION_DAYS
+            ),
+        )
+    )
+
     user_match_retention_days = int(
         os.environ.get(
             "USER_MATCH_RETENTION_DAYS",
@@ -203,9 +238,10 @@ def main() -> None:
     logger.info(
         "Maintenance service started: "
         "interval=%.0fs jobs=%sd "
-        "user_matches=%sd",
+        "bug_reports=%sd user_matches=%sd",
         interval_seconds,
         job_retention_days,
+        bug_report_retention_days,
         user_match_retention_days,
     )
 
@@ -215,6 +251,9 @@ def main() -> None:
                 session_factory=session_factory,
                 job_retention_days=(
                     job_retention_days
+                ),
+                bug_report_retention_days=(
+                    bug_report_retention_days
                 ),
                 user_match_retention_days=(
                     user_match_retention_days

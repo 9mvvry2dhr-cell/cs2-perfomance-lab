@@ -10,6 +10,7 @@ from src.database.maintenance_repository import (
 from src.database.models import (
     AnalysisJobModel,
     AuthSessionModel,
+    BugReportModel,
     Base,
     MatchModel,
     UserMatchModel,
@@ -259,6 +260,68 @@ class MaintenanceRepositoryTest(
                 "old-processing",
             },
         )
+
+    def test_purge_only_old_bug_reports(
+        self,
+    ):
+        old = BugReportModel(
+            id="old-report",
+            owner_steam_id=self.user.steam_id,
+            category="ui",
+            message="Old report",
+            created_at=(
+                self.now
+                - timedelta(days=91)
+            ),
+        )
+
+        recent = BugReportModel(
+            id="recent-report",
+            owner_steam_id=self.user.steam_id,
+            category="ui",
+            message="Recent report",
+            created_at=(
+                self.now
+                - timedelta(days=10)
+            ),
+        )
+
+        self.session.add_all(
+            [
+                old,
+                recent,
+            ]
+        )
+
+        self.session.commit()
+
+        count = (
+            self.repository
+            .purge_bug_reports(
+                created_before=(
+                    self.now
+                    - timedelta(days=90)
+                )
+            )
+        )
+
+        self.assertEqual(
+            count,
+            1,
+        )
+
+        remaining = {
+            item.id
+            for item in self.session.query(
+                BugReportModel
+            ).all()
+        }
+
+        self.assertEqual(
+            remaining,
+            {"recent-report"},
+        )
+
 
     def test_purge_only_old_user_matches(
         self,

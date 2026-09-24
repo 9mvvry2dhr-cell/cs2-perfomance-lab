@@ -488,6 +488,79 @@ class FindingModel(Base):
         back_populates="findings",
     )
 
+class BugReportModel(Base):
+    __tablename__ = "bug_reports"
+
+    __table_args__ = (
+        CheckConstraint(
+            "category IN "
+            "('analysis', 'statistics', 'ai', 'ui', 'other')",
+            name="ck_bug_reports_category",
+        ),
+        Index(
+            "ix_bug_reports_owner_steam_id",
+            "owner_steam_id",
+        ),
+        Index(
+            "ix_bug_reports_created_at",
+            "created_at",
+        ),
+    )
+
+    id: Mapped[str] = mapped_column(
+        String(36),
+        primary_key=True,
+        default=lambda: str(uuid4()),
+    )
+
+    owner_steam_id: Mapped[str] = mapped_column(
+        String(32),
+        ForeignKey(
+            "users.steam_id",
+            ondelete="CASCADE",
+        ),
+        nullable=False,
+    )
+
+    category: Mapped[str] = mapped_column(
+        String(16),
+        nullable=False,
+    )
+
+    message: Mapped[str] = mapped_column(
+        Text,
+        nullable=False,
+    )
+
+    match_id: Mapped[str | None] = mapped_column(
+        String(128),
+        ForeignKey(
+            "matches.match_id",
+            ondelete="SET NULL",
+        ),
+        nullable=True,
+        index=True,
+    )
+
+    job_id: Mapped[str | None] = mapped_column(
+        String(36),
+        ForeignKey(
+            "analysis_jobs.id",
+            ondelete="SET NULL",
+        ),
+        nullable=True,
+        index=True,
+    )
+
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=False,
+        default=lambda: datetime.now(
+            timezone.utc
+        ),
+    )
+
+
 class AnalysisJobModel(Base):
     __tablename__ = "analysis_jobs"
 

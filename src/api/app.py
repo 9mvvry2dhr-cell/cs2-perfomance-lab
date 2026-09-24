@@ -39,6 +39,7 @@ from src.auth.steam_profile import fetch_steam_profile
 from src.api.dependencies import (
     dispose_database_resources,
     get_auth_repository,
+    get_bug_report_repository,
     get_analysis_job_repository,
     get_analysis_repository,
     get_current_user,
@@ -48,6 +49,8 @@ from src.api.dependencies import (
 )
 from src.api.schemas import (
     AnalysisJobResponse,
+    BugReportCreateRequest,
+    BugReportResponse,
     CurrentUserResponse,
     HealthResponse,
     MatchAnalysisResponse,
@@ -58,6 +61,10 @@ from src.api.schemas import (
 from src.database.auth_repository import (
     AuthRepository,
     DEFAULT_SESSION_LIFETIME,
+)
+from src.database.bug_report_repository import (
+    BugReportReferenceError,
+    BugReportRepository,
 )
 from src.database.job_repository import AnalysisJobRepository
 from src.database.repository import AnalysisRepository
@@ -789,6 +796,55 @@ def get_my_history_summary(
     return (
         PlayerHistorySummaryResponse
         .model_validate(public_summary)
+    )
+
+
+@app.post(
+    "/bug-reports",
+    response_model=BugReportResponse,
+    status_code=status.HTTP_201_CREATED,
+)
+def create_bug_report(
+    payload: BugReportCreateRequest,
+    repository: Annotated[
+        BugReportRepository,
+        Depends(get_bug_report_repository),
+    ],
+    current_user: Annotated[
+        CurrentUser,
+        Depends(get_current_user),
+    ],
+) -> BugReportResponse:
+    try:
+        report = repository.create_report(
+            owner_steam_id=(
+                current_user.steam_id
+            ),
+            category=payload.category,
+            message=payload.message,
+            match_id=payload.match_id,
+            job_id=payload.job_id,
+        )
+
+    except BugReportReferenceError as exc:
+        # Do not reveal whether another user's
+        # match/job actually exists.
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=(
+                "Referenced match or "
+                "analysis job not found"
+            ),
+        ) from exc
+
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(exc),
+        ) from exc
+
+    return BugReportResponse.model_validate(
+        report
     )
 
 

@@ -7,6 +7,7 @@ from sqlalchemy.orm import sessionmaker
 from src.database.models import (
     AnalysisJobModel,
     AuthSessionModel,
+    BugReportModel,
     Base,
     MatchModel,
     UserMatchModel,
@@ -324,6 +325,21 @@ class PrivacyRepositoryTest(
             match_id=match_id,
         )
 
+        self.session.add(
+            BugReportModel(
+                id="export-report",
+                owner_steam_id=(
+                    self.target_steam_id
+                ),
+                category="statistics",
+                message="ADR выглядит неверно.",
+                match_id=match_id,
+                created_at=self.now,
+            )
+        )
+
+        self.session.commit()
+
         exported = (
             self.repository
             .export_user_data(
@@ -358,6 +374,18 @@ class PrivacyRepositoryTest(
         self.assertNotIn(
             "storage_key",
             exported["analysis_jobs"][0],
+        )
+
+        self.assertEqual(
+            len(exported["bug_reports"]),
+            1,
+        )
+
+        self.assertEqual(
+            exported["bug_reports"][0][
+                "category"
+            ],
+            "statistics",
         )
 
         self.assertEqual(
@@ -429,6 +457,11 @@ class PrivacyRepositoryTest(
 
         self.assertEqual(
             exported["analysis_jobs"],
+            [],
+        )
+
+        self.assertEqual(
+            exported["bug_reports"],
             [],
         )
 
@@ -527,6 +560,31 @@ class PrivacyRepositoryTest(
             match_id=shared,
         )
 
+        self.session.add_all(
+            [
+                BugReportModel(
+                    id="target-report",
+                    owner_steam_id=(
+                        self.target_steam_id
+                    ),
+                    category="ui",
+                    message="UI bug target.",
+                    created_at=self.now,
+                ),
+                BugReportModel(
+                    id="other-report",
+                    owner_steam_id=(
+                        self.other_steam_id
+                    ),
+                    category="ui",
+                    message="UI bug other.",
+                    created_at=self.now,
+                ),
+            ]
+        )
+
+        self.session.commit()
+
         result = (
             self.repository
             .delete_user_data(
@@ -538,6 +596,7 @@ class PrivacyRepositoryTest(
             result,
             DeleteUserDataResult(
                 sessions_deleted=1,
+                bug_reports_deleted=1,
                 jobs_deleted=2,
                 user_matches_deleted=2,
                 user_deleted=1,
@@ -722,6 +781,7 @@ class PrivacyRepositoryTest(
             result,
             DeleteUserDataResult(
                 sessions_deleted=0,
+                bug_reports_deleted=0,
                 jobs_deleted=0,
                 user_matches_deleted=0,
                 user_deleted=0,

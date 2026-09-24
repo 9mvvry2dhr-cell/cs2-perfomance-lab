@@ -8,6 +8,7 @@ from sqlalchemy.orm import Session, selectinload
 from src.database.models import (
     AnalysisJobModel,
     AuthSessionModel,
+    BugReportModel,
     FindingModel,
     MatchModel,
     MatchPlayerModel,
@@ -24,6 +25,7 @@ class ActiveUserAnalysisError(RuntimeError):
 @dataclass(frozen=True)
 class DeleteUserDataResult:
     sessions_deleted: int
+    bug_reports_deleted: int
     jobs_deleted: int
     user_matches_deleted: int
     user_deleted: int
@@ -72,6 +74,19 @@ class PrivacyRepository:
                     == steam_id
                 ).order_by(
                     AnalysisJobModel.created_at
+                )
+            ).all()
+        )
+
+        bug_reports = list(
+            self.session.scalars(
+                select(
+                    BugReportModel
+                ).where(
+                    BugReportModel.owner_steam_id
+                    == steam_id
+                ).order_by(
+                    BugReportModel.created_at
                 )
             ).all()
         )
@@ -350,6 +365,19 @@ class PrivacyRepository:
                 }
                 for job in jobs
             ],
+            "bug_reports": [
+                {
+                    "id": report.id,
+                    "category": report.category,
+                    "message": report.message,
+                    "match_id": report.match_id,
+                    "job_id": report.job_id,
+                    "created_at": (
+                        report.created_at.isoformat()
+                    ),
+                }
+                for report in bug_reports
+            ],
             "matches": exported_matches,
         }
 
@@ -399,6 +427,15 @@ class PrivacyRepository:
                         == steam_id
                     )
                 ).all()
+            )
+
+            bug_reports_result = (
+                self.session.execute(
+                    delete(BugReportModel).where(
+                        BugReportModel.owner_steam_id
+                        == steam_id
+                    )
+                )
             )
 
             sessions_result = self.session.execute(
@@ -509,6 +546,9 @@ class PrivacyRepository:
             return DeleteUserDataResult(
                 sessions_deleted=int(
                     sessions_result.rowcount or 0
+                ),
+                bug_reports_deleted=int(
+                    bug_reports_result.rowcount or 0
                 ),
                 jobs_deleted=int(
                     jobs_result.rowcount or 0

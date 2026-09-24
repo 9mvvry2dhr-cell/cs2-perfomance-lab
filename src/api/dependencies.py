@@ -21,6 +21,9 @@ from src.ai.client import (
 )
 from src.auth.session import SESSION_COOKIE_NAME
 from src.database.auth_repository import AuthRepository
+from src.database.bug_report_repository import (
+    BugReportRepository,
+)
 from src.database.connection import (
     create_db_engine,
     create_session_factory,
@@ -67,6 +70,17 @@ def get_auth_repository(
     ],
 ) -> AuthRepository:
     return AuthRepository(
+        session
+    )
+
+
+def get_bug_report_repository(
+    session: Annotated[
+        Session,
+        Depends(get_database_session),
+    ],
+) -> BugReportRepository:
+    return BugReportRepository(
         session
     )
 

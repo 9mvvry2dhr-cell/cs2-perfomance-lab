@@ -37,6 +37,16 @@ class FakeMaintenanceRepository:
         )
         return 1
 
+    def purge_bug_reports(
+        self,
+        *,
+        created_before,
+    ):
+        self.calls.append(
+            ("bug_reports", created_before)
+        )
+        return 5
+
     def purge_finished_analysis_jobs(
         self,
         *,
@@ -88,6 +98,7 @@ class MaintenanceRunnerTest(
             session_factory=lambda: session,
             now=self.now,
             job_retention_days=30,
+            bug_report_retention_days=90,
             user_match_retention_days=90,
             repository_factory=(
                 FakeMaintenanceRepository
@@ -98,6 +109,7 @@ class MaintenanceRunnerTest(
             result,
             MaintenanceResult(
                 sessions_deleted=1,
+                bug_reports_deleted=5,
                 jobs_deleted=2,
                 user_matches_deleted=3,
                 matches_deleted=4,
@@ -115,6 +127,11 @@ class MaintenanceRunnerTest(
                 (
                     "sessions",
                     self.now,
+                ),
+                (
+                    "bug_reports",
+                    self.now
+                    - timedelta(days=90),
                 ),
                 (
                     "jobs",
@@ -188,6 +205,15 @@ class MaintenanceRunnerTest(
             run_maintenance_once(
                 session_factory=FakeSession,
                 now=self.now,
+                bug_report_retention_days=0,
+            )
+
+        with self.assertRaises(
+            ValueError
+        ):
+            run_maintenance_once(
+                session_factory=FakeSession,
+                now=self.now,
                 user_match_retention_days=0,
             )
 
@@ -201,6 +227,7 @@ class MaintenanceRunnerTest(
 
             return MaintenanceResult(
                 sessions_deleted=0,
+                bug_reports_deleted=0,
                 jobs_deleted=0,
                 user_matches_deleted=0,
                 matches_deleted=0,
