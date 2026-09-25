@@ -10,12 +10,12 @@ from src.metrics.round_context import (
 )
 
 
-def calculate_clutches(
+def calculate_clutch_metrics(
     parser: RawDemoParser,
-    player_steam_ids: List[str]
-) -> Dict[str, int]:
+    player_steam_ids: List[str],
+) -> tuple[Dict[str, int], Dict[str, int]]:
     """
-    Считает выигранные clutch-ситуации.
+    Считает clutch attempts и выигранные clutch-ситуации.
 
     Clutch win:
         игрок становится единственным живым игроком своей команды,
@@ -31,10 +31,25 @@ def calculate_clutches(
     - отсутствие хардкода на 24 раунда.
 
     Возвращает:
-        {
-            steam_id: clutches_won
-        }
+        (
+            {
+                steam_id: clutch_attempts
+            },
+            {
+                steam_id: clutches_won
+            },
+        )
+
+    Attempt считается один раз за раунд, когда игрок впервые
+    остаётся единственным живым игроком своей команды против
+    минимум одного живого соперника.
     """
+
+    clutch_attempts = {
+        str(steam_id): 0
+        for steam_id in player_steam_ids
+        if valid_sid(steam_id)
+    }
 
     clutches = {
         str(steam_id): 0
@@ -51,7 +66,7 @@ def calculate_clutches(
     )
 
     if not rounds:
-        return clutches
+        return clutch_attempts, clutches
 
     # ------------------------------------------------------------------
     # PLAYERS / TEAMS AT FREEZE END
@@ -76,7 +91,7 @@ def calculate_clutches(
             "⚠️ Ошибка при получении team state "
             f"для Clutch: {exc}"
         )
-        return clutches
+        return clutch_attempts, clutches
 
     if (
         df_teams is None
@@ -85,7 +100,7 @@ def calculate_clutches(
         or "steamid" not in df_teams.columns
         or "team_num" not in df_teams.columns
     ):
-        return clutches
+        return clutch_attempts, clutches
 
     round_by_snapshot = {
         round_data.freeze_end_tick:
@@ -160,14 +175,14 @@ def calculate_clutches(
             f"⚠️ Ошибка при парсинге player_death "
             f"для Clutch: {exc}"
         )
-        return clutches
+        return clutch_attempts, clutches
 
     if (
         df_deaths is None
         or df_deaths.empty
         or "tick" not in df_deaths.columns
     ):
-        return clutches
+        return clutch_attempts, clutches
 
     df_deaths = df_deaths.copy()
 
@@ -311,7 +326,18 @@ def calculate_clutches(
             detect_clutch_candidates()
 
         # --------------------------------------------------------------
-        # Проверяем кандидатов после окончания раунда.
+        # Каждый кандидат = одна подтверждённая clutch opportunity
+        # в этом раунде независимо от результата.
+        # --------------------------------------------------------------
+
+        for player in candidates:
+            if player not in clutch_attempts:
+                clutch_attempts[player] = 0
+
+            clutch_attempts[player] += 1
+
+        # --------------------------------------------------------------
+        # Проверяем, какие из attempts были выиграны.
         # --------------------------------------------------------------
 
         for player, candidate in candidates.items():
@@ -333,5 +359,21 @@ def calculate_clutches(
                 clutches[player] = 0
 
             clutches[player] += 1
+
+    return clutch_attempts, clutches
+
+
+
+def calculate_clutches(
+    parser: RawDemoParser,
+    player_steam_ids: List[str],
+) -> Dict[str, int]:
+    """
+    Backward-compatible wrapper returning only clutch wins.
+    """
+    _, clutches = calculate_clutch_metrics(
+        parser,
+        player_steam_ids,
+    )
 
     return clutches
