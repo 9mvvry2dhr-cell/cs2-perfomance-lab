@@ -28,7 +28,8 @@ class TestPlayerAnalysis(unittest.TestCase):
             flash_duration=34.1,
             entry_kills=2,
             entry_deaths=1,
-            clutches_won=0,
+            clutch_attempts=3,
+            clutches_won=1,
             trade_kills=3,
             traded_deaths=4,
             kast_rounds=16,
@@ -96,6 +97,16 @@ class TestPlayerAnalysis(unittest.TestCase):
         self.assertEqual(
             analysis.stats.kast_pct,
             66.7,
+        )
+
+        self.assertEqual(
+            analysis.stats.clutch_attempts,
+            3,
+        )
+
+        self.assertEqual(
+            analysis.stats.clutches_won,
+            1,
         )
 
         self.assertEqual(
