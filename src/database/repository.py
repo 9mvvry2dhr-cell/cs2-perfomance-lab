@@ -175,6 +175,7 @@ class AnalysisRepository:
                     inferno_damage=stats.inferno_damage,
                     enemies_flashed=stats.enemies_flashed,
                     flash_duration=stats.flash_duration,
+                    clutch_attempts=stats.clutch_attempts,
                     clutches_won=stats.clutches_won,
                     trade_kills=stats.trade_kills,
                     traded_deaths=stats.traded_deaths,
@@ -461,6 +462,9 @@ class AnalysisRepository:
                 ),
                 five_k_rounds=(
                     player_model.five_k_rounds
+                ),
+                clutch_attempts=(
+                    player_model.clutch_attempts
                 ),
             )
 
@@ -761,6 +765,9 @@ class AnalysisRepository:
                         ),
                         five_k_rounds=(
                             player_model.five_k_rounds
+                        ),
+                        clutch_attempts=(
+                            player_model.clutch_attempts
                         ),
                     ),
                     findings=findings,
