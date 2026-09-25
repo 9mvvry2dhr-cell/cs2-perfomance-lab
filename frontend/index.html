@@ -6866,6 +6866,138 @@ button.dashboard-match-row:hover {
     margin-top: 22px;
 }
 
+.profile-help {
+    position: relative;
+    z-index: 40;
+    width: 16px;
+    height: 16px;
+    display: inline-grid;
+    place-items: center;
+    flex: 0 0 auto;
+    margin-left: 6px;
+    padding: 0;
+    border: 1px solid rgba(118,171,215,.30);
+    border-radius: 50%;
+    color: #8fa9bf;
+    background: rgba(7,20,31,.86);
+    font: inherit;
+    font-size: 9px;
+    font-weight: 800;
+    line-height: 1;
+    cursor: help;
+    vertical-align: middle;
+}
+
+.profile-help:hover,
+.profile-help:focus-visible {
+    color: #d9eeff;
+    border-color: rgba(90,178,255,.62);
+    background: rgba(21,54,79,.96);
+    outline: none;
+}
+
+.profile-help-tooltip {
+    position: absolute;
+    z-index: 100;
+    left: 50%;
+    top: calc(100% + 9px);
+    width: 235px;
+    padding: 10px 12px;
+    opacity: 0;
+    visibility: hidden;
+    transform: translate(-50%,-3px);
+    border: 1px solid rgba(88,170,232,.30);
+    border-radius: 11px;
+    color: #d9e8f4;
+    background: rgba(5,17,27,.985);
+    box-shadow: 0 14px 38px rgba(0,0,0,.42);
+    font-size: 11px;
+    font-weight: 520;
+    line-height: 1.5;
+    text-align: left;
+    white-space: normal;
+    overflow-wrap: break-word;
+    pointer-events: none;
+    transition:
+        opacity 120ms ease,
+        visibility 120ms ease,
+        transform 120ms ease;
+}
+
+.profile-help:hover .profile-help-tooltip,
+.profile-help:focus-visible .profile-help-tooltip {
+    opacity: 1;
+    visibility: visible;
+    transform: translate(-50%,0);
+}
+
+.player-profile-hero,
+.player-profile-core,
+.player-profile-core-item,
+.player-profile-section-head,
+.player-dna-list,
+.player-dna-row,
+.player-dna-row-metrics,
+.player-dna-inline {
+    overflow: visible;
+}
+
+.player-profile-core-label-wrap,
+.player-profile-section-title-wrap,
+.player-dna-inline-label-wrap {
+    display: inline-flex;
+    align-items: center;
+    min-width: 0;
+}
+
+.player-profile-core-label-wrap .profile-help {
+    margin-left: 5px;
+}
+
+.player-profile-core-label {
+    font-size: 9px;
+}
+
+.player-profile-meta-line {
+    font-size: 10.5px;
+}
+
+.player-profile-section-note {
+    font-size: 10px;
+}
+
+.player-dna-row-title {
+    font-size: 10px;
+}
+
+.player-dna-row-caption {
+    font-size: 9.5px;
+}
+
+.player-dna-row-secondary-label {
+    font-size: 9.5px;
+}
+
+.player-dna-inline-label {
+    font-size: 9px;
+}
+
+.player-dna-inline-value {
+    font-size: 12px;
+}
+
+.player-profile-signal-title {
+    font-size: 10px;
+}
+
+.player-profile-signal-name {
+    font-size: 11px;
+}
+
+.player-profile-signal-count {
+    font-size: 10px;
+}
+
 .player-profile-history-v3 .player-history-match {
     padding-left: 6px;
     padding-right: 6px;
@@ -12351,6 +12483,40 @@ function appendProfileSignalBox(
 
 
 
+function makeProfileHelp(
+    text,
+    label = "Что означает этот показатель"
+) {
+    const button =
+        historyElement(
+            "button",
+            "profile-help",
+            "?"
+        );
+
+    button.type =
+        "button";
+
+    button.setAttribute(
+        "aria-label",
+        label
+    );
+
+    const tooltip =
+        historyElement(
+            "span",
+            "profile-help-tooltip",
+            text
+        );
+
+    button.appendChild(
+        tooltip
+    );
+
+    return button;
+}
+
+
 function makePlayerDnaRow(
     kind,
     title,
@@ -12424,12 +12590,32 @@ function makePlayerDnaRow(
                     "player-dna-inline"
                 );
 
-            metric.append(
+            const metricLabel =
+                historyElement(
+                    "div",
+                    "player-dna-inline-label-wrap"
+                );
+
+            metricLabel.appendChild(
                 historyElement(
                     "div",
                     "player-dna-inline-label",
                     item[0]
-                ),
+                )
+            );
+
+            if (item[2]) {
+                metricLabel.appendChild(
+                    makeProfileHelp(
+                        item[2],
+                        "Что означает "
+                        + item[0]
+                    )
+                );
+            }
+
+            metric.append(
+                metricLabel,
                 historyElement(
                     "div",
                     "player-dna-inline-value",
@@ -12749,12 +12935,14 @@ function renderPlayerHistory(
                 stats.kd,
                 2
             ),
+            "Соотношение убийств к смертям. Показывает, сколько убийств в среднем приходится на одну смерть.",
         ],
         [
             "ADR",
             formatNumber(
                 stats.adr
             ),
+            "Average Damage per Round — средний урон за раунд. Помогает оценить стабильный боевой импакт, даже когда килла не было.",
         ],
         [
             "KAST",
@@ -12762,6 +12950,7 @@ function renderPlayerHistory(
                 stats.kast_pct
             )
             + "%",
+            "Доля раундов, где был килл, ассист, выживание или тебя разменяли. Показывает стабильность участия в раундах.",
         ],
         [
             "HS",
@@ -12769,25 +12958,42 @@ function renderPlayerHistory(
                 stats.headshot_pct
             )
             + "%",
+            "Доля убийств в голову. Характеризует точность и стиль стрельбы, но сама по себе не измеряет общий импакт.",
         ],
         [
             "KPR",
             kpr.toFixed(2),
+            "Kills per Round — убийства за раунд. Показывает частоту фрагов независимо от количества смертей.",
         ],
     ].forEach(
-        ([label, value]) => {
+        ([label, value, helpText]) => {
             const item =
                 historyElement(
                     "div",
                     "player-profile-core-item"
                 );
 
-            item.append(
+            const labelWrap =
+                historyElement(
+                    "div",
+                    "player-profile-core-label-wrap"
+                );
+
+            labelWrap.append(
                 historyElement(
                     "div",
                     "player-profile-core-label",
                     label
                 ),
+                makeProfileHelp(
+                    helpText,
+                    "Что означает "
+                    + label
+                )
+            );
+
+            item.append(
+                labelWrap,
                 historyElement(
                     "div",
                     "player-profile-core-value",
@@ -12822,12 +13028,26 @@ function renderPlayerHistory(
             "player-profile-section-head"
         );
 
-    dnaHead.append(
+    const dnaTitleWrap =
+        historyElement(
+            "div",
+            "player-profile-section-title-wrap"
+        );
+
+    dnaTitleWrap.append(
         historyElement(
             "div",
             "player-profile-section-title",
             "PLAYER DNA"
         ),
+        makeProfileHelp(
+            "Player DNA — не рейтинг и не оценка уровня. Это профиль того, как ты играешь: первые контакты, размены, utility и импакт по раундам.",
+            "Что такое Player DNA"
+        )
+    );
+
+    dnaHead.append(
+        dnaTitleWrap,
         historyElement(
             "div",
             "player-profile-section-note",
@@ -12909,6 +13129,7 @@ function renderPlayerHistory(
                 [
                     "DPR",
                     dpr.toFixed(2),
+                    "Deaths per Round — среднее количество смертей за раунд. Чем выше значение, тем чаще игрок погибает относительно сыгранных раундов.",
                 ],
             ]
         ),
