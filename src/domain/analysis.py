@@ -40,8 +40,9 @@ class PlayerStats:
     five_k_rounds: int
 
     # None marks legacy persisted matches that predate
-    # clutch-opportunity tracking.
+    # opportunity tracking.
     clutch_attempts: int | None = None
+    trade_opportunities: int | None = None
 
 
 @dataclass(frozen=True)
@@ -267,6 +268,9 @@ def build_player_analysis(
         ),
         clutch_attempts=int(
             player.clutch_attempts
+        ),
+        trade_opportunities=int(
+            player.trade_opportunities
         ),
     )
 
