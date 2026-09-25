@@ -337,6 +337,10 @@ class MatchPlayerModel(Base):
     enemies_flashed: Mapped[int] = mapped_column(Integer, nullable=False)
     flash_duration: Mapped[float] = mapped_column(Float, nullable=False)
 
+    clutch_attempts: Mapped[int | None] = mapped_column(
+        Integer,
+        nullable=True,
+    )
     clutches_won: Mapped[int] = mapped_column(Integer, nullable=False)
     trade_kills: Mapped[int] = mapped_column(Integer, nullable=False)
     traded_deaths: Mapped[int] = mapped_column(Integer, nullable=False)
