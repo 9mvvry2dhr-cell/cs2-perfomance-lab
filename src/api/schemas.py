@@ -160,6 +160,9 @@ class PlayerMatchHistoryResponse(ApiModel):
     player_name: str
     stats: PlayerStatsResponse
     findings: list[FindingResponse]
+    sides: dict[str, SideStatsResponse] = Field(
+        default_factory=dict
+    )
 
     player_result: Literal[
         "win",
