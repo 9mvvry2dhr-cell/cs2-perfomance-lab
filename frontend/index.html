@@ -6851,6 +6851,87 @@ button.dashboard-match-row:hover {
     white-space: nowrap;
 }
 
+.player-dna-verdict {
+    margin-top: 18px;
+    overflow: hidden;
+    border: 1px solid rgba(137,167,187,.13);
+    border-radius: 13px;
+    background:
+        linear-gradient(
+            135deg,
+            rgba(13,32,45,.68),
+            rgba(6,17,26,.42)
+        );
+}
+
+.player-dna-verdict-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 14px 16px;
+    border-bottom: 1px solid rgba(137,167,187,.09);
+}
+
+.player-dna-verdict-title-wrap {
+    display: inline-flex;
+    align-items: center;
+}
+
+.player-dna-verdict-title {
+    color: #e4edf2;
+    font-size: 10px;
+    font-weight: 820;
+    letter-spacing: .075em;
+    text-transform: uppercase;
+}
+
+.player-dna-verdict-sub {
+    color: #71899b;
+    font-size: 9.5px;
+}
+
+.player-dna-verdict-grid {
+    display: grid;
+    grid-template-columns: repeat(3,minmax(0,1fr));
+}
+
+.player-dna-verdict-item {
+    min-width: 0;
+    padding: 15px 16px 16px;
+    border-left: 1px solid rgba(137,167,187,.08);
+}
+
+.player-dna-verdict-item:first-child {
+    border-left: 0;
+}
+
+.player-dna-verdict-label {
+    font-size: 8.5px;
+    font-weight: 820;
+    letter-spacing: .07em;
+    text-transform: uppercase;
+}
+
+.player-dna-verdict-item.positive .player-dna-verdict-label {
+    color: #72d1a8;
+}
+
+.player-dna-verdict-item.growth .player-dna-verdict-label {
+    color: #e5ac53;
+}
+
+.player-dna-verdict-item.focus .player-dna-verdict-label {
+    color: #69b8ef;
+}
+
+.player-dna-verdict-text {
+    margin-top: 7px;
+    color: #aec0cb;
+    font-size: 11px;
+    line-height: 1.55;
+}
+
 .player-profile-signals-v3 {
     display: grid;
     grid-template-columns: repeat(2,minmax(0,1fr));
@@ -7024,8 +7105,24 @@ button.dashboard-match-row:hover {
     }
 
     .player-profile-core,
-    .player-profile-signals-v3 {
+    .player-profile-signals-v3,
+    .player-dna-verdict-grid {
         grid-template-columns: 1fr;
+    }
+
+    .player-dna-verdict-item {
+        border-left: 0;
+        border-top: 1px solid rgba(137,167,187,.08);
+    }
+
+    .player-dna-verdict-item:first-child {
+        border-top: 0;
+    }
+
+    .player-dna-verdict-head {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 5px;
     }
 
     .player-profile-core-item {
@@ -12702,6 +12799,241 @@ function applyProfileAvatar(
 }
 
 
+function buildPlayerDnaVerdict(
+    data
+) {
+    const positive = [];
+    const growth = [];
+
+    if (
+        data.openingDuels >= 6
+        && data.openingSuccess >= 55
+    ) {
+        positive.push(
+            "Первые контакты сейчас дают плюс: "
+            + data.openingSuccess.toFixed(1)
+            + "% успешных opening-дуэлей при участии в "
+            + data.openingInvolvement.toFixed(1)
+            + "% раундов."
+        );
+    } else if (
+        data.openingDuels >= 6
+        && data.openingSuccess < 45
+    ) {
+        growth.push(
+            "Первый контакт забирает слишком много раундов: успешность "
+            + data.openingSuccess.toFixed(1)
+            + "%. Объём opening лучше не увеличивать, пока качество дуэлей не вырастет."
+        );
+    }
+
+    if (
+        data.tradeOpportunities >= 5
+    ) {
+        if (
+            data.tradeConversion >= 60
+        ) {
+            positive.push(
+                "Размены работают: конвертировано "
+                + data.tradeConversion.toFixed(1)
+                + "% доступных trade-ситуаций."
+            );
+        } else if (
+            data.tradeConversion < 45
+        ) {
+            growth.push(
+                "Главная потеря сейчас в разменах: реализовано только "
+                + data.tradeConversion.toFixed(1)
+                + "% зафиксированных trade-возможностей."
+            );
+        }
+    }
+
+    if (
+        data.rounds >= 12
+        && data.utilityPerRound >= 8
+    ) {
+        positive.push(
+            "HE и molotov уже дают заметный урон: "
+            + data.utilityPerRound.toFixed(1)
+            + " damage за раунд."
+        );
+    } else if (
+        data.rounds >= 12
+        && data.utilityPerRound <= 1
+    ) {
+        growth.push(
+            "Damage-utility почти не конвертируется в урон: "
+            + data.utilityPerRound.toFixed(1)
+            + " за раунд."
+        );
+    }
+
+    if (
+        data.rounds >= 12
+        && data.flashedPerRound >= .75
+        && data.flashSecondsPerRound >= 1.8
+    ) {
+        positive.push(
+            "Флешки уже дают сильный подтверждённый импакт: "
+            + data.flashedPerRound.toFixed(2)
+            + " врага и "
+            + data.flashSecondsPerRound.toFixed(2)
+            + " сек. ослепления за раунд."
+        );
+    } else if (
+        data.rounds >= 12
+        && data.flashedPerRound <= .10
+        && data.flashSecondsPerRound <= .15
+    ) {
+        growth.push(
+            "Флешки почти не создают окно для команды: "
+            + data.flashedPerRound.toFixed(2)
+            + " врага за раунд."
+        );
+    }
+
+    if (
+        data.multikillRounds >= 6
+        && data.multikillRate >= 33
+    ) {
+        positive.push(
+            "Есть стабильный раундовый импакт: "
+            + data.multikillRate.toFixed(1)
+            + "% раундов заканчиваются для тебя 2K+."
+        );
+    }
+
+    if (!positive.length) {
+        positive.push(
+            "Пока нет одного показателя, который уверенно выделяется как закреплённая сильная сторона. Это не минус — выборка ещё формируется."
+        );
+    }
+
+    if (!growth.length) {
+        if (
+            data.rounds >= 12
+            && (
+                data.utilityPerRound < 8
+                || data.flashedPerRound < .75
+            )
+        ) {
+            growth.push(
+                "Явной просадки нет. Ближайший резерв роста — utility: сейчас она полезна, но ещё не выходит на уровень сильного повторяющегося сигнала."
+            );
+        } else {
+            growth.push(
+                "Явной устойчивой просадки по Player DNA пока не видно."
+            );
+        }
+    }
+
+    let focus;
+
+    if (
+        data.openingDuels >= 6
+        && data.openingSuccess < 45
+    ) {
+        focus = (
+            "Следующие матчи: не добавляй новых соло-opening. "
+            + "Перед первым пиком требуй одно из двух условий — флешку или игрока на мгновенный размен. "
+            + "Смотрим, растёт ли opening success без падения участия."
+        );
+    } else if (
+        data.tradeOpportunities >= 5
+        && data.tradeConversion < 45
+    ) {
+        focus = (
+            "Следующий фокус — дистанция до первого номера. "
+            + "После его контакта не задерживай ответный пик: держись достаточно близко, чтобы уложить размен в 5-секундное окно. "
+            + "Проверяем рост trade conversion."
+        );
+    } else if (
+        data.rounds >= 12
+        && data.utilityPerRound <= 1
+    ) {
+        focus = (
+            "В ближайших матчах перенеси часть HE/molotov с формального контроля на конкретный контакт: choke, ретейк или выбивание позиции. "
+            + "Смотрим, растёт ли utility damage / round."
+        );
+    } else if (
+        data.rounds >= 12
+        && data.flashedPerRound <= .10
+        && data.flashSecondsPerRound <= .15
+    ) {
+        focus = (
+            "Добавь подготовленную флешку перед ключевым командным контактом вместо поздней флешки после начала перестрелки. "
+            + "Смотрим enemies flashed и blind time / round."
+        );
+    } else if (
+        data.openingDuels >= 6
+        && data.openingSuccess >= 55
+        && data.rounds >= 12
+        && (
+            data.utilityPerRound < 8
+            || data.flashedPerRound < .75
+        )
+    ) {
+        focus = (
+            "Opening сейчас лучше не ломать. Следующий кандидат для роста — подготовка первого контакта utility: "
+            + "добавляй флешку или damage-гранату перед запланированной дуэлью и проверяй, растёт ли utility impact без просадки opening success."
+        );
+    } else if (
+        data.tradeKnownMatches > 0
+        && data.tradeOpportunities < 5
+    ) {
+        focus = (
+            "Сохрани текущий стиль и отдельно следи за вторым номером: новых данных по trade-возможностям пока мало. "
+            + "Нам нужны ещё реальные окна для размена, чтобы понять, теряются ли они системно."
+        );
+    } else {
+        focus = (
+            "Не меняй сразу весь стиль. Выбери один повторяющийся сигнал из следующих матчей и меняй только связанную с ним привычку — так будет видно, что реально дало эффект."
+        );
+    }
+
+    return {
+        positive:
+            positive[0],
+        growth:
+            growth[0],
+        focus,
+    };
+}
+
+
+function appendDnaVerdictItem(
+    container,
+    kind,
+    label,
+    text
+) {
+    const item =
+        historyElement(
+            "div",
+            "player-dna-verdict-item "
+            + kind
+        );
+
+    item.append(
+        historyElement(
+            "div",
+            "player-dna-verdict-label",
+            label
+        ),
+        historyElement(
+            "div",
+            "player-dna-verdict-text",
+            text
+        )
+    );
+
+    container.appendChild(
+        item
+    );
+}
+
+
 function renderPlayerHistory(
     summary,
     matches
@@ -12786,6 +13118,44 @@ function renderPlayerHistory(
         profileRate(
             tradeKills,
             rounds
+        );
+
+    const tradeKnownMatches =
+        matches.filter(
+            item =>
+                item.stats
+                && item.stats.trade_opportunities
+                !== null
+                && item.stats.trade_opportunities
+                !== undefined
+        );
+
+    const tradeOpportunitiesKnown =
+        tradeKnownMatches.reduce(
+            (sum, item) =>
+                sum
+                + Number(
+                    item.stats.trade_opportunities
+                    || 0
+                ),
+            0
+        );
+
+    const tradeKillsKnown =
+        tradeKnownMatches.reduce(
+            (sum, item) =>
+                sum
+                + Number(
+                    item.stats.trade_kills
+                    || 0
+                ),
+            0
+        );
+
+    const tradeConversion =
+        profilePercent(
+            tradeKillsKnown,
+            tradeOpportunitiesKnown
         );
 
     const utilityDamage =
@@ -13144,19 +13514,34 @@ function renderPlayerHistory(
         makePlayerDnaRow(
             "trade",
             "РАЗМЕНЫ",
-            String(
-                tradeKills
-            ),
-            "подтверждённых trade kills",
+            tradeKnownMatches.length
+                ? (
+                    tradeKillsKnown
+                    + " / "
+                    + tradeOpportunitiesKnown
+                )
+                : String(
+                    tradeKills
+                ),
+            tradeKnownMatches.length
+                ? "успешные размены / возможности"
+                : "подтверждённых trade kills",
             tradedDeaths
             + " / "
             + deaths,
             "твоих смертей разменяно",
             [
                 [
-                    "TRADE / РАУНД",
-                    tradePerRound
-                        .toFixed(2),
+                    "TRADE CONV.",
+                    tradeKnownMatches.length
+                        && tradeOpportunitiesKnown > 0
+                        ? (
+                            tradeConversion
+                                .toFixed(1)
+                            + "%"
+                        )
+                        : "—",
+                    "Trade conversion — доля успешных разменов среди зафиксированных возможностей. CS2Lab считает возможность, когда союзник погибает, ты жив и находишься не дальше 900 игровых единиц от убийцы. Успешный trade — убийство этого соперника в течение 5 секунд.",
                 ],
                 [
                     "РАЗМЕНЕНО",
@@ -13266,6 +13651,105 @@ function renderPlayerHistory(
 
     body.appendChild(
         dna
+    );
+
+    const verdictData =
+        buildPlayerDnaVerdict(
+            {
+                rounds,
+                openingDuels,
+                openingSuccess,
+                openingInvolvement,
+                tradeKnownMatches:
+                    tradeKnownMatches.length,
+                tradeOpportunities:
+                    tradeOpportunitiesKnown,
+                tradeConversion,
+                utilityPerRound,
+                flashedPerRound,
+                flashSecondsPerRound,
+                multikillRounds,
+                multikillRate,
+            }
+        );
+
+    const verdict =
+        historyElement(
+            "section",
+            "player-dna-verdict"
+        );
+
+    const verdictHead =
+        historyElement(
+            "div",
+            "player-dna-verdict-head"
+        );
+
+    const verdictTitleWrap =
+        historyElement(
+            "div",
+            "player-dna-verdict-title-wrap"
+        );
+
+    verdictTitleWrap.append(
+        historyElement(
+            "div",
+            "player-dna-verdict-title",
+            "КРАТКИЙ ВЫВОД ПО PLAYER DNA"
+        ),
+        makeProfileHelp(
+            "Это детерминированный вывод CS2Lab по текущим метрикам и порогам, а не ответ AI. Он выбирает один подтверждённый плюс, одну зону роста и один конкретный фокус на следующие матчи.",
+            "Как формируется краткий вывод"
+        )
+    );
+
+    verdictHead.append(
+        verdictTitleWrap,
+        historyElement(
+            "div",
+            "player-dna-verdict-sub",
+            "На основе "
+            + summary.matches_analyzed
+            + " матчей · "
+            + rounds
+            + " раундов"
+        )
+    );
+
+    const verdictGrid =
+        historyElement(
+            "div",
+            "player-dna-verdict-grid"
+        );
+
+    appendDnaVerdictItem(
+        verdictGrid,
+        "positive",
+        "ЧТО УЖЕ РАБОТАЕТ",
+        verdictData.positive
+    );
+
+    appendDnaVerdictItem(
+        verdictGrid,
+        "growth",
+        "ЗОНА РОСТА",
+        verdictData.growth
+    );
+
+    appendDnaVerdictItem(
+        verdictGrid,
+        "focus",
+        "СЛЕДУЮЩИЙ ФОКУС",
+        verdictData.focus
+    );
+
+    verdict.append(
+        verdictHead,
+        verdictGrid
+    );
+
+    body.appendChild(
+        verdict
     );
 
     const recurring =
