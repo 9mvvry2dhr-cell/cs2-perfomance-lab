@@ -140,6 +140,8 @@ class PlayerStatsResponse(ApiModel):
     four_k_rounds: int
     five_k_rounds: int
 
+    clutch_attempts: int | None = None
+
 
 class PlayerAnalysisResponse(ApiModel):
     steam_id: str
