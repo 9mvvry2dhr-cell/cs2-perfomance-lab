@@ -28,6 +28,7 @@ class ParsedPlayer:
     clutches_won: int = 0
 
     # Trade
+    trade_opportunities: int = 0
     trade_kills: int = 0
     traded_deaths: int = 0
 
