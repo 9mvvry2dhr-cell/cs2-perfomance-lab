@@ -4747,7 +4747,7 @@ button.dashboard-match-row:hover {
 
 .maps-v3-card {
     position: relative;
-    min-height: 150px;
+    min-height: 126px;
     overflow: hidden;
     padding: 18px;
     border: 1px solid rgba(115,155,184,.17);
@@ -15330,10 +15330,19 @@ document
                             "div",
                             "map-v3-pattern-meta",
                             item.count
-                            + "/"
-                            + item.rate
-                                .toFixed(0)
-                            + "%"
+                            + " из "
+                            + Math.max(
+                                item.count,
+                                Math.round(
+                                    item.count
+                                    / Math.max(
+                                        item.rate,
+                                        0.0001
+                                    )
+                                    * 100
+                                )
+                            )
+                            + " матч."
                         )
                     );
 
@@ -15496,18 +15505,8 @@ document
                 )
             );
 
-            hero.append(
-                title,
-                makeElement(
-                    "div",
-                    "map-v3-record",
-                    "W / L / D · "
-                    + group.stats.wins
-                    + " / "
-                    + group.stats.losses
-                    + " / "
-                    + group.stats.draws
-                )
+            hero.appendChild(
+                title
             );
 
             const content =
@@ -15681,27 +15680,41 @@ document
                 findingFrequency(
                     group.items,
                     true
+                )
+                .filter(
+                    item =>
+                        item.count >= 2
                 );
 
-            appendMapPatternGroup(
-                patterns,
-                "Сильные",
-                frequency.filter(
-                    item =>
-                        item.kind
-                        === "strength"
-                )
-            );
+            if (!frequency.length) {
+                patterns.appendChild(
+                    makeElement(
+                        "div",
+                        "map-v3-empty",
+                        "Пока нет сигнала, который повторился минимум в 2 матчах на этой карте."
+                    )
+                );
+            } else {
+                appendMapPatternGroup(
+                    patterns,
+                    "Сильные",
+                    frequency.filter(
+                        item =>
+                            item.kind
+                            === "strength"
+                    )
+                );
 
-            appendMapPatternGroup(
-                patterns,
-                "Слабые",
-                frequency.filter(
-                    item =>
-                        item.kind
-                        === "weakness"
-                )
-            );
+                appendMapPatternGroup(
+                    patterns,
+                    "Слабые",
+                    frequency.filter(
+                        item =>
+                            item.kind
+                            === "weakness"
+                    )
+                );
+            }
 
             const recent =
                 makeElement(
@@ -15795,16 +15808,6 @@ document
                                     + "%"
                                 )
                         )
-                    ),
-                    makeElement(
-                        "div",
-                        "maps-v3-card-record",
-                        "W / L / D · "
-                        + group.stats.wins
-                        + " / "
-                        + group.stats.losses
-                        + " / "
-                        + group.stats.draws
                     )
                 );
 
@@ -16566,10 +16569,19 @@ document
                             "div",
                             "stats-v3-pattern-rate",
                             item.count
-                            + "/"
-                            + item.rate
-                                .toFixed(0)
-                            + "%"
+                            + " из "
+                            + Math.max(
+                                item.count,
+                                Math.round(
+                                    item.count
+                                    / Math.max(
+                                        item.rate,
+                                        0.0001
+                                    )
+                                    * 100
+                                )
+                            )
+                            + " матч."
                         )
                     );
 
@@ -16886,6 +16898,10 @@ document
         const frequency =
             findingFrequency(
                 matches
+            )
+            .filter(
+                item =>
+                    item.count >= 2
             );
 
         const patterns =
@@ -16898,39 +16914,50 @@ document
             makeElement(
                 "div",
                 "map-v3-section-label",
-                "Какие паттерны возвращаются"
+                "Повторяющиеся сигналы"
             )
         );
 
-        const columns =
-            makeElement(
-                "div",
-                "stats-v3-pattern-columns"
+        if (!frequency.length) {
+            patterns.appendChild(
+                makeElement(
+                    "div",
+                    "map-v3-empty",
+                    "Пока ни один сильный или слабый сигнал не повторился минимум в 2 матчах. "
+                    + "Когда паттерн начнёт повторяться, он появится здесь."
+                )
+            );
+        } else {
+            const columns =
+                makeElement(
+                    "div",
+                    "stats-v3-pattern-columns"
+                );
+
+            appendStatsPatternColumn(
+                columns,
+                "Сильные",
+                frequency.filter(
+                    item =>
+                        item.kind
+                        === "strength"
+                )
             );
 
-        appendStatsPatternColumn(
-            columns,
-            "Сильные сигналы",
-            frequency.filter(
-                item =>
-                    item.kind
-                    === "strength"
-            )
-        );
+            appendStatsPatternColumn(
+                columns,
+                "Слабые",
+                frequency.filter(
+                    item =>
+                        item.kind
+                        === "weakness"
+                )
+            );
 
-        appendStatsPatternColumn(
-            columns,
-            "Слабые сигналы",
-            frequency.filter(
-                item =>
-                    item.kind
-                    === "weakness"
-            )
-        );
-
-        patterns.appendChild(
-            columns
-        );
+            patterns.appendChild(
+                columns
+            );
+        }
 
         placeholderBody.appendChild(
             patterns
@@ -16972,7 +16999,7 @@ document
             statsNav,
             "СТАТИСТИКА",
             "Динамика игры",
-            "Общий срез, форма последних матчей и повторяющиеся паттерны. Расчёт идёт по последним 100 анализам."
+            "Динамика показателей от матча к матчу и сигналы, которые действительно начинают повторяться."
         );
 
         try {
