@@ -2,7 +2,11 @@ import unittest
 
 import pandas as pd
 
-from src.metrics.trade import calculate_trade_metrics
+from src.metrics.trade import (
+    calculate_trade_metrics,
+    calculate_trade_metrics_v2,
+    calculate_trade_opportunities,
+)
 
 
 class FakeDemoParser:
@@ -301,6 +305,203 @@ class TestTradeMetrics(unittest.TestCase):
 
         self.assertEqual(traded_deaths["A"], 0)
         self.assertEqual(trade_kills["B"], 0)
+
+    def test_trade_opportunity_counts_nearby_alive_teammate(self):
+        parser = FakeDemoParser(
+            deaths=[
+                {
+                    "tick": 300,
+                    "game_time": 10.0,
+                    "attacker_steamid": "X",
+                    "user_steamid": "A",
+                },
+            ],
+            team_rows=[
+                {
+                    "tick": 300,
+                    "steamid": "X",
+                    "team_num": 3,
+                    "health": 100,
+                    "X": 0.0,
+                    "Y": 0.0,
+                    "Z": 0.0,
+                },
+                {
+                    "tick": 300,
+                    "steamid": "A",
+                    "team_num": 2,
+                    "health": 0,
+                    "X": 100.0,
+                    "Y": 0.0,
+                    "Z": 0.0,
+                },
+                {
+                    "tick": 300,
+                    "steamid": "B",
+                    "team_num": 2,
+                    "health": 100,
+                    "X": 500.0,
+                    "Y": 0.0,
+                    "Z": 0.0,
+                },
+            ],
+        )
+
+        opportunities = calculate_trade_opportunities(
+            parser,
+            ["A", "B", "X"],
+        )
+
+        self.assertEqual(
+            opportunities["B"],
+            1,
+        )
+
+        self.assertEqual(
+            opportunities["A"],
+            0,
+        )
+
+    def test_trade_opportunity_ignores_distant_teammate(self):
+        parser = FakeDemoParser(
+            deaths=[
+                {
+                    "tick": 300,
+                    "game_time": 10.0,
+                    "attacker_steamid": "X",
+                    "user_steamid": "A",
+                },
+            ],
+            team_rows=[
+                {
+                    "tick": 300,
+                    "steamid": "X",
+                    "team_num": 3,
+                    "health": 100,
+                    "X": 0.0,
+                    "Y": 0.0,
+                    "Z": 0.0,
+                },
+                {
+                    "tick": 300,
+                    "steamid": "A",
+                    "team_num": 2,
+                    "health": 0,
+                    "X": 100.0,
+                    "Y": 0.0,
+                    "Z": 0.0,
+                },
+                {
+                    "tick": 300,
+                    "steamid": "B",
+                    "team_num": 2,
+                    "health": 100,
+                    "X": 1200.0,
+                    "Y": 0.0,
+                    "Z": 0.0,
+                },
+            ],
+        )
+
+        opportunities = calculate_trade_opportunities(
+            parser,
+            ["A", "B", "X"],
+        )
+
+        self.assertEqual(
+            opportunities["B"],
+            0,
+        )
+
+    def test_trade_metrics_v2_never_has_less_opportunities_than_trade_kills(self):
+        parser = FakeDemoParser(
+            deaths=[
+                {
+                    "tick": 300,
+                    "game_time": 10.0,
+                    "attacker_steamid": "X",
+                    "user_steamid": "A",
+                },
+                {
+                    "tick": 400,
+                    "game_time": 14.0,
+                    "attacker_steamid": "B",
+                    "user_steamid": "X",
+                },
+            ],
+            team_rows=[
+                {
+                    "tick": 300,
+                    "steamid": "X",
+                    "team_num": 3,
+                    "health": 100,
+                    "X": 0.0,
+                    "Y": 0.0,
+                    "Z": 0.0,
+                },
+                {
+                    "tick": 300,
+                    "steamid": "A",
+                    "team_num": 2,
+                    "health": 0,
+                    "X": 100.0,
+                    "Y": 0.0,
+                    "Z": 0.0,
+                },
+                {
+                    "tick": 300,
+                    "steamid": "B",
+                    "team_num": 2,
+                    "health": 100,
+                    "X": 1600.0,
+                    "Y": 0.0,
+                    "Z": 0.0,
+                },
+                {
+                    "tick": 400,
+                    "steamid": "B",
+                    "team_num": 2,
+                    "health": 100,
+                    "X": 0.0,
+                    "Y": 0.0,
+                    "Z": 0.0,
+                },
+                {
+                    "tick": 400,
+                    "steamid": "X",
+                    "team_num": 3,
+                    "health": 0,
+                    "X": 0.0,
+                    "Y": 0.0,
+                    "Z": 0.0,
+                },
+            ],
+        )
+
+        (
+            opportunities,
+            trade_kills,
+            traded_deaths,
+        ) = calculate_trade_metrics_v2(
+            parser,
+            ["A", "B", "X"],
+        )
+
+        self.assertEqual(
+            trade_kills["B"],
+            1,
+        )
+
+        self.assertEqual(
+            traded_deaths["A"],
+            1,
+        )
+
+        self.assertGreaterEqual(
+            opportunities["B"],
+            trade_kills["B"],
+        )
+
 
     def test_one_retaliation_can_trade_multiple_deaths_but_is_one_trade_kill(self):
         parser = FakeDemoParser(
