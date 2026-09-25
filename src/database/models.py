@@ -342,6 +342,10 @@ class MatchPlayerModel(Base):
         nullable=True,
     )
     clutches_won: Mapped[int] = mapped_column(Integer, nullable=False)
+    trade_opportunities: Mapped[int | None] = mapped_column(
+        Integer,
+        nullable=True,
+    )
     trade_kills: Mapped[int] = mapped_column(Integer, nullable=False)
     traded_deaths: Mapped[int] = mapped_column(Integer, nullable=False)
 
