@@ -30,6 +30,7 @@ class TestPlayerAnalysis(unittest.TestCase):
             entry_deaths=1,
             clutch_attempts=3,
             clutches_won=1,
+            trade_opportunities=5,
             trade_kills=3,
             traded_deaths=4,
             kast_rounds=16,
@@ -107,6 +108,16 @@ class TestPlayerAnalysis(unittest.TestCase):
         self.assertEqual(
             analysis.stats.clutches_won,
             1,
+        )
+
+        self.assertEqual(
+            analysis.stats.trade_opportunities,
+            5,
+        )
+
+        self.assertEqual(
+            analysis.stats.trade_kills,
+            3,
         )
 
         self.assertEqual(
