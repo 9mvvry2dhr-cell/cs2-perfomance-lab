@@ -11,7 +11,7 @@ from src.metrics.entry import (
     detect_entry_events,
 )
 from src.metrics.clutch import calculate_clutch_metrics
-from src.metrics.trade import calculate_trade_metrics
+from src.metrics.trade import calculate_trade_metrics_v2
 from src.metrics.kast import (
     detect_kast_rounds,
 )
@@ -743,9 +743,13 @@ class DemoParser:
         # --------------------------------------------------------------
 
         try:
-            trade_kills, traded_deaths = _timed_metric(
+            (
+                trade_opportunities,
+                trade_kills,
+                traded_deaths,
+            ) = _timed_metric(
                 "trade",
-                calculate_trade_metrics,
+                calculate_trade_metrics_v2,
                 self.raw_parser,
                 steam_ids,
             )
@@ -754,6 +758,7 @@ class DemoParser:
             print(
                 f"Trade metrics calculation failed: {exc}"
             )
+            trade_opportunities = {}
             trade_kills = {}
             traded_deaths = {}
 
@@ -892,6 +897,13 @@ class DemoParser:
             # ----------------------------------------------------------
             # Trade
             # ----------------------------------------------------------
+
+            player.trade_opportunities = self._safe_int(
+                trade_opportunities.get(
+                    sid,
+                    0
+                )
+            )
 
             player.trade_kills = self._safe_int(
                 trade_kills.get(
