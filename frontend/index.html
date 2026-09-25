@@ -16049,14 +16049,21 @@ document
                 "svg"
             );
 
-        svg.setAttribute(
-            "viewBox",
-            "0 0 900 280"
+        const chartWidth = Math.max(
+            720,
+            Math.round(
+                mount.clientWidth || 900
+            )
         );
 
+        const chartHeight = 280;
+
         svg.setAttribute(
-            "preserveAspectRatio",
-            "none"
+            "viewBox",
+            "0 0 "
+            + chartWidth
+            + " "
+            + chartHeight
         );
 
         const defs =
@@ -16142,9 +16149,13 @@ document
         const top = 26;
         const bottom = 44;
         const width =
-            900 - left - right;
+            chartWidth
+            - left
+            - right;
         const height =
-            280 - top - bottom;
+            chartHeight
+            - top
+            - bottom;
 
         let min =
             Math.min(
@@ -16443,7 +16454,7 @@ document
 
                 label.setAttribute(
                     "y",
-                    264
+                    chartHeight - 16
                 );
 
                 label.setAttribute(
