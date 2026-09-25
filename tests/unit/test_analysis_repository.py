@@ -787,6 +787,21 @@ class AnalysisRepositoryTest(unittest.TestCase):
         )
 
         self.assertEqual(
+            set(history[0].sides),
+            {"CT", "T"},
+        )
+
+        self.assertEqual(
+            history[0].sides["CT"].adr,
+            123.5,
+        )
+
+        self.assertEqual(
+            history[0].sides["T"].entry_deaths,
+            1,
+        )
+
+        self.assertEqual(
             history[0].player_result,
             "loss",
         )
