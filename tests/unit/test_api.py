@@ -259,6 +259,7 @@ class ApiTest(unittest.TestCase):
             player_name=player.name,
             stats=player.stats,
             findings=player.findings,
+            sides=player.sides,
             player_result="win",
         )
 
@@ -312,6 +313,16 @@ class ApiTest(unittest.TestCase):
         self.assertEqual(
             response.json(),
             expected,
+        )
+
+        self.assertEqual(
+            response.json()[0]["sides"]["CT"]["adr"],
+            123.5,
+        )
+
+        self.assertEqual(
+            response.json()[0]["sides"]["T"]["entry_deaths"],
+            1,
         )
 
 
