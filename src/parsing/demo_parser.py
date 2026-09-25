@@ -10,7 +10,7 @@ from src.metrics.utility import calculate_utility_metrics
 from src.metrics.entry import (
     detect_entry_events,
 )
-from src.metrics.clutch import calculate_clutches
+from src.metrics.clutch import calculate_clutch_metrics
 from src.metrics.trade import calculate_trade_metrics
 from src.metrics.kast import (
     detect_kast_rounds,
@@ -721,9 +721,12 @@ class DemoParser:
         # --------------------------------------------------------------
 
         try:
-            clutch_stats = _timed_metric(
+            (
+                clutch_attempts,
+                clutch_stats,
+            ) = _timed_metric(
                 "clutch",
-                calculate_clutches,
+                calculate_clutch_metrics,
                 self.raw_parser,
                 steam_ids,
             )
@@ -732,6 +735,7 @@ class DemoParser:
             print(
                 f"⚠️ Ошибка при расчёте Clutch: {exc}"
             )
+            clutch_attempts = {}
             clutch_stats = {}
 
         # --------------------------------------------------------------
@@ -870,6 +874,13 @@ class DemoParser:
             # ----------------------------------------------------------
             # Clutch
             # ----------------------------------------------------------
+
+            player.clutch_attempts = self._safe_int(
+                clutch_attempts.get(
+                    sid,
+                    0
+                )
+            )
 
             player.clutches_won = self._safe_int(
                 clutch_stats.get(
