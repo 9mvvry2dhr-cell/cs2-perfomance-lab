@@ -177,6 +177,7 @@ class AnalysisRepository:
                     flash_duration=stats.flash_duration,
                     clutch_attempts=stats.clutch_attempts,
                     clutches_won=stats.clutches_won,
+                    trade_opportunities=stats.trade_opportunities,
                     trade_kills=stats.trade_kills,
                     traded_deaths=stats.traded_deaths,
                     two_k_rounds=stats.two_k_rounds,
@@ -465,6 +466,9 @@ class AnalysisRepository:
                 ),
                 clutch_attempts=(
                     player_model.clutch_attempts
+                ),
+                trade_opportunities=(
+                    player_model.trade_opportunities
                 ),
             )
 
@@ -768,6 +772,9 @@ class AnalysisRepository:
                         ),
                         clutch_attempts=(
                             player_model.clutch_attempts
+                        ),
+                        trade_opportunities=(
+                            player_model.trade_opportunities
                         ),
                     ),
                     findings=findings,
