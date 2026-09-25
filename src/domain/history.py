@@ -1,9 +1,9 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import datetime
 
-from src.domain.analysis import PlayerStats
+from src.domain.analysis import PlayerStats, SideStats
 from src.domain.insights import Finding
 from src.domain.metrics import (
     calculate_adr,
@@ -24,6 +24,10 @@ class PlayerMatchHistoryItem:
     player_name: str
     stats: PlayerStats
     findings: list[Finding]
+
+    sides: dict[str, SideStats] = field(
+        default_factory=dict
+    )
 
     player_result: str = "unknown"
 
