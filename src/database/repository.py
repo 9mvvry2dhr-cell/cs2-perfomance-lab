@@ -618,7 +618,10 @@ class AnalysisRepository:
             .options(
                 selectinload(
                     MatchPlayerModel.findings
-                )
+                ),
+                selectinload(
+                    MatchPlayerModel.sides
+                ),
             )
             .where(
                 UserMatchModel.owner_steam_id
@@ -659,6 +662,36 @@ class AnalysisRepository:
                 for finding
                 in player_model.findings
             ]
+
+            sides = {
+                side_model.side: SideStats(
+                    rounds_played=(
+                        side_model.rounds_played
+                    ),
+                    kills=side_model.kills,
+                    deaths=side_model.deaths,
+                    damage=side_model.damage,
+                    adr=side_model.adr,
+                    kast_rounds=(
+                        side_model.kast_rounds
+                    ),
+                    kast_pct=side_model.kast_pct,
+                    survived_rounds=(
+                        side_model.survived_rounds
+                    ),
+                    survival_pct=(
+                        side_model.survival_pct
+                    ),
+                    entry_kills=(
+                        side_model.entry_kills
+                    ),
+                    entry_deaths=(
+                        side_model.entry_deaths
+                    ),
+                )
+                for side_model
+                in player_model.sides
+            }
 
             history.append(
                 PlayerMatchHistoryItem(
@@ -731,6 +764,7 @@ class AnalysisRepository:
                         ),
                     ),
                     findings=findings,
+                    sides=sides,
                     player_result=(
                         player_model.result
                     ),
