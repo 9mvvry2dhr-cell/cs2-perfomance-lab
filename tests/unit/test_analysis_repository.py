@@ -58,6 +58,7 @@ def make_analysis(
         three_k_rounds=1,
         four_k_rounds=0,
         five_k_rounds=0,
+        clutch_attempts=2,
     )
 
     sides = {
@@ -787,6 +788,11 @@ class AnalysisRepositoryTest(unittest.TestCase):
         )
 
         self.assertEqual(
+            history[0].stats.clutch_attempts,
+            2,
+        )
+
+        self.assertEqual(
             set(history[0].sides),
             {"CT", "T"},
         )
@@ -1015,6 +1021,11 @@ class AnalysisRepositoryTest(unittest.TestCase):
         )
 
         self.assertEqual(
+            summary.stats.clutch_attempts,
+            4,
+        )
+
+        self.assertEqual(
             len(summary.finding_frequency),
             1,
         )
@@ -1038,6 +1049,43 @@ class AnalysisRepositoryTest(unittest.TestCase):
         self.assertEqual(
             finding.match_rate_pct,
             100.0,
+        )
+
+
+    def test_player_history_summary_does_not_invent_legacy_clutch_attempts(self):
+        first, _ = self._save_history_pair()
+
+        player_model = self.session.scalar(
+            select(
+                MatchPlayerModel
+            ).where(
+                MatchPlayerModel.match_id
+                == first.match_id
+            )
+        )
+
+        self.assertIsNotNone(
+            player_model
+        )
+
+        player_model.clutch_attempts = None
+
+        self.session.commit()
+
+        summary = (
+            self.repository
+            .get_player_history_summary(
+                "76561198055629469",
+                limit=10,
+            )
+        )
+
+        self.assertIsNotNone(
+            summary
+        )
+
+        self.assertIsNone(
+            summary.stats.clutch_attempts
         )
 
 
