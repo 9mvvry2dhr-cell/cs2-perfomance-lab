@@ -39,6 +39,10 @@ class PlayerStats:
     four_k_rounds: int
     five_k_rounds: int
 
+    # None marks legacy persisted matches that predate
+    # clutch-opportunity tracking.
+    clutch_attempts: int | None = None
+
 
 @dataclass(frozen=True)
 class SideStats:
@@ -260,6 +264,9 @@ def build_player_analysis(
         ),
         five_k_rounds=int(
             player.five_k_rounds
+        ),
+        clutch_attempts=int(
+            player.clutch_attempts
         ),
     )
 
