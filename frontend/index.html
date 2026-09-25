@@ -12834,6 +12834,44 @@ function renderPlayerHistory(
             rounds
         );
 
+    const clutchKnownMatches =
+        matches.filter(
+            item =>
+                item.stats
+                && item.stats.clutch_attempts
+                !== null
+                && item.stats.clutch_attempts
+                !== undefined
+        );
+
+    const clutchAttemptsKnown =
+        clutchKnownMatches.reduce(
+            (sum, item) =>
+                sum
+                + Number(
+                    item.stats.clutch_attempts
+                    || 0
+                ),
+            0
+        );
+
+    const clutchWinsKnown =
+        clutchKnownMatches.reduce(
+            (sum, item) =>
+                sum
+                + Number(
+                    item.stats.clutches_won
+                    || 0
+                ),
+            0
+        );
+
+    const clutchConversion =
+        profilePercent(
+            clutchWinsKnown,
+            clutchAttemptsKnown
+        );
+
     const kpr =
         profileRate(
             kills,
@@ -13176,21 +13214,41 @@ function renderPlayerHistory(
                 .toFixed(1)
             + "%",
             "раундов с 2K+",
-            String(
-                stats.clutches_won || 0
-            ),
-            "выигранных клатчей",
+            clutchKnownMatches.length
+                ? (
+                    clutchWinsKnown
+                    + " / "
+                    + clutchAttemptsKnown
+                )
+                : String(
+                    stats.clutches_won || 0
+                ),
+            clutchKnownMatches.length
+                ? (
+                    "клатчи: победы / попытки · "
+                    + clutchKnownMatches.length
+                    + " нов. матч."
+                )
+                : "выигранных клатчей · attempts появятся в новых анализах",
             [
+                [
+                    "CLUTCH CONV.",
+                    clutchKnownMatches.length
+                        && clutchAttemptsKnown > 0
+                        ? (
+                            clutchConversion
+                                .toFixed(1)
+                            + "%"
+                        )
+                        : "—",
+                    "Clutch conversion — доля выигранных clutch-ситуаций среди подтверждённых попыток. Для старых матчей attempts неизвестны, поэтому они не подмешиваются.",
+                ],
                 [
                     "SURVIVAL",
                     formatNumber(
                         stats.survival_pct
                     )
                     + "%",
-                ],
-                [
-                    "APR",
-                    apr.toFixed(2),
                 ],
                 [
                     "2K / 3K / 4K / 5K",
