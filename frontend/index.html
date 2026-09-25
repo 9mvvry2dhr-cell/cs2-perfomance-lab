@@ -4526,6 +4526,213 @@ button.dashboard-match-row:hover {
     font-weight: 780;
 }
 
+
+.map-dashboard-card {
+    position: relative;
+    overflow: hidden;
+    min-height: 116px;
+    isolation: isolate;
+}
+
+.map-dashboard-card::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -2;
+    background-image: var(--map-card-bg);
+    background-position: center;
+    background-size: cover;
+    opacity: .22;
+    filter: saturate(.75) contrast(1.06);
+}
+
+.map-dashboard-card::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background:
+        linear-gradient(
+            90deg,
+            rgba(5,16,25,.96) 0%,
+            rgba(5,16,25,.82) 58%,
+            rgba(5,16,25,.58) 100%
+        );
+}
+
+.map-dashboard-card .map-dashboard-record {
+    margin-top: 20px;
+}
+
+.map-focus {
+    position: relative;
+    overflow: hidden;
+    margin-top: 12px;
+    padding: 22px;
+    border: 1px solid rgba(137,167,187,.14);
+    border-radius: 14px;
+    background:
+        linear-gradient(
+            110deg,
+            rgba(7,20,31,.97),
+            rgba(7,20,31,.86) 58%,
+            rgba(7,20,31,.68)
+        );
+    isolation: isolate;
+}
+
+.map-focus::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -2;
+    background-image: var(--map-focus-bg);
+    background-position: center;
+    background-size: cover;
+    opacity: .2;
+    filter: saturate(.75);
+}
+
+.map-focus::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background:
+        linear-gradient(
+            90deg,
+            rgba(5,15,24,.98),
+            rgba(5,15,24,.86) 62%,
+            rgba(5,15,24,.62)
+        );
+}
+
+.map-focus-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 18px;
+}
+
+.map-focus-title {
+    color: #f0f7fb;
+    font-size: 25px;
+    font-weight: 830;
+    letter-spacing: -.03em;
+}
+
+.map-focus-sub {
+    margin-top: 5px;
+    color: #7f97aa;
+    font-size: 10px;
+}
+
+.map-focus-record {
+    color: #dbe7ee;
+    font-size: 13px;
+    font-weight: 780;
+}
+
+.side-compare {
+    display: grid;
+    grid-template-columns: repeat(2,minmax(0,1fr));
+    gap: 12px;
+    margin-top: 16px;
+}
+
+.side-card {
+    padding: 15px;
+    border: 1px solid rgba(137,167,187,.14);
+    border-radius: 11px;
+    background: rgba(7,18,27,.68);
+}
+
+.side-card.ct {
+    border-color: rgba(73,168,255,.25);
+}
+
+.side-card.t {
+    border-color: rgba(240,165,47,.24);
+}
+
+.side-card-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.side-card-title {
+    color: #eef5f9;
+    font-size: 14px;
+    font-weight: 820;
+}
+
+.side-card-rounds {
+    color: #70889b;
+    font-size: 9px;
+}
+
+.side-card-metrics {
+    display: grid;
+    grid-template-columns: repeat(5,minmax(0,1fr));
+    gap: 8px;
+    margin-top: 12px;
+}
+
+.side-metric {
+    padding: 9px;
+    border-radius: 8px;
+    background: rgba(255,255,255,.028);
+}
+
+.side-metric span {
+    display: block;
+    color: #667f92;
+    font-size: 8px;
+    font-weight: 760;
+    letter-spacing: .05em;
+}
+
+.side-metric strong {
+    display: block;
+    margin-top: 4px;
+    color: #dfe9ef;
+    font-size: 13px;
+}
+
+.map-patterns {
+    display: grid;
+    grid-template-columns: repeat(2,minmax(0,1fr));
+    gap: 10px;
+}
+
+.map-pattern-side {
+    margin-left: 6px;
+    color: #6f8ca1;
+    font-size: 8px;
+    font-weight: 780;
+}
+
+.stats-overview-v2 {
+    display: grid;
+    grid-template-columns: repeat(5,minmax(0,1fr));
+    gap: 9px;
+}
+
+.stats-trend-grid-v2 {
+    display: grid;
+    grid-template-columns: repeat(3,minmax(0,1fr));
+    gap: 10px;
+}
+
+.stats-context-note {
+    margin-top: 10px;
+    color: #70889b;
+    font-size: 9px;
+    line-height: 1.5;
+}
+
 @media (max-width: 1050px) {
     .maps-grid {
         grid-template-columns: repeat(2,minmax(0,1fr));
@@ -13253,6 +13460,10 @@ document
             headshots: 0,
             damage: 0,
             kastRounds: 0,
+            survivedRounds: 0,
+            entryKills: 0,
+            entryDeaths: 0,
+            utilityDamage: 0,
         };
 
         matches.forEach(
@@ -13303,6 +13514,29 @@ document
                     Number(
                         stats.kast_rounds || 0
                     );
+
+                totals.survivedRounds +=
+                    Number(
+                        stats.survived_rounds || 0
+                    );
+
+                totals.entryKills +=
+                    Number(
+                        stats.entry_kills || 0
+                    );
+
+                totals.entryDeaths +=
+                    Number(
+                        stats.entry_deaths || 0
+                    );
+
+                totals.utilityDamage +=
+                    Number(
+                        stats.he_damage || 0
+                    )
+                    + Number(
+                        stats.inferno_damage || 0
+                    );
             }
         );
 
@@ -13350,11 +13584,141 @@ document
                     )
                     : 0,
 
+            survival:
+                totals.rounds > 0
+                    ? pct(
+                        totals.survivedRounds,
+                        totals.rounds
+                    )
+                    : 0,
+
             hs:
                 totals.kills > 0
                     ? pct(
                         totals.headshots,
                         totals.kills
+                    )
+                    : 0,
+
+            entryDelta:
+                totals.entryKills
+                - totals.entryDeaths,
+
+            utilityPerRound:
+                totals.rounds > 0
+                    ? (
+                        totals.utilityDamage
+                        / totals.rounds
+                    )
+                    : 0,
+        };
+    }
+
+
+    function aggregateSide(
+        matches,
+        sideName
+    ) {
+        const totals = {
+            rounds: 0,
+            kills: 0,
+            deaths: 0,
+            damage: 0,
+            kastRounds: 0,
+            survivedRounds: 0,
+            entryKills: 0,
+            entryDeaths: 0,
+        };
+
+        matches.forEach(
+            match => {
+                const side =
+                    match.sides?.[
+                        sideName
+                    ];
+
+                if (!side) {
+                    return;
+                }
+
+                totals.rounds +=
+                    Number(
+                        side.rounds_played || 0
+                    );
+
+                totals.kills +=
+                    Number(
+                        side.kills || 0
+                    );
+
+                totals.deaths +=
+                    Number(
+                        side.deaths || 0
+                    );
+
+                totals.damage +=
+                    Number(
+                        side.damage || 0
+                    );
+
+                totals.kastRounds +=
+                    Number(
+                        side.kast_rounds || 0
+                    );
+
+                totals.survivedRounds +=
+                    Number(
+                        side.survived_rounds || 0
+                    );
+
+                totals.entryKills +=
+                    Number(
+                        side.entry_kills || 0
+                    );
+
+                totals.entryDeaths +=
+                    Number(
+                        side.entry_deaths || 0
+                    );
+            }
+        );
+
+        return {
+            ...totals,
+
+            kd:
+                totals.deaths > 0
+                    ? (
+                        totals.kills
+                        / totals.deaths
+                    )
+                    : (
+                        totals.kills > 0
+                            ? totals.kills
+                            : 0
+                    ),
+
+            adr:
+                totals.rounds > 0
+                    ? (
+                        totals.damage
+                        / totals.rounds
+                    )
+                    : 0,
+
+            kast:
+                totals.rounds > 0
+                    ? pct(
+                        totals.kastRounds,
+                        totals.rounds
+                    )
+                    : 0,
+
+            survival:
+                totals.rounds > 0
+                    ? pct(
+                        totals.survivedRounds,
+                        totals.rounds
                     )
                     : 0,
         };
@@ -13661,334 +14025,6 @@ document
     }
 
 
-    function renderMapsDashboard(
-        matches
-    ) {
-        placeholderBody.replaceChildren();
-
-        if (!matches.length) {
-            showDashboardMessage(
-                "Пока нет проанализированных матчей. Загрузи .dem — здесь появится срез по картам."
-            );
-            return;
-        }
-
-        const overall =
-            aggregateMatches(
-                matches
-            );
-
-        const grouped =
-            new Map();
-
-        matches.forEach(
-            match => {
-                const key =
-                    String(
-                        match.map_name
-                        || "unknown"
-                    )
-                    .toLowerCase();
-
-                if (!grouped.has(key)) {
-                    grouped.set(
-                        key,
-                        []
-                    );
-                }
-
-                grouped.get(
-                    key
-                ).push(
-                    match
-                );
-            }
-        );
-
-        const groups =
-            Array.from(
-                grouped.entries()
-            )
-            .map(
-                ([key, items]) => ({
-                    key,
-                    items,
-                    stats:
-                        aggregateMatches(
-                            items
-                        ),
-                })
-            )
-            .sort(
-                (a, b) =>
-                    b.items.length
-                    - a.items.length
-                    || prettyMapName(a.key)
-                        .localeCompare(
-                            prettyMapName(b.key)
-                        )
-            );
-
-        const summary =
-            makeElement(
-                "div",
-                "dashboard-summary"
-            );
-
-        summary.append(
-            makeMetric(
-                "Матчей",
-                overall.matches
-            ),
-            makeMetric(
-                "Карт",
-                groups.length
-            ),
-            makeMetric(
-                "Победы",
-                overall.wins
-                + " / "
-                + overall.losses
-                + " / "
-                + overall.draws
-            ),
-            makeMetric(
-                "Win rate",
-                overall.winRate == null
-                    ? "—"
-                    : (
-                        overall.winRate
-                            .toFixed(1)
-                        + "%"
-                    )
-            )
-        );
-
-        placeholderBody.appendChild(
-            summary
-        );
-
-        placeholderBody.appendChild(
-            makeElement(
-                "div",
-                "dashboard-section-title",
-                "Срез по картам · последние 100 анализов"
-            )
-        );
-
-        const grid =
-            makeElement(
-                "div",
-                "maps-grid"
-            );
-
-        const detail =
-            makeElement(
-                "div",
-                "dashboard-detail"
-            );
-
-        function renderDetail(
-            group
-        ) {
-            detail.replaceChildren();
-
-            const head =
-                makeElement(
-                    "div",
-                    "dashboard-detail-head"
-                );
-
-            head.append(
-                makeElement(
-                    "div",
-                    "dashboard-detail-title",
-                    prettyMapName(
-                        group.key
-                    )
-                    + " · последние матчи"
-                ),
-                makeElement(
-                    "div",
-                    "dashboard-detail-meta",
-                    "Нажми на матч, чтобы открыть полный разбор"
-                )
-            );
-
-            detail.appendChild(
-                head
-            );
-
-            group.items
-                .slice(0, 8)
-                .forEach(
-                    match => {
-                        detail.appendChild(
-                            makeMatchRow(
-                                match
-                            )
-                        );
-                    }
-                );
-        }
-
-        groups.forEach(
-            (group, index) => {
-                const button =
-                    makeElement(
-                        "button",
-                        "map-dashboard-card"
-                        + (
-                            index === 0
-                                ? " active"
-                                : ""
-                        )
-                    );
-
-                button.type =
-                    "button";
-
-                const head =
-                    makeElement(
-                        "div",
-                        "map-dashboard-head"
-                    );
-
-                head.append(
-                    makeElement(
-                        "div",
-                        "map-dashboard-name",
-                        prettyMapName(
-                            group.key
-                        )
-                    ),
-                    makeElement(
-                        "div",
-                        "map-dashboard-count",
-                        group.items.length
-                        + " матч."
-                    )
-                );
-
-                const record =
-                    makeElement(
-                        "div",
-                        "map-dashboard-record"
-                    );
-
-                record.append(
-                    document.createTextNode(
-                        "W / L / D · "
-                    ),
-                    makeElement(
-                        "strong",
-                        "",
-                        group.stats.wins
-                        + " / "
-                        + group.stats.losses
-                        + " / "
-                        + group.stats.draws
-                    )
-                );
-
-                const metrics =
-                    makeElement(
-                        "div",
-                        "map-dashboard-metrics"
-                    );
-
-                [
-                    [
-                        "K/D",
-                        group.stats.kd
-                            .toFixed(2),
-                    ],
-                    [
-                        "ADR",
-                        group.stats.adr
-                            .toFixed(1),
-                    ],
-                    [
-                        "KAST",
-                        group.stats.kast
-                            .toFixed(1)
-                        + "%",
-                    ],
-                ].forEach(
-                    ([label, value]) => {
-                        const item =
-                            makeElement(
-                                "div",
-                                "map-dashboard-mini"
-                            );
-
-                        item.append(
-                            makeElement(
-                                "span",
-                                "",
-                                label
-                            ),
-                            makeElement(
-                                "strong",
-                                "",
-                                value
-                            )
-                        );
-
-                        metrics.appendChild(
-                            item
-                        );
-                    }
-                );
-
-                button.append(
-                    head,
-                    record,
-                    metrics
-                );
-
-                button.addEventListener(
-                    "click",
-                    () => {
-                        grid
-                            .querySelectorAll(
-                                ".map-dashboard-card"
-                            )
-                            .forEach(
-                                card => {
-                                    card.classList.remove(
-                                        "active"
-                                    );
-                                }
-                            );
-
-                        button.classList.add(
-                            "active"
-                        );
-
-                        renderDetail(
-                            group
-                        );
-                    }
-                );
-
-                grid.appendChild(
-                    button
-                );
-            }
-        );
-
-        placeholderBody.append(
-            grid,
-            detail
-        );
-
-        renderDetail(
-            groups[0]
-        );
-    }
-
-
     function findingName(
         code
     ) {
@@ -14036,7 +14072,8 @@ document
 
 
     function findingFrequency(
-        matches
+        matches,
+        splitBySide = false
     ) {
         const counts =
             new Map();
@@ -14055,19 +14092,34 @@ document
                                 finding.code || ""
                             );
 
+                        const side =
+                            String(
+                                finding.side || ""
+                            );
+
+                        const key =
+                            splitBySide
+                                ? (
+                                    code
+                                    + "|"
+                                    + side
+                                )
+                                : code;
+
                         if (
                             !code
-                            || seen.has(code)
+                            || seen.has(key)
                         ) {
                             return;
                         }
 
-                        seen.add(code);
+                        seen.add(key);
 
                         const current =
-                            counts.get(code)
+                            counts.get(key)
                             || {
                                 code,
+                                side,
                                 kind:
                                     finding.kind
                                     || "unknown",
@@ -14077,7 +14129,7 @@ document
                         current.count += 1;
 
                         counts.set(
-                            code,
+                            key,
                             current
                         );
                     }
@@ -14113,7 +14165,8 @@ document
 
     function makePatternPanel(
         titleText,
-        items
+        items,
+        showSide = false
     ) {
         const panel =
             makeElement(
@@ -14151,14 +14204,31 @@ document
                             "stats-pattern-row"
                         );
 
-                    row.append(
+                    const name =
                         makeElement(
                             "div",
                             "stats-pattern-name",
                             findingName(
                                 item.code
                             )
-                        ),
+                        );
+
+                    if (
+                        showSide
+                        && item.side
+                        && item.side !== "ALL"
+                    ) {
+                        name.appendChild(
+                            makeElement(
+                                "span",
+                                "map-pattern-side",
+                                item.side
+                            )
+                        );
+                    }
+
+                    row.append(
+                        name,
                         makeElement(
                             "div",
                             "stats-pattern-rate",
@@ -14180,12 +14250,518 @@ document
     }
 
 
+    function makeSideCard(
+        sideName,
+        stats
+    ) {
+        const card =
+            makeElement(
+                "div",
+                "side-card "
+                + sideName.toLowerCase()
+            );
+
+        const head =
+            makeElement(
+                "div",
+                "side-card-head"
+            );
+
+        head.append(
+            makeElement(
+                "div",
+                "side-card-title",
+                sideName
+            ),
+            makeElement(
+                "div",
+                "side-card-rounds",
+                stats.rounds
+                + " раундов"
+            )
+        );
+
+        const metrics =
+            makeElement(
+                "div",
+                "side-card-metrics"
+            );
+
+        const entries = [
+            [
+                "K/D",
+                stats.kd.toFixed(2),
+            ],
+            [
+                "ADR",
+                stats.adr.toFixed(1),
+            ],
+            [
+                "KAST",
+                stats.kast.toFixed(1)
+                + "%",
+            ],
+            [
+                "ENTRY",
+                stats.entryKills
+                + " / "
+                + stats.entryDeaths,
+            ],
+            [
+                "SURV",
+                stats.survival.toFixed(1)
+                + "%",
+            ],
+        ];
+
+        entries.forEach(
+            ([label, value]) => {
+                const metric =
+                    makeElement(
+                        "div",
+                        "side-metric"
+                    );
+
+                metric.append(
+                    makeElement(
+                        "span",
+                        "",
+                        label
+                    ),
+                    makeElement(
+                        "strong",
+                        "",
+                        value
+                    )
+                );
+
+                metrics.appendChild(
+                    metric
+                );
+            }
+        );
+
+        card.append(
+            head,
+            metrics
+        );
+
+        return card;
+    }
+
+
+    function renderMapsDashboard(
+        matches
+    ) {
+        placeholderBody.replaceChildren();
+
+        if (!matches.length) {
+            showDashboardMessage(
+                "Пока нет проанализированных матчей. Загрузи .dem — здесь появится разбор по картам."
+            );
+            return;
+        }
+
+        const grouped =
+            new Map();
+
+        matches.forEach(
+            match => {
+                const key =
+                    String(
+                        match.map_name
+                        || "unknown"
+                    )
+                    .toLowerCase();
+
+                if (!grouped.has(key)) {
+                    grouped.set(
+                        key,
+                        []
+                    );
+                }
+
+                grouped.get(
+                    key
+                ).push(
+                    match
+                );
+            }
+        );
+
+        const groups =
+            Array.from(
+                grouped.entries()
+            )
+            .map(
+                ([key, items]) => ({
+                    key,
+                    items,
+                    stats:
+                        aggregateMatches(
+                            items
+                        ),
+                    ct:
+                        aggregateSide(
+                            items,
+                            "CT"
+                        ),
+                    t:
+                        aggregateSide(
+                            items,
+                            "T"
+                        ),
+                })
+            )
+            .sort(
+                (a, b) =>
+                    b.items.length
+                    - a.items.length
+                    || prettyMapName(a.key)
+                        .localeCompare(
+                            prettyMapName(b.key)
+                        )
+            );
+
+        placeholderBody.appendChild(
+            makeElement(
+                "div",
+                "dashboard-section-title",
+                "Выбери карту"
+            )
+        );
+
+        const grid =
+            makeElement(
+                "div",
+                "maps-grid"
+            );
+
+        const detail =
+            makeElement(
+                "div",
+                ""
+            );
+
+        function renderDetail(
+            group
+        ) {
+            detail.replaceChildren();
+
+            const focus =
+                makeElement(
+                    "section",
+                    "map-focus"
+                );
+
+            focus.style.setProperty(
+                "--map-focus-bg",
+                "url('/assets/maps/backgrounds/"
+                + group.key
+                + ".webp')"
+            );
+
+            const top =
+                makeElement(
+                    "div",
+                    "map-focus-top"
+                );
+
+            const titleWrap =
+                makeElement(
+                    "div",
+                    ""
+                );
+
+            titleWrap.append(
+                makeElement(
+                    "div",
+                    "map-focus-title",
+                    prettyMapName(
+                        group.key
+                    )
+                ),
+                makeElement(
+                    "div",
+                    "map-focus-sub",
+                    group.items.length
+                    + " матч."
+                    + " · "
+                    + (
+                        group.stats.winRate == null
+                            ? "win rate —"
+                            : (
+                                "win rate "
+                                + group.stats.winRate
+                                    .toFixed(1)
+                                + "%"
+                            )
+                    )
+                )
+            );
+
+            top.append(
+                titleWrap,
+                makeElement(
+                    "div",
+                    "map-focus-record",
+                    "W / L / D · "
+                    + group.stats.wins
+                    + " / "
+                    + group.stats.losses
+                    + " / "
+                    + group.stats.draws
+                )
+            );
+
+            focus.appendChild(
+                top
+            );
+
+            focus.appendChild(
+                makeElement(
+                    "div",
+                    "dashboard-section-title",
+                    "CT против T"
+                )
+            );
+
+            const sideCompare =
+                makeElement(
+                    "div",
+                    "side-compare"
+                );
+
+            sideCompare.append(
+                makeSideCard(
+                    "CT",
+                    group.ct
+                ),
+                makeSideCard(
+                    "T",
+                    group.t
+                )
+            );
+
+            focus.appendChild(
+                sideCompare
+            );
+
+            const frequency =
+                findingFrequency(
+                    group.items,
+                    true
+                );
+
+            const strengths =
+                frequency.filter(
+                    item =>
+                        item.kind
+                        === "strength"
+                );
+
+            const weaknesses =
+                frequency.filter(
+                    item =>
+                        item.kind
+                        === "weakness"
+                );
+
+            focus.appendChild(
+                makeElement(
+                    "div",
+                    "dashboard-section-title",
+                    "Что повторяется именно на этой карте"
+                )
+            );
+
+            const patterns =
+                makeElement(
+                    "div",
+                    "map-patterns"
+                );
+
+            patterns.append(
+                makePatternPanel(
+                    "Сильные сигналы",
+                    strengths,
+                    true
+                ),
+                makePatternPanel(
+                    "Слабые сигналы",
+                    weaknesses,
+                    true
+                )
+            );
+
+            focus.appendChild(
+                patterns
+            );
+
+            focus.appendChild(
+                makeElement(
+                    "div",
+                    "dashboard-section-title",
+                    "Последние матчи на карте"
+                )
+            );
+
+            const matchesList =
+                makeElement(
+                    "div",
+                    "dashboard-detail"
+                );
+
+            const head =
+                makeElement(
+                    "div",
+                    "dashboard-detail-head"
+                );
+
+            head.appendChild(
+                makeElement(
+                    "div",
+                    "dashboard-detail-meta",
+                    "Нажми на матч, чтобы открыть полный разбор"
+                )
+            );
+
+            matchesList.appendChild(
+                head
+            );
+
+            group.items
+                .slice(0, 8)
+                .forEach(
+                    match => {
+                        matchesList.appendChild(
+                            makeMatchRow(
+                                match
+                            )
+                        );
+                    }
+                );
+
+            focus.appendChild(
+                matchesList
+            );
+
+            detail.appendChild(
+                focus
+            );
+        }
+
+        groups.forEach(
+            (group, index) => {
+                const button =
+                    makeElement(
+                        "button",
+                        "map-dashboard-card"
+                        + (
+                            index === 0
+                                ? " active"
+                                : ""
+                        )
+                    );
+
+                button.type =
+                    "button";
+
+                button.style.setProperty(
+                    "--map-card-bg",
+                    "url('/assets/maps/backgrounds/"
+                    + group.key
+                    + ".webp')"
+                );
+
+                const head =
+                    makeElement(
+                        "div",
+                        "map-dashboard-head"
+                    );
+
+                head.append(
+                    makeElement(
+                        "div",
+                        "map-dashboard-name",
+                        prettyMapName(
+                            group.key
+                        )
+                    ),
+                    makeElement(
+                        "div",
+                        "map-dashboard-count",
+                        group.items.length
+                        + " матч."
+                    )
+                );
+
+                const record =
+                    makeElement(
+                        "div",
+                        "map-dashboard-record",
+                        "W / L / D · "
+                        + group.stats.wins
+                        + " / "
+                        + group.stats.losses
+                        + " / "
+                        + group.stats.draws
+                );
+
+                button.append(
+                    head,
+                    record
+                );
+
+                button.addEventListener(
+                    "click",
+                    () => {
+                        grid
+                            .querySelectorAll(
+                                ".map-dashboard-card"
+                            )
+                            .forEach(
+                                card => {
+                                    card.classList.remove(
+                                        "active"
+                                    );
+                                }
+                            );
+
+                        button.classList.add(
+                            "active"
+                        );
+
+                        renderDetail(
+                            group
+                        );
+                    }
+                );
+
+                grid.appendChild(
+                    button
+                );
+            }
+        );
+
+        placeholderBody.append(
+            grid,
+            detail
+        );
+
+        renderDetail(
+            groups[0]
+        );
+    }
+
+
     function trendCard(
         label,
         recentValue,
         previousValue,
         digits,
-        suffix = ""
+        suffix = "",
+        higherIsBetter = true
     ) {
         const card =
             makeElement(
@@ -14225,19 +14801,29 @@ document
                 recentValue
                 - previousValue;
 
+            let direction =
+                "flat";
+
+            if (
+                Math.abs(delta)
+                > 0.005
+            ) {
+                const improved =
+                    higherIsBetter
+                        ? delta > 0
+                        : delta < 0;
+
+                direction =
+                    improved
+                        ? "up"
+                        : "down";
+            }
+
             const deltaNode =
                 makeElement(
                     "span",
                     "stats-delta "
-                    + (
-                        delta > 0.005
-                            ? "up"
-                            : (
-                                delta < -0.005
-                                    ? "down"
-                                    : "flat"
-                            )
-                    ),
+                    + direction,
                     (
                         delta > 0
                             ? "+"
@@ -14285,7 +14871,7 @@ document
         const overview =
             makeElement(
                 "div",
-                "stats-overview"
+                "stats-overview-v2"
             );
 
         overview.append(
@@ -14304,24 +14890,22 @@ document
                     )
             ),
             makeMetric(
-                "K/D",
-                overall.kd
-                    .toFixed(2)
+                "Entry +/-",
+                (
+                    overall.entryDelta > 0
+                        ? "+"
+                        : ""
+                )
+                + overall.entryDelta
             ),
             makeMetric(
-                "ADR",
-                overall.adr
+                "Utility / round",
+                overall.utilityPerRound
                     .toFixed(1)
             ),
             makeMetric(
-                "KAST",
-                overall.kast
-                    .toFixed(1)
-                + "%"
-            ),
-            makeMetric(
-                "HS",
-                overall.hs
+                "Survival",
+                overall.survival
                     .toFixed(1)
                 + "%"
             )
@@ -14413,7 +14997,7 @@ document
         const trends =
             makeElement(
                 "div",
-                "stats-trend-grid"
+                "stats-trend-grid-v2"
             );
 
         trends.append(
@@ -14438,6 +15022,31 @@ document
                 recent.kast,
                 previous
                     ? previous.kast
+                    : null,
+                1,
+                "%"
+            ),
+            trendCard(
+                "Entry +/-",
+                recent.entryDelta,
+                previous
+                    ? previous.entryDelta
+                    : null,
+                0
+            ),
+            trendCard(
+                "Utility / round",
+                recent.utilityPerRound,
+                previous
+                    ? previous.utilityPerRound
+                    : null,
+                1
+            ),
+            trendCard(
+                "Survival",
+                recent.survival,
+                previous
+                    ? previous.survival
                     : null,
                 1,
                 "%"
@@ -14471,7 +15080,7 @@ document
             makeElement(
                 "div",
                 "dashboard-section-title",
-                "Повторяющиеся паттерны"
+                "Какие паттерны закрепляются"
             )
         );
 
@@ -14499,31 +15108,9 @@ document
         placeholderBody.appendChild(
             makeElement(
                 "div",
-                "dashboard-section-title",
-                "Последние матчи"
+                "stats-context-note",
+                "Статистика здесь отвечает не на вопрос «какие у тебя цифры вообще», а на вопрос «в какую сторону меняется игра». Для устойчивого тренда нужно больше матчей."
             )
-        );
-
-        const list =
-            makeElement(
-                "div",
-                "dashboard-detail"
-            );
-
-        matches
-            .slice(0, 10)
-            .forEach(
-                match => {
-                    list.appendChild(
-                        makeMatchRow(
-                            match
-                        )
-                    );
-                }
-            );
-
-        placeholderBody.appendChild(
-            list
         );
     }
 
