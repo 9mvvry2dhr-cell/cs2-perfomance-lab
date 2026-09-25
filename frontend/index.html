@@ -6853,7 +6853,7 @@ button.dashboard-match-row:hover {
 
 .player-dna-verdict {
     margin-top: 18px;
-    overflow: hidden;
+    padding: 16px 18px 17px;
     border: 1px solid rgba(137,167,187,.13);
     border-radius: 13px;
     background:
@@ -6869,8 +6869,6 @@ button.dashboard-match-row:hover {
     align-items: center;
     justify-content: space-between;
     gap: 16px;
-    padding: 14px 16px;
-    border-bottom: 1px solid rgba(137,167,187,.09);
 }
 
 .player-dna-verdict-title-wrap {
@@ -6889,47 +6887,15 @@ button.dashboard-match-row:hover {
 .player-dna-verdict-sub {
     color: #71899b;
     font-size: 9.5px;
-}
-
-.player-dna-verdict-grid {
-    display: grid;
-    grid-template-columns: repeat(3,minmax(0,1fr));
-}
-
-.player-dna-verdict-item {
-    min-width: 0;
-    padding: 15px 16px 16px;
-    border-left: 1px solid rgba(137,167,187,.08);
-}
-
-.player-dna-verdict-item:first-child {
-    border-left: 0;
-}
-
-.player-dna-verdict-label {
-    font-size: 8.5px;
-    font-weight: 820;
-    letter-spacing: .07em;
-    text-transform: uppercase;
-}
-
-.player-dna-verdict-item.positive .player-dna-verdict-label {
-    color: #72d1a8;
-}
-
-.player-dna-verdict-item.growth .player-dna-verdict-label {
-    color: #e5ac53;
-}
-
-.player-dna-verdict-item.focus .player-dna-verdict-label {
-    color: #69b8ef;
+    white-space: nowrap;
 }
 
 .player-dna-verdict-text {
-    margin-top: 7px;
+    max-width: 980px;
+    margin-top: 10px;
     color: #aec0cb;
-    font-size: 11px;
-    line-height: 1.55;
+    font-size: 11.5px;
+    line-height: 1.6;
 }
 
 .player-profile-signals-v3 {
@@ -7105,24 +7071,18 @@ button.dashboard-match-row:hover {
     }
 
     .player-profile-core,
-    .player-profile-signals-v3,
-    .player-dna-verdict-grid {
+    .player-profile-signals-v3 {
         grid-template-columns: 1fr;
-    }
-
-    .player-dna-verdict-item {
-        border-left: 0;
-        border-top: 1px solid rgba(137,167,187,.08);
-    }
-
-    .player-dna-verdict-item:first-child {
-        border-top: 0;
     }
 
     .player-dna-verdict-head {
         align-items: flex-start;
         flex-direction: column;
         gap: 5px;
+    }
+
+    .player-dna-verdict-sub {
+        white-space: normal;
     }
 
     .player-profile-core-item {
@@ -12799,237 +12759,126 @@ function applyProfileAvatar(
 }
 
 
-function buildPlayerDnaVerdict(
+function buildPlayerDnaSummary(
     data
 ) {
-    const positive = [];
-    const growth = [];
+    let strength = "";
+    let limiter = "";
 
     if (
         data.openingDuels >= 6
         && data.openingSuccess >= 55
     ) {
-        positive.push(
-            "Первые контакты сейчас дают плюс: "
-            + data.openingSuccess.toFixed(1)
-            + "% успешных opening-дуэлей при участии в "
-            + data.openingInvolvement.toFixed(1)
-            + "% раундов."
-        );
+        strength =
+            "Сильнее всего сейчас выглядят первые контакты: "
+            + "ты регулярно создаёшь команде раннее преимущество.";
     } else if (
-        data.openingDuels >= 6
-        && data.openingSuccess < 45
-    ) {
-        growth.push(
-            "Первый контакт забирает слишком много раундов: успешность "
-            + data.openingSuccess.toFixed(1)
-            + "%. Объём opening лучше не увеличивать, пока качество дуэлей не вырастет."
-        );
-    }
-
-    if (
         data.tradeOpportunities >= 5
+        && data.tradeConversion >= 60
     ) {
-        if (
-            data.tradeConversion >= 60
-        ) {
-            positive.push(
-                "Размены работают: конвертировано "
-                + data.tradeConversion.toFixed(1)
-                + "% доступных trade-ситуаций."
-            );
-        } else if (
-            data.tradeConversion < 45
-        ) {
-            growth.push(
-                "Главная потеря сейчас в разменах: реализовано только "
-                + data.tradeConversion.toFixed(1)
-                + "% зафиксированных trade-возможностей."
-            );
-        }
-    }
-
-    if (
-        data.rounds >= 12
-        && data.utilityPerRound >= 8
-    ) {
-        positive.push(
-            "HE и molotov уже дают заметный урон: "
-            + data.utilityPerRound.toFixed(1)
-            + " damage за раунд."
-        );
+        strength =
+            "Сильная сторона текущего профиля — размены: "
+            + "ты хорошо поддерживаешь первый контакт и сохраняешь командный темп.";
     } else if (
         data.rounds >= 12
-        && data.utilityPerRound <= 1
-    ) {
-        growth.push(
-            "Damage-utility почти не конвертируется в урон: "
-            + data.utilityPerRound.toFixed(1)
-            + " за раунд."
-        );
-    }
-
-    if (
-        data.rounds >= 12
-        && data.flashedPerRound >= .75
-        && data.flashSecondsPerRound >= 1.8
-    ) {
-        positive.push(
-            "Флешки уже дают сильный подтверждённый импакт: "
-            + data.flashedPerRound.toFixed(2)
-            + " врага и "
-            + data.flashSecondsPerRound.toFixed(2)
-            + " сек. ослепления за раунд."
-        );
-    } else if (
-        data.rounds >= 12
-        && data.flashedPerRound <= .10
-        && data.flashSecondsPerRound <= .15
-    ) {
-        growth.push(
-            "Флешки почти не создают окно для команды: "
-            + data.flashedPerRound.toFixed(2)
-            + " врага за раунд."
-        );
-    }
-
-    if (
-        data.multikillRounds >= 6
+        && data.multikillRounds >= 6
         && data.multikillRate >= 33
     ) {
-        positive.push(
-            "Есть стабильный раундовый импакт: "
-            + data.multikillRate.toFixed(1)
-            + "% раундов заканчиваются для тебя 2K+."
-        );
-    }
-
-    if (!positive.length) {
-        positive.push(
-            "Пока нет одного показателя, который уверенно выделяется как закреплённая сильная сторона. Это не минус — выборка ещё формируется."
-        );
-    }
-
-    if (!growth.length) {
-        if (
-            data.rounds >= 12
-            && (
-                data.utilityPerRound < 8
-                || data.flashedPerRound < .75
+        strength =
+            "Твой профиль сейчас строится вокруг раундового импакта: "
+            + "ты регулярно превращаешь выигранные дуэли в серии фрагов.";
+    } else if (
+        data.rounds >= 12
+        && (
+            data.utilityPerRound >= 8
+            || (
+                data.flashedPerRound >= .75
+                && data.flashSecondsPerRound >= 1.8
             )
-        ) {
-            growth.push(
-                "Явной просадки нет. Ближайший резерв роста — utility: сейчас она полезна, но ещё не выходит на уровень сильного повторяющегося сигнала."
-            );
-        } else {
-            growth.push(
-                "Явной устойчивой просадки по Player DNA пока не видно."
-            );
-        }
+        )
+    ) {
+        strength =
+            "Utility уже является заметной частью твоего импакта, "
+            + "а не просто дополнением к стрельбе.";
     }
-
-    let focus;
 
     if (
         data.openingDuels >= 6
         && data.openingSuccess < 45
     ) {
-        focus = (
-            "Следующие матчи: не добавляй новых соло-opening. "
-            + "Перед первым пиком требуй одно из двух условий — флешку или игрока на мгновенный размен. "
-            + "Смотрим, растёт ли opening success без падения участия."
-        );
+        limiter =
+            "Главное ограничение — качество первых контактов: "
+            + "слишком большая часть ранней инициативы заканчивается потерей игрока.";
     } else if (
         data.tradeOpportunities >= 5
         && data.tradeConversion < 45
     ) {
-        focus = (
-            "Следующий фокус — дистанция до первого номера. "
-            + "После его контакта не задерживай ответный пик: держись достаточно близко, чтобы уложить размен в 5-секундное окно. "
-            + "Проверяем рост trade conversion."
-        );
+        limiter =
+            "Главная потеря сейчас происходит после первого контакта: "
+            + "созданное преимущество слишком часто не закрепляется разменом.";
+    } else if (
+        data.rounds >= 12
+        && data.utilityPerRound <= 1
+        && data.flashedPerRound <= .10
+    ) {
+        limiter =
+            "Ты заметно сильнее влияешь на раунд стрельбой, чем utility. "
+            + "Основной резерв профиля сейчас — влияние гранат на командные эпизоды.";
     } else if (
         data.rounds >= 12
         && data.utilityPerRound <= 1
     ) {
-        focus = (
-            "В ближайших матчах перенеси часть HE/molotov с формального контроля на конкретный контакт: choke, ретейк или выбивание позиции. "
-            + "Смотрим, растёт ли utility damage / round."
-        );
+        limiter =
+            "Стрельба даёт больше импакта, чем damage-utility. "
+            + "Именно здесь сейчас виден наиболее очевидный резерв роста.";
     } else if (
         data.rounds >= 12
         && data.flashedPerRound <= .10
         && data.flashSecondsPerRound <= .15
     ) {
-        focus = (
-            "Добавь подготовленную флешку перед ключевым командным контактом вместо поздней флешки после начала перестрелки. "
-            + "Смотрим enemies flashed и blind time / round."
-        );
-    } else if (
-        data.openingDuels >= 6
-        && data.openingSuccess >= 55
-        && data.rounds >= 12
-        && (
-            data.utilityPerRound < 8
-            || data.flashedPerRound < .75
-        )
+        limiter =
+            "Флешки пока почти не влияют на командные контакты. "
+            + "Это самый заметный резерв роста внутри текущего Player DNA.";
+    }
+
+    if (
+        strength
+        && limiter
     ) {
-        focus = (
-            "Opening сейчас лучше не ломать. Следующий кандидат для роста — подготовка первого контакта utility: "
-            + "добавляй флешку или damage-гранату перед запланированной дуэлью и проверяй, растёт ли utility impact без просадки opening success."
-        );
-    } else if (
-        data.tradeKnownMatches > 0
-        && data.tradeOpportunities < 5
-    ) {
-        focus = (
-            "Сохрани текущий стиль и отдельно следи за вторым номером: новых данных по trade-возможностям пока мало. "
-            + "Нам нужны ещё реальные окна для размена, чтобы понять, теряются ли они системно."
-        );
-    } else {
-        focus = (
-            "Не меняй сразу весь стиль. Выбери один повторяющийся сигнал из следующих матчей и меняй только связанную с ним привычку — так будет видно, что реально дало эффект."
+        return (
+            strength
+            + " "
+            + limiter
         );
     }
 
-    return {
-        positive:
-            positive[0],
-        growth:
-            growth[0],
-        focus,
-    };
-}
-
-
-function appendDnaVerdictItem(
-    container,
-    kind,
-    label,
-    text
-) {
-    const item =
-        historyElement(
-            "div",
-            "player-dna-verdict-item "
-            + kind
+    if (strength) {
+        return (
+            strength
+            + " Явной устойчивой просадки по Player DNA пока не видно."
         );
+    }
 
-    item.append(
-        historyElement(
-            "div",
-            "player-dna-verdict-label",
-            label
-        ),
-        historyElement(
-            "div",
-            "player-dna-verdict-text",
-            text
-        )
-    );
+    if (limiter) {
+        return (
+            "Профиль ещё формируется, но направление уже видно. "
+            + limiter
+        );
+    }
 
-    container.appendChild(
-        item
+    if (
+        data.tradeKnownMatches > 0
+        && data.tradeOpportunities < 5
+    ) {
+        return (
+            "Player DNA пока формируется без одного доминирующего сигнала. "
+            + "По части метрик данных уже достаточно, но для уверенного вывода по разменам нужно больше реальных trade-ситуаций."
+        );
+    }
+
+    return (
+        "Player DNA пока выглядит сбалансированно, без одной явно доминирующей сильной или слабой стороны. "
+        + "Следующие матчи нужны прежде всего для того, чтобы отделить устойчивый стиль от случайных колебаний."
     );
 }
 
@@ -13653,8 +13502,8 @@ function renderPlayerHistory(
         dna
     );
 
-    const verdictData =
-        buildPlayerDnaVerdict(
+    const verdictText =
+        buildPlayerDnaSummary(
             {
                 rounds,
                 openingDuels,
@@ -13698,7 +13547,7 @@ function renderPlayerHistory(
             "КРАТКИЙ ВЫВОД ПО PLAYER DNA"
         ),
         makeProfileHelp(
-            "Это детерминированный вывод CS2Lab по текущим метрикам и порогам, а не ответ AI. Он выбирает один подтверждённый плюс, одну зону роста и один конкретный фокус на следующие матчи.",
+            "Это короткая интерпретация текущего Player DNA по подтверждённым метрикам и порогам. Здесь нет полноценного совета или плана действий — за этим отвечает Тренер AI.",
             "Как формируется краткий вывод"
         )
     );
@@ -13716,36 +13565,13 @@ function renderPlayerHistory(
         )
     );
 
-    const verdictGrid =
-        historyElement(
-            "div",
-            "player-dna-verdict-grid"
-        );
-
-    appendDnaVerdictItem(
-        verdictGrid,
-        "positive",
-        "ЧТО УЖЕ РАБОТАЕТ",
-        verdictData.positive
-    );
-
-    appendDnaVerdictItem(
-        verdictGrid,
-        "growth",
-        "ЗОНА РОСТА",
-        verdictData.growth
-    );
-
-    appendDnaVerdictItem(
-        verdictGrid,
-        "focus",
-        "СЛЕДУЮЩИЙ ФОКУС",
-        verdictData.focus
-    );
-
     verdict.append(
         verdictHead,
-        verdictGrid
+        historyElement(
+            "div",
+            "player-dna-verdict-text",
+            verdictText
+        )
     );
 
     body.appendChild(
