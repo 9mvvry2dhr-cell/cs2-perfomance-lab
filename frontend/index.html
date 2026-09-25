@@ -6559,6 +6559,369 @@ button.dashboard-match-row:hover {
     }
 }
 
+
+/* =========================================================
+   PLAYER PROFILE V3 — FACEIT-INSPIRED HIERARCHY
+   ========================================================= */
+
+.player-profile-hero {
+    position: relative;
+    overflow: hidden;
+    display: grid;
+    grid-template-columns: auto minmax(0,1fr);
+    gap: 18px;
+    align-items: center;
+    margin: -2px -2px 0;
+    padding: 20px 22px;
+    border: 1px solid rgba(137,167,187,.12);
+    border-radius: 14px;
+    background:
+        radial-gradient(
+            circle at 82% 12%,
+            rgba(240,165,47,.09),
+            transparent 34%
+        ),
+        linear-gradient(
+            135deg,
+            rgba(12,29,42,.94),
+            rgba(7,19,29,.82)
+        );
+}
+
+.player-profile-hero::before {
+    content: "";
+    position: absolute;
+    inset: 0 auto 0 0;
+    width: 3px;
+    background:
+        linear-gradient(
+            180deg,
+            #ffc04b,
+            #e58d21
+        );
+}
+
+.player-profile-avatar {
+    width: 74px;
+    height: 74px;
+    display: grid;
+    place-items: center;
+    overflow: hidden;
+    border: 2px solid rgba(240,165,47,.45);
+    border-radius: 12px;
+    background: #0a1823;
+    color: #d9e6ed;
+    font-family: "Sora","Manrope",sans-serif;
+    font-size: 24px;
+    font-weight: 700;
+    box-shadow:
+        0 0 0 4px rgba(240,165,47,.035),
+        0 10px 24px rgba(0,0,0,.24);
+}
+
+.player-profile-avatar img {
+    width: 100%;
+    height: 100%;
+    display: block;
+    object-fit: cover;
+}
+
+.player-profile-identity {
+    min-width: 0;
+}
+
+.player-profile-identity-top {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    min-width: 0;
+}
+
+.player-profile-name {
+    min-width: 0;
+    overflow: hidden;
+    color: #f4f8fb;
+    font-family: "Sora","Manrope",sans-serif;
+    font-size: 24px;
+    font-weight: 700;
+    letter-spacing: -.035em;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.player-profile-live {
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 8px;
+    border: 1px solid rgba(88,214,155,.20);
+    border-radius: 999px;
+    color: #79d9ae;
+    background: rgba(88,214,155,.055);
+    font-size: 8px;
+    font-weight: 760;
+}
+
+.player-profile-live::before {
+    content: "";
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: #58d69b;
+    box-shadow: 0 0 8px rgba(88,214,155,.55);
+}
+
+.player-profile-meta-line {
+    margin-top: 6px;
+    color: #7c95a7;
+    font-size: 9px;
+    line-height: 1.5;
+}
+
+.player-profile-meta-line strong {
+    color: #afc1cd;
+    font-weight: 680;
+}
+
+.player-profile-core {
+    display: grid;
+    grid-template-columns: repeat(5,minmax(0,1fr));
+    margin-top: 14px;
+    border: 1px solid rgba(137,167,187,.10);
+    border-radius: 11px;
+    background: rgba(4,14,22,.34);
+}
+
+.player-profile-core-item {
+    min-width: 0;
+    padding: 11px 13px;
+    border-left: 1px solid rgba(137,167,187,.08);
+}
+
+.player-profile-core-item:first-child {
+    border-left: 0;
+}
+
+.player-profile-core-label {
+    color: #657f92;
+    font-size: 7.5px;
+    font-weight: 760;
+    letter-spacing: .075em;
+    text-transform: uppercase;
+}
+
+.player-profile-core-value {
+    margin-top: 4px;
+    color: #eef6fa;
+    font-family: "Sora","Manrope",sans-serif;
+    font-size: 17px;
+    font-weight: 680;
+    letter-spacing: -.025em;
+    font-variant-numeric: tabular-nums;
+}
+
+.player-profile-section-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 14px;
+    margin-top: 22px;
+}
+
+.player-profile-section-title {
+    color: #dce7ed;
+    font-size: 10px;
+    font-weight: 820;
+    letter-spacing: .075em;
+    text-transform: uppercase;
+}
+
+.player-profile-section-note {
+    color: #657f91;
+    font-size: 8.5px;
+}
+
+.player-dna-list {
+    margin-top: 9px;
+    border-top: 1px solid rgba(137,167,187,.10);
+    border-bottom: 1px solid rgba(137,167,187,.10);
+}
+
+.player-dna-row {
+    display: grid;
+    grid-template-columns: 150px 150px minmax(0,1fr);
+    gap: 18px;
+    align-items: center;
+    min-height: 74px;
+    padding: 11px 8px 11px 14px;
+    border-top: 1px solid rgba(137,167,187,.075);
+    border-left: 2px solid #4ba9ea;
+}
+
+.player-dna-row:first-child {
+    border-top: 0;
+}
+
+.player-dna-row.trade {
+    border-left-color: #70c69f;
+}
+
+.player-dna-row.utility {
+    border-left-color: #e4a33c;
+}
+
+.player-dna-row.impact {
+    border-left-color: #9c86ed;
+}
+
+.player-dna-row:hover {
+    background: rgba(255,255,255,.015);
+}
+
+.player-dna-row-title {
+    color: #8fa6b6;
+    font-size: 8.5px;
+    font-weight: 800;
+    letter-spacing: .07em;
+    text-transform: uppercase;
+}
+
+.player-dna-row-main {
+    margin-top: 5px;
+    color: #f0f6fa;
+    font-family: "Sora","Manrope",sans-serif;
+    font-size: 20px;
+    font-weight: 690;
+    letter-spacing: -.03em;
+    font-variant-numeric: tabular-nums;
+}
+
+.player-dna-row-caption {
+    margin-top: 3px;
+    color: #637d90;
+    font-size: 8px;
+    line-height: 1.35;
+}
+
+.player-dna-row-secondary {
+    min-width: 0;
+}
+
+.player-dna-row-secondary-main {
+    color: #dbe7ed;
+    font-size: 12px;
+    font-weight: 760;
+    font-variant-numeric: tabular-nums;
+}
+
+.player-dna-row-secondary-label {
+    margin-top: 3px;
+    color: #60798c;
+    font-size: 8px;
+}
+
+.player-dna-row-metrics {
+    display: grid;
+    grid-template-columns: repeat(3,minmax(0,1fr));
+    gap: 12px;
+    min-width: 0;
+}
+
+.player-dna-inline {
+    min-width: 0;
+}
+
+.player-dna-inline-label {
+    color: #60798d;
+    font-size: 7.5px;
+    font-weight: 740;
+    letter-spacing: .045em;
+    text-transform: uppercase;
+}
+
+.player-dna-inline-value {
+    margin-top: 4px;
+    overflow: hidden;
+    color: #bdced8;
+    font-size: 10.5px;
+    font-weight: 730;
+    font-variant-numeric: tabular-nums;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.player-profile-signals-v3 {
+    display: grid;
+    grid-template-columns: repeat(2,minmax(0,1fr));
+    gap: 12px;
+    margin-top: 9px;
+}
+
+.player-profile-signals-v3 .player-profile-signal-box {
+    background: rgba(5,15,23,.30);
+}
+
+.player-profile-history-v3 {
+    margin-top: 22px;
+}
+
+.player-profile-history-v3 .player-history-match {
+    padding-left: 6px;
+    padding-right: 6px;
+}
+
+@media (max-width: 1000px) {
+    .player-profile-core {
+        grid-template-columns: repeat(3,minmax(0,1fr));
+    }
+
+    .player-profile-core-item:nth-child(4) {
+        border-left: 0;
+    }
+
+    .player-dna-row {
+        grid-template-columns: 135px 120px minmax(0,1fr);
+        gap: 12px;
+    }
+}
+
+@media (max-width: 760px) {
+    .player-profile-hero {
+        grid-template-columns: 1fr;
+    }
+
+    .player-profile-core,
+    .player-profile-signals-v3 {
+        grid-template-columns: 1fr;
+    }
+
+    .player-profile-core-item {
+        border-left: 0;
+        border-top: 1px solid rgba(137,167,187,.08);
+    }
+
+    .player-profile-core-item:first-child {
+        border-top: 0;
+    }
+
+    .player-dna-row {
+        grid-template-columns: 1fr;
+        gap: 9px;
+        padding: 14px;
+    }
+
+    .player-dna-row-metrics {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .player-profile-section-head {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 4px;
+    }
+}
+
 /* END PLAYER MATCH HISTORY */
 
 
@@ -11987,6 +12350,172 @@ function appendProfileSignalBox(
 }
 
 
+
+function makePlayerDnaRow(
+    kind,
+    title,
+    main,
+    caption,
+    secondary,
+    secondaryLabel,
+    metrics
+) {
+    const row =
+        historyElement(
+            "div",
+            "player-dna-row "
+            + kind
+        );
+
+    const primary =
+        historyElement(
+            "div",
+            ""
+        );
+
+    primary.append(
+        historyElement(
+            "div",
+            "player-dna-row-title",
+            title
+        ),
+        historyElement(
+            "div",
+            "player-dna-row-main",
+            main
+        ),
+        historyElement(
+            "div",
+            "player-dna-row-caption",
+            caption
+        )
+    );
+
+    const second =
+        historyElement(
+            "div",
+            "player-dna-row-secondary"
+        );
+
+    second.append(
+        historyElement(
+            "div",
+            "player-dna-row-secondary-main",
+            secondary
+        ),
+        historyElement(
+            "div",
+            "player-dna-row-secondary-label",
+            secondaryLabel
+        )
+    );
+
+    const metricGrid =
+        historyElement(
+            "div",
+            "player-dna-row-metrics"
+        );
+
+    metrics.forEach(
+        item => {
+            const metric =
+                historyElement(
+                    "div",
+                    "player-dna-inline"
+                );
+
+            metric.append(
+                historyElement(
+                    "div",
+                    "player-dna-inline-label",
+                    item[0]
+                ),
+                historyElement(
+                    "div",
+                    "player-dna-inline-value",
+                    item[1]
+                )
+            );
+
+            metricGrid.appendChild(
+                metric
+            );
+        }
+    );
+
+    row.append(
+        primary,
+        second,
+        metricGrid
+    );
+
+    return row;
+}
+
+
+function applyProfileAvatar(
+    avatar,
+    displayName
+) {
+    const avatarUrl =
+        String(
+            window.CS2_STEAM_AVATAR_URL
+            || ""
+        ).trim();
+
+    avatar.replaceChildren();
+
+    if (avatarUrl) {
+        const image =
+            document.createElement(
+                "img"
+            );
+
+        image.src =
+            avatarUrl;
+
+        image.alt =
+            displayName
+            || "Steam avatar";
+
+        image.referrerPolicy =
+            "no-referrer";
+
+        image.addEventListener(
+            "error",
+            () => {
+                avatar.replaceChildren();
+
+                avatar.textContent =
+                    (
+                        displayName
+                        || "?"
+                    )
+                    .slice(0, 1)
+                    .toUpperCase();
+            },
+            {
+                once: true,
+            }
+        );
+
+        avatar.appendChild(
+            image
+        );
+
+        return;
+    }
+
+    avatar.textContent =
+        (
+            displayName
+            || "?"
+        )
+        .slice(0, 1)
+        .toUpperCase();
+}
+
+
 function renderPlayerHistory(
     summary,
     matches
@@ -12137,120 +12666,193 @@ function renderPlayerHistory(
             rounds
         );
 
-    const head =
+    const displayName =
+        String(
+            window.CS2_STEAM_DISPLAY_NAME
+            || summary.player_name
+            || ""
+        ).trim()
+        || summary.player_name;
+
+    const hero =
         historyElement(
-            "div",
-            "player-history-head"
+            "section",
+            "player-profile-hero"
         );
 
-    const headLeft =
+    const avatar =
         historyElement(
             "div",
-            ""
+            "player-profile-avatar"
         );
 
-    headLeft.append(
+    applyProfileAvatar(
+        avatar,
+        displayName
+    );
+
+    const identity =
         historyElement(
             "div",
-            "player-history-eyebrow",
-            "ПРОФИЛЬ ИГРОКА"
+            "player-profile-identity"
+        );
+
+    const identityTop =
+        historyElement(
+            "div",
+            "player-profile-identity-top"
+        );
+
+    identityTop.append(
+        historyElement(
+            "div",
+            "player-profile-name",
+            displayName
         ),
         historyElement(
             "div",
-            "player-history-title",
-            summary.player_name
+            "player-profile-live",
+            "Steam подключён"
         )
     );
 
-    head.append(
-        headLeft,
+    const meta =
         historyElement(
             "div",
-            "player-history-meta",
+            "player-profile-meta-line"
+        );
+
+    meta.append(
+        document.createTextNode(
             summary.matches_analyzed
             + " матчей · "
             + rounds
-            + " раундов"
+            + " раундов · "
+        ),
+        historyElement(
+            "strong",
+            "",
+            "CS2 Performance Lab"
         )
     );
 
-    body.appendChild(
-        head
-    );
-
-    const baseline =
+    const core =
         historyElement(
             "div",
-            "player-profile-v2-baseline"
+            "player-profile-core"
         );
 
-    appendProfileBaseMetric(
-        baseline,
-        "K/D",
-        formatNumber(
-            stats.kd,
-            2
-        )
+    [
+        [
+            "K/D",
+            formatNumber(
+                stats.kd,
+                2
+            ),
+        ],
+        [
+            "ADR",
+            formatNumber(
+                stats.adr
+            ),
+        ],
+        [
+            "KAST",
+            formatNumber(
+                stats.kast_pct
+            )
+            + "%",
+        ],
+        [
+            "HS",
+            formatNumber(
+                stats.headshot_pct
+            )
+            + "%",
+        ],
+        [
+            "KPR",
+            kpr.toFixed(2),
+        ],
+    ].forEach(
+        ([label, value]) => {
+            const item =
+                historyElement(
+                    "div",
+                    "player-profile-core-item"
+                );
+
+            item.append(
+                historyElement(
+                    "div",
+                    "player-profile-core-label",
+                    label
+                ),
+                historyElement(
+                    "div",
+                    "player-profile-core-value",
+                    value
+                )
+            );
+
+            core.appendChild(
+                item
+            );
+        }
     );
 
-    appendProfileBaseMetric(
-        baseline,
-        "ADR",
-        formatNumber(
-            stats.adr
-        )
+    identity.append(
+        identityTop,
+        meta,
+        core
     );
 
-    appendProfileBaseMetric(
-        baseline,
-        "KAST",
-        formatNumber(
-            stats.kast_pct
-        )
-        + "%"
-    );
-
-    appendProfileBaseMetric(
-        baseline,
-        "HS",
-        formatNumber(
-            stats.headshot_pct
-        )
-        + "%"
-    );
-
-    appendProfileBaseMetric(
-        baseline,
-        "KPR",
-        kpr.toFixed(2)
+    hero.append(
+        avatar,
+        identity
     );
 
     body.appendChild(
-        baseline
+        hero
     );
 
-    body.appendChild(
+    const dnaHead =
         historyElement(
             "div",
-            "player-profile-v2-section-title",
-            "PLAYER DNA · КАК ТЫ ИГРАЕШЬ"
+            "player-profile-section-head"
+        );
+
+    dnaHead.append(
+        historyElement(
+            "div",
+            "player-profile-section-title",
+            "PLAYER DNA"
+        ),
+        historyElement(
+            "div",
+            "player-profile-section-note",
+            "4 ключевых аспекта твоей игры"
         )
+    );
+
+    body.appendChild(
+        dnaHead
     );
 
     const dna =
         historyElement(
             "div",
-            "player-dna-grid"
+            "player-dna-list"
         );
 
     dna.append(
-        makeDnaCard(
+        makePlayerDnaRow(
             "opening",
             "ПЕРВЫЕ КОНТАКТЫ",
             entryKills
             + " / "
             + entryDeaths,
-            "выигранные / проигранные opening-дуэли",
+            "выиграно / проиграно",
             (
                 openingBalance > 0
                     ? "+"
@@ -12262,20 +12864,26 @@ function renderPlayerHistory(
                 [
                     "УСПЕХ",
                     openingDuels
-                        ? openingSuccess.toFixed(1) + "%"
+                        ? openingSuccess
+                            .toFixed(1)
+                            + "%"
                         : "—",
                 ],
                 [
                     "УЧАСТИЕ",
-                    openingInvolvement.toFixed(1) + "%",
+                    openingInvolvement
+                        .toFixed(1)
+                    + "%",
                 ],
                 [
                     "ДУЭЛЕЙ",
-                    String(openingDuels),
+                    String(
+                        openingDuels
+                    ),
                 ],
             ]
         ),
-        makeDnaCard(
+        makePlayerDnaRow(
             "trade",
             "РАЗМЕНЫ",
             String(
@@ -12288,37 +12896,43 @@ function renderPlayerHistory(
             "твоих смертей разменяно",
             [
                 [
-                    "РАЗМЕН / РАУНД",
-                    tradePerRound.toFixed(2),
+                    "TRADE / РАУНД",
+                    tradePerRound
+                        .toFixed(2),
                 ],
                 [
-                    "РАЗМЕНЕНО СМЕРТЕЙ",
-                    tradedDeathPct.toFixed(1) + "%",
+                    "РАЗМЕНЕНО",
+                    tradedDeathPct
+                        .toFixed(1)
+                    + "%",
                 ],
                 [
-                    "СМЕРТЕЙ / РАУНД",
+                    "DPR",
                     dpr.toFixed(2),
                 ],
             ]
         ),
-        makeDnaCard(
+        makePlayerDnaRow(
             "utility",
             "UTILITY",
-            utilityPerRound.toFixed(1),
-            "урона HE + fire за раунд",
+            utilityPerRound
+                .toFixed(1),
+            "урона HE + fire / раунд",
             formatNumber(
                 utilityDamage,
                 0
             ),
-            "суммарный utility damage",
+            "utility damage всего",
             [
                 [
-                    "ВРАГОВ FLASH / РАУНД",
-                    flashedPerRound.toFixed(2),
+                    "FLASHED / РАУНД",
+                    flashedPerRound
+                        .toFixed(2),
                 ],
                 [
                     "FLASH SEC / РАУНД",
-                    flashSecondsPerRound.toFixed(2),
+                    flashSecondsPerRound
+                        .toFixed(2),
                 ],
                 [
                     "HE / FIRE",
@@ -12334,10 +12948,12 @@ function renderPlayerHistory(
                 ],
             ]
         ),
-        makeDnaCard(
+        makePlayerDnaRow(
             "impact",
             "ROUND IMPACT",
-            multikillRate.toFixed(1) + "%",
+            multikillRate
+                .toFixed(1)
+            + "%",
             "раундов с 2K+",
             String(
                 stats.clutches_won || 0
@@ -12352,7 +12968,7 @@ function renderPlayerHistory(
                     + "%",
                 ],
                 [
-                    "ASSISTS / ROUND",
+                    "APR",
                     apr.toFixed(2),
                 ],
                 [
@@ -12371,82 +12987,6 @@ function renderPlayerHistory(
 
     body.appendChild(
         dna
-    );
-
-    body.appendChild(
-        historyElement(
-            "div",
-            "player-profile-v2-section-title",
-            "ЧТО ВИДНО ПО ДАННЫМ"
-        )
-    );
-
-    const observations =
-        historyElement(
-            "div",
-            "player-profile-observations"
-        );
-
-    appendProfileObservation(
-        observations,
-        "OPENING",
-        openingDuels > 0
-            ? (
-                "Участие в первых контактах: "
-                + openingInvolvement.toFixed(1)
-                + "% раундов. Баланс "
-                + (
-                    openingBalance > 0
-                        ? "+"
-                        : ""
-                )
-                + openingBalance
-                + ", успешность "
-                + openingSuccess.toFixed(1)
-                + "%."
-            )
-            : "Подтверждённых opening-дуэлей пока нет."
-    );
-
-    appendProfileObservation(
-        observations,
-        "TRADE",
-        tradeKills
-        + " подтверждённых trade kills; "
-        + tradedDeaths
-        + " из "
-        + deaths
-        + " смертей были разменяны ("
-        + tradedDeathPct.toFixed(1)
-        + "%)."
-    );
-
-    appendProfileObservation(
-        observations,
-        "UTILITY",
-        utilityPerRound.toFixed(1)
-        + " урона гранатами за раунд; "
-        + flashedPerRound.toFixed(2)
-        + " ослеплённых врага за раунд; "
-        + flashSecondsPerRound.toFixed(2)
-        + " сек. ослепления за раунд."
-    );
-
-    appendProfileObservation(
-        observations,
-        "IMPACT",
-        multikillRounds
-        + " раундов с 2K+ из "
-        + rounds
-        + " ("
-        + multikillRate.toFixed(1)
-        + "%); "
-        + (stats.clutches_won || 0)
-        + " выигранных клатча."
-    );
-
-    body.appendChild(
-        observations
     );
 
     const recurring =
@@ -12470,18 +13010,33 @@ function renderPlayerHistory(
                 === "weakness"
         );
 
-    body.appendChild(
+    const signalsHead =
         historyElement(
             "div",
-            "player-profile-v2-section-title",
+            "player-profile-section-head"
+        );
+
+    signalsHead.append(
+        historyElement(
+            "div",
+            "player-profile-section-title",
             "ПОВТОРЯЮЩИЕСЯ СИГНАЛЫ"
+        ),
+        historyElement(
+            "div",
+            "player-profile-section-note",
+            "показываем только то, что встретилось минимум в 2 матчах"
         )
+    );
+
+    body.appendChild(
+        signalsHead
     );
 
     const signalGrid =
         historyElement(
             "div",
-            "player-profile-signals-v2"
+            "player-profile-signals-v3"
         );
 
     appendProfileSignalBox(
@@ -12505,7 +13060,7 @@ function renderPlayerHistory(
     const matchesSection =
         historyElement(
             "div",
-            "player-history-matches player-profile-history-v2"
+            "player-history-matches player-profile-history-v3"
         );
 
     matchesSection.appendChild(
@@ -12559,8 +13114,7 @@ function renderPlayerHistory(
                     item.stats.kills
                     + " / "
                     + item.stats.deaths
-                    + " · "
-                    + "K/D "
+                    + " · K/D "
                     + formatNumber(
                         item.stats.kd,
                         2
