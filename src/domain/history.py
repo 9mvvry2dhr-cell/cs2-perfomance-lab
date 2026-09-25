@@ -174,6 +174,24 @@ def build_player_history_summary(
         else None
     )
 
+    trade_opportunity_values = [
+        item.stats.trade_opportunities
+        for item in matches
+    ]
+
+    trade_opportunities = (
+        sum(
+            value
+            for value in trade_opportunity_values
+            if value is not None
+        )
+        if all(
+            value is not None
+            for value in trade_opportunity_values
+        )
+        else None
+    )
+
     trade_kills = sum(
         item.stats.trade_kills
         for item in matches
@@ -259,6 +277,7 @@ def build_player_history_summary(
         four_k_rounds=four_k_rounds,
         five_k_rounds=five_k_rounds,
         clutch_attempts=clutch_attempts,
+        trade_opportunities=trade_opportunities,
     )
 
     finding_counts: dict[str, int] = {}
