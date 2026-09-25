@@ -156,6 +156,24 @@ def build_player_history_summary(
         for item in matches
     )
 
+    clutch_attempt_values = [
+        item.stats.clutch_attempts
+        for item in matches
+    ]
+
+    clutch_attempts = (
+        sum(
+            value
+            for value in clutch_attempt_values
+            if value is not None
+        )
+        if all(
+            value is not None
+            for value in clutch_attempt_values
+        )
+        else None
+    )
+
     trade_kills = sum(
         item.stats.trade_kills
         for item in matches
@@ -240,6 +258,7 @@ def build_player_history_summary(
         three_k_rounds=three_k_rounds,
         four_k_rounds=four_k_rounds,
         five_k_rounds=five_k_rounds,
+        clutch_attempts=clutch_attempts,
     )
 
     finding_counts: dict[str, int] = {}
