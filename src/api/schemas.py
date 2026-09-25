@@ -141,6 +141,7 @@ class PlayerStatsResponse(ApiModel):
     five_k_rounds: int
 
     clutch_attempts: int | None = None
+    trade_opportunities: int | None = None
 
 
 class PlayerAnalysisResponse(ApiModel):
