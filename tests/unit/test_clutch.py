@@ -2,7 +2,10 @@ import unittest
 
 import pandas as pd
 
-from src.metrics.clutch import calculate_clutches
+from src.metrics.clutch import (
+    calculate_clutch_metrics,
+    calculate_clutches,
+)
 
 
 class FakeDemoParser:
@@ -224,7 +227,7 @@ class TestClutchMetrics(unittest.TestCase):
             ],
         )
 
-        clutches = calculate_clutches(
+        attempts, clutches = calculate_clutch_metrics(
             parser,
             [
                 "A",
@@ -233,6 +236,11 @@ class TestClutchMetrics(unittest.TestCase):
                 "B2",
                 "B3",
             ],
+        )
+
+        self.assertEqual(
+            attempts["A"],
+            1,
         )
 
         self.assertEqual(
@@ -280,7 +288,7 @@ class TestClutchMetrics(unittest.TestCase):
             ],
         )
 
-        clutches = calculate_clutches(
+        attempts, clutches = calculate_clutch_metrics(
             parser,
             [
                 "A",
@@ -288,6 +296,11 @@ class TestClutchMetrics(unittest.TestCase):
                 "B",
                 "B2",
             ],
+        )
+
+        self.assertEqual(
+            attempts["A"],
+            1,
         )
 
         self.assertEqual(
