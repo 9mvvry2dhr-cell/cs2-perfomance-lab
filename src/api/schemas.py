@@ -26,6 +26,14 @@ class ReadyResponse(ApiModel):
     status: Literal["ready"]
 
 
+class AIOverviewQuotaResponse(ApiModel):
+    available: bool
+    cooldown_days: int
+    last_generated_at: datetime | None = None
+    next_available_at: datetime | None = None
+    has_cached_report: bool
+
+
 class AnalysisJobResponse(ApiModel):
     id: str
     status: Literal[

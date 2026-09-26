@@ -22,6 +22,10 @@ from src.ai.client import (
 )
 from src.auth.session import SESSION_COOKIE_NAME
 from src.database.auth_repository import AuthRepository
+from src.database.ai_overview_quota_repository import (
+    AIOverviewQuotaRepository,
+    DEFAULT_AI_OVERVIEW_COOLDOWN_DAYS,
+)
 from src.database.bug_report_repository import (
     BugReportRepository,
 )
@@ -94,6 +98,37 @@ def get_analysis_repository(
 ) -> AnalysisRepository:
     return AnalysisRepository(
         session
+    )
+
+
+def get_ai_overview_quota_repository(
+    session: Annotated[
+        Session,
+        Depends(get_database_session),
+    ],
+) -> AIOverviewQuotaRepository:
+    raw_days = os.environ.get(
+        "AI_OVERVIEW_COOLDOWN_DAYS",
+        str(
+            DEFAULT_AI_OVERVIEW_COOLDOWN_DAYS
+        ),
+    ).strip()
+
+    try:
+        cooldown_days = int(
+            raw_days
+        )
+    except ValueError as exc:
+        raise RuntimeError(
+            "AI_OVERVIEW_COOLDOWN_DAYS must be an integer"
+        ) from exc
+
+    return AIOverviewQuotaRepository(
+        session,
+        cooldown_days=max(
+            0,
+            cooldown_days,
+        ),
     )
 
 

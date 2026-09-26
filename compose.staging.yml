@@ -117,6 +117,7 @@ services:
       STEAM_API_KEY: ${STEAM_API_KEY:?STEAM_API_KEY is required}
       OPENAI_API_KEY: ${OPENAI_API_KEY:-}
       OPENAI_MODEL: ${OPENAI_MODEL:-gpt-5.6}
+      AI_OVERVIEW_COOLDOWN_DAYS: ${AI_OVERVIEW_COOLDOWN_DAYS:-30}
     expose:
       - "8000"
     volumes:

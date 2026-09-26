@@ -47,6 +47,7 @@ from src.api.dependencies import (
     dispose_database_resources,
     get_auth_repository,
     get_bug_report_repository,
+    get_ai_overview_quota_repository,
     get_analysis_job_repository,
     get_analysis_repository,
     get_current_user,
@@ -56,6 +57,7 @@ from src.api.dependencies import (
     get_player_ai_explainer,
 )
 from src.api.schemas import (
+    AIOverviewQuotaResponse,
     AnalysisJobResponse,
     BugReportCreateRequest,
     BugReportResponse,
@@ -65,6 +67,10 @@ from src.api.schemas import (
     PlayerHistorySummaryResponse,
     PlayerMatchHistoryResponse,
     ReadyResponse,
+)
+from src.database.ai_overview_quota_repository import (
+    AIOverviewRateLimitError,
+    AIOverviewQuotaRepository,
 )
 from src.database.auth_repository import (
     AuthRepository,
@@ -581,6 +587,77 @@ def explain_match_with_ai(
         ) from exc
 
 
+@app.get(
+    "/me/ai-overview/status",
+    response_model=AIOverviewQuotaResponse,
+)
+def get_ai_overview_status(
+    quota_repository: Annotated[
+        AIOverviewQuotaRepository,
+        Depends(
+            get_ai_overview_quota_repository
+        ),
+    ],
+    current_user: Annotated[
+        CurrentUser,
+        Depends(get_current_user),
+    ],
+) -> AIOverviewQuotaResponse:
+    quota = quota_repository.get_status(
+        current_user.steam_id
+    )
+
+    return AIOverviewQuotaResponse(
+        available=quota.available,
+        cooldown_days=(
+            quota.cooldown_days
+        ),
+        last_generated_at=(
+            quota.last_generated_at
+        ),
+        next_available_at=(
+            quota.next_available_at
+        ),
+        has_cached_report=(
+            quota.has_cached_report
+        ),
+    )
+
+
+@app.get(
+    "/me/ai-overview/latest",
+    response_model=PlayerAIResponse,
+)
+def get_latest_ai_overview(
+    quota_repository: Annotated[
+        AIOverviewQuotaRepository,
+        Depends(
+            get_ai_overview_quota_repository
+        ),
+    ],
+    current_user: Annotated[
+        CurrentUser,
+        Depends(get_current_user),
+    ],
+) -> PlayerAIResponse:
+    cached = (
+        quota_repository
+        .get_cached_response(
+            current_user.steam_id
+        )
+    )
+
+    if cached is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="AI overview not found",
+        )
+
+    return PlayerAIResponse.model_validate(
+        cached
+    )
+
+
 @app.post(
     "/me/ai-overview",
     response_model=PlayerAIResponse,
@@ -589,6 +666,12 @@ def explain_player_with_ai(
     repository: Annotated[
         AnalysisRepository,
         Depends(get_analysis_repository),
+    ],
+    quota_repository: Annotated[
+        AIOverviewQuotaRepository,
+        Depends(
+            get_ai_overview_quota_repository
+        ),
     ],
     explainer: Annotated[
         OpenAIPlayerExplainer,
@@ -633,19 +716,58 @@ def explain_player_with_ai(
     )
 
     try:
-        return explainer.explain_with_usage(
+        quota_repository.reserve_generation(
+            current_user.steam_id
+        )
+    except AIOverviewRateLimitError as exc:
+        raise HTTPException(
+            status_code=(
+                status.HTTP_429_TOO_MANY_REQUESTS
+            ),
+            detail=(
+                "Общий разбор доступен раз в "
+                "30 дней. Следующий запуск: "
+                + exc.next_available_at.isoformat()
+            ),
+            headers={
+                "Retry-After": str(
+                    exc.retry_after_seconds
+                ),
+            },
+        ) from exc
+
+    try:
+        result = explainer.explain_with_usage(
             payload
         )
+
+        quota_repository.commit_success(
+            result.model_dump(
+                mode="json"
+            )
+        )
+
+        return result
+
     except AIResponseValidationError as exc:
+        quota_repository.cancel_generation()
+
         raise HTTPException(
             status_code=status.HTTP_502_BAD_GATEWAY,
             detail="AI response failed evidence validation",
         ) from exc
+
     except AIProviderError as exc:
+        quota_repository.cancel_generation()
+
         raise HTTPException(
             status_code=status.HTTP_502_BAD_GATEWAY,
             detail="AI provider request failed",
         ) from exc
+
+    except Exception:
+        quota_repository.cancel_generation()
+        raise
 
 
 @app.get(

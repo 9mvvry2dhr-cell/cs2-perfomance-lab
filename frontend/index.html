@@ -8720,6 +8720,13 @@ table {
     font-weight: 700;
 }
 
+.ai-coach-overview-limit {
+    margin-top: 6px;
+    color: #5f788b;
+    font-size: 9.5px;
+    line-height: 1.55;
+}
+
 .ai-coach-overview-generate {
     align-self: center;
     min-width: 210px;
@@ -9798,6 +9805,11 @@ hidden
             id="aiCoachOverviewMeta"
             >
                 Считаем доступные матчи…
+            </div>
+
+            <div class="ai-coach-overview-limit">
+                На сервере новый общий разбор доступен 1 раз в 30 дней.
+                Последний готовый разбор можно открывать без нового AI-запроса.
             </div>
         </div>
 
@@ -22665,7 +22677,7 @@ document
 </script>
 
 
-<script id="cs2-ai-coach-overview-js-v1">
+<script id="cs2-ai-coach-overview-js-v2">
 (function () {
     const button =
         document.getElementById(
@@ -22709,6 +22721,15 @@ document
     let fingerprint =
         null;
 
+    let quotaAvailable =
+        false;
+
+    let hasCachedReport =
+        false;
+
+    let nextAvailableAt =
+        null;
+
     const cache =
         new Map();
 
@@ -22746,6 +22767,78 @@ document
     }
 
 
+    function formatDate(
+        value
+    ) {
+        if (!value) {
+            return "позже";
+        }
+
+        const date =
+            new Date(
+                value
+            );
+
+        if (
+            Number.isNaN(
+                date.getTime()
+            )
+        ) {
+            return "позже";
+        }
+
+        return date.toLocaleDateString(
+            "ru-RU",
+            {
+                day: "numeric",
+                month: "long",
+                year: "numeric",
+            }
+        );
+    }
+
+
+    function updateButtonState(
+        matches
+    ) {
+        if (matches < 1) {
+            button.disabled =
+                true;
+
+            button.textContent =
+                "ПОЛУЧИТЬ ОБЩИЙ РАЗБОР";
+
+            return;
+        }
+
+        if (quotaAvailable) {
+            button.disabled =
+                false;
+
+            button.textContent =
+                "ПОЛУЧИТЬ ОБЩИЙ РАЗБОР";
+
+            return;
+        }
+
+        if (hasCachedReport) {
+            button.disabled =
+                false;
+
+            button.textContent =
+                "ПОКАЗАТЬ ПОСЛЕДНИЙ РАЗБОР";
+
+            return;
+        }
+
+        button.disabled =
+            true;
+
+        button.textContent =
+            "ОБЩИЙ РАЗБОР НЕДОСТУПЕН";
+    }
+
+
     async function prepareOverview() {
         button.disabled =
             true;
@@ -22754,46 +22847,93 @@ document
             "Считаем доступные матчи…";
 
         try {
-            const response =
-                await fetch(
-                    "/me/summary?limit=100",
-                    {
-                        credentials:
-                            "same-origin",
-                        cache:
-                            "no-store",
-                        headers: {
-                            Accept:
-                                "application/json"
-                        }
-                    }
+            const responses =
+                await Promise.all(
+                    [
+                        fetch(
+                            "/me/summary?limit=100",
+                            {
+                                credentials:
+                                    "same-origin",
+                                cache:
+                                    "no-store",
+                                headers: {
+                                    Accept:
+                                        "application/json"
+                                }
+                            }
+                        ),
+                        fetch(
+                            "/me/ai-overview/status",
+                            {
+                                credentials:
+                                    "same-origin",
+                                cache:
+                                    "no-store",
+                                headers: {
+                                    Accept:
+                                        "application/json"
+                                }
+                            }
+                        ),
+                    ]
                 );
 
-            if (!response.ok) {
-                if (response.status === 404) {
-                    fingerprint =
-                        null;
+            const summaryResponse =
+                responses[0];
 
-                    meta.textContent =
-                        "Пока нет матчей для общего разбора.";
+            const quotaResponse =
+                responses[1];
 
-                    setStatus(
-                        "Сначала проанализируй хотя бы одну .dem.",
-                        "error"
-                    );
+            if (
+                summaryResponse.status
+                === 404
+            ) {
+                fingerprint =
+                    null;
 
-                    return;
-                }
+                quotaAvailable =
+                    false;
 
+                hasCachedReport =
+                    false;
+
+                meta.textContent =
+                    "Пока нет матчей для общего разбора.";
+
+                setStatus(
+                    "Сначала проанализируй хотя бы одну .dem.",
+                    "error"
+                );
+
+                updateButtonState(
+                    0
+                );
+
+                return;
+            }
+
+            if (!summaryResponse.ok) {
                 throw new Error(
                     await readError(
-                        response
+                        summaryResponse
+                    )
+                );
+            }
+
+            if (!quotaResponse.ok) {
+                throw new Error(
+                    await readError(
+                        quotaResponse
                     )
                 );
             }
 
             const summary =
-                await response.json();
+                await summaryResponse.json();
+
+            const quota =
+                await quotaResponse.json();
 
             const matches =
                 Number(
@@ -22812,6 +22952,20 @@ document
                 + ":"
                 + rounds;
 
+            quotaAvailable =
+                Boolean(
+                    quota.available
+                );
+
+            hasCachedReport =
+                Boolean(
+                    quota.has_cached_report
+                );
+
+            nextAvailableAt =
+                quota.next_available_at
+                || null;
+
             meta.textContent =
                 matches
                 + " матч."
@@ -22819,19 +22973,50 @@ document
                 + rounds
                 + " раундов доступны для общего разбора";
 
-            button.disabled =
-                matches < 1;
-
-            setStatus(
-                "Общий разбор готов к запуску."
+            updateButtonState(
+                matches
             );
+
+            if (quotaAvailable) {
+                setStatus(
+                    "Общий разбор готов к запуску."
+                );
+            } else if (
+                hasCachedReport
+            ) {
+                setStatus(
+                    "Новый общий разбор будет доступен "
+                    + formatDate(
+                        nextAvailableAt
+                    )
+                    + ". Последний разбор можно открыть без расхода API."
+                );
+            } else {
+                setStatus(
+                    "Новый общий разбор будет доступен "
+                    + formatDate(
+                        nextAvailableAt
+                    )
+                    + "."
+                );
+            }
 
         } catch (error) {
             fingerprint =
                 null;
 
+            quotaAvailable =
+                false;
+
+            hasCachedReport =
+                false;
+
             meta.textContent =
                 "Не удалось получить историю.";
+
+            updateButtonState(
+                0
+            );
 
             setStatus(
                 error.message
@@ -23078,6 +23263,78 @@ document
     }
 
 
+    async function showCachedOverview() {
+        button.disabled =
+            true;
+
+        const oldText =
+            button.textContent;
+
+        button.textContent =
+            "ЗАГРУЖАЕМ…";
+
+        setStatus(
+            "Открываем последний сохранённый общий разбор…",
+            "loading"
+        );
+
+        try {
+            const response =
+                await fetch(
+                    "/me/ai-overview/latest",
+                    {
+                        credentials:
+                            "same-origin",
+                        cache:
+                            "no-store",
+                        headers: {
+                            Accept:
+                                "application/json"
+                        }
+                    }
+                );
+
+            if (!response.ok) {
+                throw new Error(
+                    await readError(
+                        response
+                    )
+                );
+            }
+
+            const data =
+                await response.json();
+
+            renderOverview(
+                data
+            );
+
+            setStatus(
+                "Показываем последний сохранённый разбор. Новый будет доступен "
+                + formatDate(
+                    nextAvailableAt
+                )
+                + ".",
+                "success"
+            );
+
+        } catch (error) {
+            setStatus(
+                error.message
+                || "Не удалось открыть сохранённый разбор.",
+                "error"
+            );
+
+        } finally {
+            button.disabled =
+                false;
+
+            button.textContent =
+                oldText;
+        }
+    }
+
+
     async function generateOverview() {
         if (!fingerprint) {
             await prepareOverview();
@@ -23085,6 +23342,27 @@ document
             if (!fingerprint) {
                 return;
             }
+        }
+
+        if (
+            !quotaAvailable
+            && hasCachedReport
+        ) {
+            await showCachedOverview();
+            return;
+        }
+
+        if (!quotaAvailable) {
+            setStatus(
+                "Новый общий разбор будет доступен "
+                + formatDate(
+                    nextAvailableAt
+                )
+                + ".",
+                "error"
+            );
+
+            return;
         }
 
         const cached =
@@ -23138,6 +23416,13 @@ document
                 );
 
             if (!response.ok) {
+                if (
+                    response.status
+                    === 429
+                ) {
+                    await prepareOverview();
+                }
+
                 throw new Error(
                     await readError(
                         response
@@ -23157,8 +23442,18 @@ document
                 data
             );
 
+            await prepareOverview();
+
             setStatus(
-                "Общий разбор готов. Выводы ниже собраны из накопленной истории.",
+                "Общий разбор готов. Новый разбор будет доступен "
+                + (
+                    quotaAvailable
+                        ? "сразу (локальный режим)"
+                        : formatDate(
+                            nextAvailableAt
+                        )
+                )
+                + ".",
                 "success"
             );
 
@@ -23170,11 +23465,19 @@ document
             );
 
         } finally {
-            button.disabled =
-                !fingerprint;
+            updateButtonState(
+                fingerprint
+                    ? 1
+                    : 0
+            );
 
-            button.textContent =
-                oldText;
+            if (
+                button.textContent
+                === "АНАЛИЗИРУЕМ…"
+            ) {
+                button.textContent =
+                    oldText;
+            }
         }
     }
 

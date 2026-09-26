@@ -59,6 +59,20 @@ class UserModel(Base):
         ),
     )
 
+    ai_overview_last_generated_at: Mapped[
+        datetime | None
+    ] = mapped_column(
+        DateTime(timezone=True),
+        nullable=True,
+    )
+
+    ai_overview_last_response: Mapped[
+        dict[str, Any] | None
+    ] = mapped_column(
+        JSON,
+        nullable=True,
+    )
+
     sessions: Mapped[
         list["AuthSessionModel"]
     ] = relationship(
