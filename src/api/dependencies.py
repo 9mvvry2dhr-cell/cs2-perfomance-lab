@@ -34,6 +34,9 @@ from src.database.connection import (
     create_session_factory,
 )
 from src.database.job_repository import AnalysisJobRepository
+from src.database.match_ai_report_repository import (
+    MatchAIReportRepository,
+)
 from src.database.repository import AnalysisRepository
 from src.ingestion.service import (
     DEFAULT_MAX_ACTIVE_JOBS,
@@ -97,6 +100,17 @@ def get_analysis_repository(
     ],
 ) -> AnalysisRepository:
     return AnalysisRepository(
+        session
+    )
+
+
+def get_match_ai_report_repository(
+    session: Annotated[
+        Session,
+        Depends(get_database_session),
+    ],
+) -> MatchAIReportRepository:
+    return MatchAIReportRepository(
         session
     )
 

@@ -260,6 +260,27 @@ class UserMatchModel(Base):
         nullable=False,
     )
 
+    ai_explanation_generated_at: Mapped[
+        datetime | None
+    ] = mapped_column(
+        DateTime(timezone=True),
+        nullable=True,
+    )
+
+    ai_explanation_version: Mapped[
+        str | None
+    ] = mapped_column(
+        String(32),
+        nullable=True,
+    )
+
+    ai_explanation_response: Mapped[
+        dict[str, Any] | None
+    ] = mapped_column(
+        JSON,
+        nullable=True,
+    )
+
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         nullable=False,

@@ -54,6 +54,7 @@ from src.api.dependencies import (
     get_database_session,
     get_demo_ingestion_service,
     get_match_ai_explainer,
+    get_match_ai_report_repository,
     get_player_ai_explainer,
 )
 from src.api.schemas import (
@@ -82,6 +83,9 @@ from src.database.bug_report_repository import (
     BugReportRepository,
 )
 from src.database.job_repository import AnalysisJobRepository
+from src.database.match_ai_report_repository import (
+    MatchAIReportRepository,
+)
 from src.database.repository import AnalysisRepository
 from src.domain.history import (
     build_player_history_summary,
@@ -516,6 +520,44 @@ def get_match_analysis(
         owned_analysis
     )
 
+@app.get(
+    "/matches/{match_id}/ai-explanation/latest",
+    response_model=MatchAIResponse,
+)
+def get_latest_match_ai_explanation(
+    match_id: str,
+    report_repository: Annotated[
+        MatchAIReportRepository,
+        Depends(
+            get_match_ai_report_repository
+        ),
+    ],
+    current_user: Annotated[
+        CurrentUser,
+        Depends(get_current_user),
+    ],
+) -> MatchAIResponse:
+    cached = (
+        report_repository
+        .get_cached_response(
+            owner_steam_id=(
+                current_user.steam_id
+            ),
+            match_id=match_id,
+        )
+    )
+
+    if cached is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="AI match explanation not found",
+        )
+
+    return MatchAIResponse.model_validate(
+        cached
+    )
+
+
 @app.post(
     "/matches/{match_id}/ai-explanation",
     response_model=MatchAIResponse,
@@ -525,6 +567,12 @@ def explain_match_with_ai(
     repository: Annotated[
         AnalysisRepository,
         Depends(get_analysis_repository),
+    ],
+    report_repository: Annotated[
+        MatchAIReportRepository,
+        Depends(
+            get_match_ai_report_repository
+        ),
     ],
     explainer: Annotated[
         OpenAIMatchExplainer,
@@ -571,20 +619,53 @@ def explain_match_with_ai(
         steam_id=player.steam_id,
     )
 
+    cached = (
+        report_repository
+        .reserve_generation(
+            owner_steam_id=(
+                current_user.steam_id
+            ),
+            match_id=match_id,
+        )
+    )
+
+    if cached is not None:
+        return MatchAIResponse.model_validate(
+            cached
+        )
+
     try:
-        return explainer.explain_with_usage(
+        result = explainer.explain_with_usage(
             payload
         )
+
+        report_repository.commit_success(
+            result.model_dump(
+                mode="json"
+            )
+        )
+
+        return result
+
     except AIResponseValidationError as exc:
+        report_repository.cancel_generation()
+
         raise HTTPException(
             status_code=status.HTTP_502_BAD_GATEWAY,
             detail="AI response failed evidence validation",
         ) from exc
+
     except AIProviderError as exc:
+        report_repository.cancel_generation()
+
         raise HTTPException(
             status_code=status.HTTP_502_BAD_GATEWAY,
             detail="AI provider request failed",
         ) from exc
+
+    except Exception:
+        report_repository.cancel_generation()
+        raise
 
 
 @app.get(

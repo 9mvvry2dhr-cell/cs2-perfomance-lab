@@ -22084,7 +22084,7 @@ document
 
 </style>
 
-<script id="cs2-ai-coach-live-js">
+<script id="cs2-ai-coach-live-js-v2">
 (function () {
     const button =
         document.getElementById(
@@ -22133,6 +22133,9 @@ document
     let selectedMatchId =
         null;
 
+    let savedMatchReport =
+        false;
+
     const cache =
         new Map();
 
@@ -22153,18 +22156,31 @@ document
     }
 
 
+    function updateMatchButton() {
+        button.disabled =
+            !selectedMatchId;
+
+        button.textContent =
+            savedMatchReport
+                ? "ПОКАЗАТЬ СОХРАНЁННЫЙ РАЗБОР"
+                : "РАЗОБРАТЬ МАТЧ";
+    }
+
+
     function setSelectedMatch(
         match
     ) {
+        savedMatchReport =
+            false;
+
         if (!match?.match_id) {
             selectedMatchId =
                 null;
 
-            button.disabled =
-                true;
-
             matchValue.textContent =
                 "Нет доступного матча";
+
+            updateMatchButton();
 
             return;
         }
@@ -22197,8 +22213,90 @@ document
             map
             + score;
 
-        button.disabled =
-            false;
+        updateMatchButton();
+    }
+
+
+    async function loadSavedMatchReport() {
+        if (!selectedMatchId) {
+            return false;
+        }
+
+        try {
+            const response =
+                await fetch(
+                    "/matches/"
+                    + encodeURIComponent(
+                        selectedMatchId
+                    )
+                    + "/ai-explanation/latest",
+                    {
+                        credentials:
+                            "same-origin",
+                        cache:
+                            "no-store",
+                        headers: {
+                            Accept:
+                                "application/json"
+                        }
+                    }
+                );
+
+            if (response.status === 404) {
+                savedMatchReport =
+                    false;
+
+                updateMatchButton();
+
+                return false;
+            }
+
+            if (!response.ok) {
+                throw new Error(
+                    await readError(
+                        response
+                    )
+                );
+            }
+
+            const data =
+                await response.json();
+
+            cache.set(
+                selectedMatchId,
+                data
+            );
+
+            savedMatchReport =
+                true;
+
+            renderExplanation(
+                data
+            );
+
+            updateMatchButton();
+
+            setStatus(
+                "Показываем сохранённый разбор этого матча.",
+                "success"
+            );
+
+            return true;
+
+        } catch (error) {
+            savedMatchReport =
+                false;
+
+            updateMatchButton();
+
+            setStatus(
+                error.message
+                || "Не удалось открыть сохранённый разбор.",
+                "error"
+            );
+
+            return false;
+        }
     }
 
 
@@ -22228,9 +22326,14 @@ document
                 current
             );
 
-            setStatus(
-                "Готов к разбору текущего матча."
-            );
+            const loaded =
+                await loadSavedMatchReport();
+
+            if (!loaded) {
+                setStatus(
+                    "Готов к разбору текущего матча."
+                );
+            }
 
             return;
         }
@@ -22290,9 +22393,14 @@ document
                 latest
             );
 
-            setStatus(
-                "Последний матч найден. Можно запускать тренера."
-            );
+            const loaded =
+                await loadSavedMatchReport();
+
+            if (!loaded) {
+                setStatus(
+                    "Последний матч найден. Можно запускать тренера."
+                );
+            }
         } catch (error) {
             setSelectedMatch(
                 null
@@ -22635,12 +22743,17 @@ document
                 data
             );
 
+            savedMatchReport =
+                true;
+
             renderExplanation(
                 data
             );
 
+            updateMatchButton();
+
             setStatus(
-                "Разбор готов. Всё ниже привязано к проверенным данным.",
+                "Разбор готов и сохранён. Повторное открытие не расходует API.",
                 "success"
             );
         } catch (error) {
@@ -22650,11 +22763,16 @@ document
                 "error"
             );
         } finally {
-            button.disabled =
-                !selectedMatchId;
+            if (
+                !savedMatchReport
+                && button.textContent
+                === "ДУМАЕМ…"
+            ) {
+                button.textContent =
+                    oldText;
+            }
 
-            button.textContent =
-                oldText;
+            updateMatchButton();
         }
     }
 
@@ -22816,7 +22934,9 @@ document
                 false;
 
             button.textContent =
-                "ПОЛУЧИТЬ ОБЩИЙ РАЗБОР";
+                hasCachedReport
+                    ? "ОБНОВИТЬ ОБЩИЙ РАЗБОР"
+                    : "ПОЛУЧИТЬ ОБЩИЙ РАЗБОР";
 
             return;
         }
@@ -22977,7 +23097,50 @@ document
                 matches
             );
 
-            if (quotaAvailable) {
+            if (hasCachedReport) {
+                try {
+                    const savedResponse =
+                        await fetch(
+                            "/me/ai-overview/latest",
+                            {
+                                credentials:
+                                    "same-origin",
+                                cache:
+                                    "no-store",
+                                headers: {
+                                    Accept:
+                                        "application/json"
+                                }
+                            }
+                        );
+
+                    if (savedResponse.ok) {
+                        const saved =
+                            await savedResponse.json();
+
+                        cache.set(
+                            fingerprint,
+                            saved
+                        );
+
+                        renderOverview(
+                            saved
+                        );
+                    }
+                } catch (_) {
+                    // Status below still explains availability.
+                }
+            }
+
+            if (
+                quotaAvailable
+                && hasCachedReport
+            ) {
+                setStatus(
+                    "Показываем последний сохранённый общий разбор. Его можно обновить без перезагрузки страницы.",
+                    "success"
+                );
+            } else if (quotaAvailable) {
                 setStatus(
                     "Общий разбор готов к запуску."
                 );
@@ -22985,11 +23148,12 @@ document
                 hasCachedReport
             ) {
                 setStatus(
-                    "Новый общий разбор будет доступен "
+                    "Показываем последний сохранённый разбор. Новый будет доступен "
                     + formatDate(
                         nextAvailableAt
                     )
-                    + ". Последний разбор можно открыть без расхода API."
+                    + ".",
+                    "success"
                 );
             } else {
                 setStatus(
