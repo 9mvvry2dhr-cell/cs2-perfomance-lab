@@ -5310,6 +5310,93 @@ button.dashboard-match-row:hover {
     font-weight: 760;
 }
 
+.stats-v3-readout-value.up,
+.stats-v3-change-current.up,
+.stats-v3-change-delta.up {
+    color: #75d5ad;
+}
+
+.stats-v3-readout-value.down,
+.stats-v3-change-current.down,
+.stats-v3-change-delta.down {
+    color: #df9b89;
+}
+
+.stats-v3-readout-value.flat,
+.stats-v3-change-current.flat,
+.stats-v3-change-delta.flat {
+    color: #91a6b5;
+}
+
+.stats-v3-changes {
+    margin-top: 22px;
+}
+
+.stats-v3-changes-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 16px;
+}
+
+.stats-v3-changes-note {
+    color: #6f8799;
+    font-size: 8.5px;
+    line-height: 1.4;
+}
+
+.stats-v3-changes-grid {
+    display: grid;
+    grid-template-columns: repeat(3,minmax(0,1fr));
+    margin-top: 9px;
+    border-top: 1px solid rgba(137,167,187,.08);
+    border-bottom: 1px solid rgba(137,167,187,.08);
+}
+
+.stats-v3-change-row {
+    min-width: 0;
+    padding: 12px 14px;
+    border-left: 1px solid rgba(137,167,187,.08);
+}
+
+.stats-v3-change-row:first-child {
+    border-left: 0;
+}
+
+.stats-v3-change-label {
+    color: #7b93a4;
+    font-size: 8px;
+    font-weight: 790;
+    letter-spacing: .05em;
+    text-transform: uppercase;
+}
+
+.stats-v3-change-values {
+    display: flex;
+    align-items: baseline;
+    gap: 7px;
+    margin-top: 5px;
+    color: #b8c8d2;
+    font-size: 12px;
+    font-weight: 760;
+    font-variant-numeric: tabular-nums;
+}
+
+.stats-v3-change-arrow {
+    color: #536e82;
+    font-weight: 600;
+}
+
+.stats-v3-change-current {
+    color: #e5eef3;
+}
+
+.stats-v3-change-delta {
+    margin-top: 4px;
+    font-size: 8.5px;
+    font-weight: 740;
+}
+
 .stats-v3-patterns {
     margin-top: 22px;
 }
@@ -5389,6 +5476,25 @@ button.dashboard-match-row:hover {
 
     .stats-v3-readout {
         grid-template-columns: 1fr;
+    }
+
+    .stats-v3-changes-head {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 5px;
+    }
+
+    .stats-v3-changes-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .stats-v3-change-row {
+        border-left: 0;
+        border-top: 1px solid rgba(137,167,187,.08);
+    }
+
+    .stats-v3-change-row:first-child {
+        border-top: 0;
     }
 
     .stats-v3-readout-item {
@@ -17707,6 +17813,8 @@ document
                 label: "K/D",
                 digits: 2,
                 suffix: "",
+                stabilityFloor: .5,
+                changeScale: .25,
                 value:
                     match =>
                         Number(
@@ -17718,6 +17826,8 @@ document
                 label: "ADR",
                 digits: 1,
                 suffix: "",
+                stabilityFloor: 50,
+                changeScale: 12,
                 value:
                     match =>
                         Number(
@@ -17729,6 +17839,8 @@ document
                 label: "KAST",
                 digits: 1,
                 suffix: "%",
+                stabilityFloor: 50,
+                changeScale: 8,
                 value:
                     match =>
                         Number(
@@ -17740,6 +17852,8 @@ document
                 label: "ENTRY +/-",
                 digits: 0,
                 suffix: "",
+                stabilityFloor: 2,
+                changeScale: 1.5,
                 value:
                     match =>
                         Number(
@@ -17754,6 +17868,8 @@ document
                 label: "UTILITY / ROUND",
                 digits: 1,
                 suffix: "",
+                stabilityFloor: 3,
+                changeScale: 2.5,
                 value:
                     match => {
                         const stats =
@@ -17782,6 +17898,8 @@ document
                 label: "SURVIVAL",
                 digits: 1,
                 suffix: "%",
+                stabilityFloor: 30,
+                changeScale: 8,
                 value:
                     match =>
                         Number(
@@ -17793,16 +17911,294 @@ document
 
 
     function chartPointLabel(
-        match
+        match,
+        index,
+        total
     ) {
         const map =
             prettyMapName(
                 match.map_name
             );
 
-        return map.length > 8
-            ? map.slice(0, 8)
-            : map;
+        const shortMap =
+            map.length > 8
+                ? map.slice(0, 8)
+                : map;
+
+        return total <= 10
+            ? "#"
+                + (index + 1)
+                + " "
+                + shortMap
+            : "#"
+                + (index + 1);
+    }
+
+
+    function statsMean(
+        values
+    ) {
+        if (!values.length) {
+            return 0;
+        }
+
+        return values.reduce(
+            (sum, value) =>
+                sum + value,
+            0
+        ) / values.length;
+    }
+
+
+    function statsTrendWindow(
+        length
+    ) {
+        if (length >= 10) {
+            return 5;
+        }
+
+        if (length >= 6) {
+            return 3;
+        }
+
+        if (length >= 4) {
+            return 2;
+        }
+
+        return 0;
+    }
+
+
+    function statsTrendSnapshot(
+        values,
+        config
+    ) {
+        const average =
+            statsMean(
+                values
+            );
+
+        const variance =
+            statsMean(
+                values.map(
+                    value =>
+                        (
+                            value
+                            - average
+                        ) ** 2
+                )
+            );
+
+        const deviation =
+            Math.sqrt(
+                variance
+            );
+
+        const stabilityRatio =
+            deviation
+            / Math.max(
+                Math.abs(
+                    average
+                ),
+                config.stabilityFloor
+            );
+
+        let stability =
+            "Стабильно";
+
+        if (stabilityRatio >= .28) {
+            stability =
+                "Нестабильно";
+        } else if (stabilityRatio >= .14) {
+            stability =
+                "Средний разброс";
+        }
+
+        const windowSize =
+            statsTrendWindow(
+                values.length
+            );
+
+        if (!windowSize) {
+            return {
+                average,
+                stability,
+                windowSize: 0,
+                previousAverage: null,
+                recentAverage: null,
+                delta: null,
+                relativeDelta: null,
+                direction: "flat",
+            };
+        }
+
+        const recent =
+            values.slice(
+                -windowSize
+            );
+
+        const previous =
+            values.slice(
+                -windowSize * 2,
+                -windowSize
+            );
+
+        const recentAverage =
+            statsMean(
+                recent
+            );
+
+        const previousAverage =
+            statsMean(
+                previous
+            );
+
+        const delta =
+            recentAverage
+            - previousAverage;
+
+        const relativeDelta =
+            Math.abs(
+                previousAverage
+            ) > .0001
+                ? (
+                    delta
+                    / Math.abs(
+                        previousAverage
+                    )
+                    * 100
+                )
+                : null;
+
+        const neutralThreshold =
+            config.changeScale
+            * .20;
+
+        const direction =
+            Math.abs(
+                delta
+            ) < neutralThreshold
+                ? "flat"
+                : (
+                    delta > 0
+                        ? "up"
+                        : "down"
+                );
+
+        return {
+            average,
+            stability,
+            windowSize,
+            previousAverage,
+            recentAverage,
+            delta,
+            relativeDelta,
+            direction,
+        };
+    }
+
+
+    function formatStatsMetricValue(
+        value,
+        config
+    ) {
+        return Number(
+            value || 0
+        ).toFixed(
+            config.digits
+        )
+        + config.suffix;
+    }
+
+
+    function buildStatsChanges(
+        matches
+    ) {
+        const chronological =
+            [...matches]
+            .reverse()
+            .slice(-20);
+
+        const configs =
+            statMetricConfig();
+
+        const keys = [
+            "kd",
+            "adr",
+            "kast",
+            "entry",
+            "utility",
+            "survival",
+        ];
+
+        const windowSize =
+            statsTrendWindow(
+                chronological.length
+            );
+
+        if (!windowSize) {
+            return {
+                windowSize: 0,
+                items: [],
+            };
+        }
+
+        const items =
+            keys.map(
+                key => {
+                    const config =
+                        configs[key];
+
+                    const values =
+                        chronological.map(
+                            match =>
+                                config.value(
+                                    match
+                                )
+                        );
+
+                    const snapshot =
+                        statsTrendSnapshot(
+                            values,
+                            config
+                        );
+
+                    const delta =
+                        snapshot.delta || 0;
+
+                    const score =
+                        Math.abs(
+                            delta
+                        )
+                        / Math.max(
+                            config.changeScale,
+                            .0001
+                        );
+
+                    return {
+                        key,
+                        label:
+                            config.label,
+                        config,
+                        snapshot,
+                        score,
+                    };
+                }
+            )
+            .sort(
+                (a, b) =>
+                    b.score
+                    - a.score
+            )
+            .slice(
+                0,
+                3
+            );
+
+        return {
+            windowSize,
+            items,
+        };
     }
 
 
@@ -18319,7 +18715,9 @@ document
                     chartPointLabel(
                         chronological[
                             index
-                        ]
+                        ],
+                        index,
+                        chronological.length
                     );
 
                 svg.appendChild(
@@ -18332,42 +18730,75 @@ document
             svg
         );
 
-        const avg =
-            values.reduce(
-                (sum, value) =>
-                    sum + value,
-                0
-            )
-            / Math.max(
-                1,
-                values.length
-            );
-
-        const best =
-            Math.max(
-                ...values
+        const snapshot =
+            statsTrendSnapshot(
+                values,
+                config
             );
 
         readoutNodes.avg.textContent =
-            avg.toFixed(
-                config.digits
-            )
-            + config.suffix;
-
-        readoutNodes.best.textContent =
-            best.toFixed(
-                config.digits
-            )
-            + config.suffix;
-
-        readoutNodes.sample.textContent =
-            values.length
-            + " матч."
-            + (
-                values.length < 10
-                    ? " · выборка пока маленькая"
-                    : " · достаточно для сравнения последних 5"
+            formatStatsMetricValue(
+                snapshot.average,
+                config
             );
+
+        readoutNodes.trend.className =
+            "stats-v3-readout-value "
+            + snapshot.direction;
+
+        if (!snapshot.windowSize) {
+            readoutNodes.trend.textContent =
+                "Нужно минимум 4 матча";
+        } else if (
+            snapshot.direction
+            === "flat"
+        ) {
+            readoutNodes.trend.textContent =
+                "≈ без заметного сдвига · "
+                + snapshot.windowSize
+                + " vs "
+                + snapshot.windowSize;
+        } else if (
+            snapshot.relativeDelta
+            !== null
+        ) {
+            readoutNodes.trend.textContent =
+                (
+                    snapshot.direction
+                    === "up"
+                        ? "↑ +"
+                        : "↓ "
+                )
+                + snapshot.relativeDelta
+                    .toFixed(1)
+                + "% · "
+                + snapshot.windowSize
+                + " vs "
+                + snapshot.windowSize;
+        } else {
+            readoutNodes.trend.textContent =
+                (
+                    snapshot.direction
+                    === "up"
+                        ? "↑ +"
+                        : "↓ "
+                )
+                + snapshot.delta
+                    .toFixed(
+                        config.digits
+                    )
+                + config.suffix
+                + " · "
+                + snapshot.windowSize
+                + " vs "
+                + snapshot.windowSize;
+        }
+
+        readoutNodes.stability.textContent =
+            snapshot.stability
+            + " · "
+            + values.length
+            + " матч.";
     }
 
 
@@ -18621,12 +19052,12 @@ document
                 "Среднее по выборке",
             ],
             [
-                "best",
-                "Лучшее значение",
+                "trend",
+                "Тенденция",
             ],
             [
-                "sample",
-                "Надёжность",
+                "stability",
+                "Стабильность",
             ],
         ].forEach(
             ([key, label]) => {
@@ -18754,72 +19185,152 @@ document
             shell
         );
 
-        const frequency =
-            findingFrequency(
+        const changesData =
+            buildStatsChanges(
                 matches
-            )
-            .filter(
-                item =>
-                    item.count >= 2
             );
 
-        const patterns =
+        const changes =
             makeElement(
                 "div",
-                "stats-v3-patterns"
+                "stats-v3-changes"
             );
 
-        patterns.appendChild(
+        const changesHead =
+            makeElement(
+                "div",
+                "stats-v3-changes-head"
+            );
+
+        changesHead.append(
             makeElement(
                 "div",
                 "map-v3-section-label",
-                "Повторяющиеся сигналы"
+                "Что изменилось"
+            ),
+            makeElement(
+                "div",
+                "stats-v3-changes-note",
+                changesData.windowSize
+                    ? (
+                        "Сравнение последних "
+                        + changesData.windowSize
+                        + " матчей с предыдущими "
+                        + changesData.windowSize
+                        + "."
+                    )
+                    : "Для сравнения динамики нужно минимум 4 матча."
             )
         );
 
-        if (!frequency.length) {
-            patterns.appendChild(
+        changes.appendChild(
+            changesHead
+        );
+
+        if (!changesData.items.length) {
+            changes.appendChild(
                 makeElement(
                     "div",
                     "map-v3-empty",
-                    "Пока ни один сильный или слабый сигнал не повторился минимум в 2 матчах. "
-                    + "Когда паттерн начнёт повторяться, он появится здесь."
+                    "Пока данных недостаточно, чтобы отделить изменение формы от одного отдельного матча."
                 )
             );
         } else {
-            const columns =
+            const changesGrid =
                 makeElement(
                     "div",
-                    "stats-v3-pattern-columns"
+                    "stats-v3-changes-grid"
                 );
 
-            appendStatsPatternColumn(
-                columns,
-                "Сильные",
-                frequency.filter(
-                    item =>
-                        item.kind
-                        === "strength"
-                )
+            changesData.items.forEach(
+                item => {
+                    const row =
+                        makeElement(
+                            "div",
+                            "stats-v3-change-row"
+                        );
+
+                    row.appendChild(
+                        makeElement(
+                            "div",
+                            "stats-v3-change-label",
+                            item.label
+                        )
+                    );
+
+                    const values =
+                        makeElement(
+                            "div",
+                            "stats-v3-change-values"
+                        );
+
+                    values.append(
+                        makeElement(
+                            "span",
+                            "",
+                            formatStatsMetricValue(
+                                item.snapshot.previousAverage,
+                                item.config
+                            )
+                        ),
+                        makeElement(
+                            "span",
+                            "stats-v3-change-arrow",
+                            "→"
+                        ),
+                        makeElement(
+                            "span",
+                            "stats-v3-change-current "
+                            + item.snapshot.direction,
+                            formatStatsMetricValue(
+                                item.snapshot.recentAverage,
+                                item.config
+                            )
+                        )
+                    );
+
+                    const delta =
+                        item.snapshot.delta || 0;
+
+                    const deltaText =
+                        makeElement(
+                            "div",
+                            "stats-v3-change-delta "
+                            + item.snapshot.direction,
+                            item.snapshot.direction
+                                === "flat"
+                                ? "без заметного сдвига"
+                                : (
+                                    (
+                                        delta > 0
+                                            ? "+"
+                                            : ""
+                                    )
+                                    + delta.toFixed(
+                                        item.config.digits
+                                    )
+                                    + item.config.suffix
+                                )
+                        );
+
+                    row.append(
+                        values,
+                        deltaText
+                    );
+
+                    changesGrid.appendChild(
+                        row
+                    );
+                }
             );
 
-            appendStatsPatternColumn(
-                columns,
-                "Слабые",
-                frequency.filter(
-                    item =>
-                        item.kind
-                        === "weakness"
-                )
-            );
-
-            patterns.appendChild(
-                columns
+            changes.appendChild(
+                changesGrid
             );
         }
 
         placeholderBody.appendChild(
-            patterns
+            changes
         );
 
         selectMetric(
@@ -18858,7 +19369,7 @@ document
             statsNav,
             "СТАТИСТИКА",
             "Динамика игры",
-            "Динамика показателей от матча к матчу и сигналы, которые действительно начинают повторяться."
+            "Динамика показателей от матча к матчу: текущий уровень, тенденция и стабильность."
         );
 
         try {
