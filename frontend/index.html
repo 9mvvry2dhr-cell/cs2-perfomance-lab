@@ -18004,14 +18004,14 @@ document
             );
 
         let stability =
-            "Стабильно";
+            "Низкий";
 
         if (stabilityRatio >= .28) {
             stability =
-                "Нестабильно";
+                "Высокий";
         } else if (stabilityRatio >= .14) {
             stability =
-                "Средний разброс";
+                "Средний";
         }
 
         const windowSize =
@@ -18754,9 +18754,9 @@ document
             === "flat"
         ) {
             readoutNodes.trend.textContent =
-                "≈ без заметного сдвига · "
+                "≈ без заметного сдвига · последние "
                 + snapshot.windowSize
-                + " vs "
+                + " vs предыдущие "
                 + snapshot.windowSize;
         } else if (
             snapshot.relativeDelta
@@ -18771,9 +18771,9 @@ document
                 )
                 + snapshot.relativeDelta
                     .toFixed(1)
-                + "% · "
+                + "% · последние "
                 + snapshot.windowSize
-                + " vs "
+                + " vs предыдущие "
                 + snapshot.windowSize;
         } else {
             readoutNodes.trend.textContent =
@@ -18788,9 +18788,9 @@ document
                         config.digits
                     )
                 + config.suffix
-                + " · "
+                + " · последние "
                 + snapshot.windowSize
-                + " vs "
+                + " vs предыдущие "
                 + snapshot.windowSize;
         }
 
@@ -19057,7 +19057,7 @@ document
             ],
             [
                 "stability",
-                "Стабильность",
+                "Разброс по матчам",
             ],
         ].forEach(
             ([key, label]) => {
