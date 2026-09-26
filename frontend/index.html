@@ -8659,6 +8659,111 @@ table {
 </style>
 
 
+<style id="cs2-ai-coach-overview-v1">
+
+.ai-coach-overview-card {
+    margin-top: 26px;
+    padding: 22px;
+    display: grid;
+    grid-template-columns: 44px minmax(0,1fr) auto;
+    gap: 17px;
+    align-items: start;
+    border: 1px solid rgba(73,168,255,0.15);
+    border-radius: 14px;
+    background:
+        linear-gradient(
+            135deg,
+            rgba(73,168,255,0.055),
+            rgba(240,165,47,0.025)
+        );
+}
+
+.ai-coach-overview-icon {
+    width: 44px;
+    height: 44px;
+    display: grid;
+    place-items: center;
+    border: 1px solid rgba(240,165,47,0.22);
+    border-radius: 12px;
+    color: #f3b947;
+    background: rgba(240,165,47,0.065);
+    font-size: 18px;
+}
+
+.ai-coach-overview-kicker {
+    color: #64839a;
+    font-size: 8.5px;
+    font-weight: 800;
+    letter-spacing: .10em;
+}
+
+.ai-coach-overview-title {
+    margin-top: 5px;
+    color: #edf5fa;
+    font-family: "Sora","Manrope",sans-serif;
+    font-size: 16px;
+    font-weight: 650;
+}
+
+.ai-coach-overview-text {
+    margin-top: 7px;
+    max-width: 780px;
+    color: #8299ab;
+    font-size: 11.5px;
+    line-height: 1.68;
+}
+
+.ai-coach-overview-meta {
+    margin-top: 10px;
+    color: #6daedc;
+    font-size: 10px;
+    font-weight: 700;
+}
+
+.ai-coach-overview-generate {
+    align-self: center;
+    min-width: 210px;
+}
+
+.ai-coach-overview-result {
+    margin-top: 16px;
+}
+
+.ai-coach-overview-sections {
+    display: grid;
+    grid-template-columns: repeat(2,minmax(0,1fr));
+    gap: 12px;
+}
+
+.ai-coach-section[data-kind="profile"],
+.ai-coach-section[data-kind="trend"],
+.ai-coach-section[data-kind="map"] {
+    border-color: rgba(73,168,255,0.13);
+}
+
+@media (max-width: 900px) {
+    .ai-coach-overview-card {
+        grid-template-columns: 44px minmax(0,1fr);
+    }
+
+    .ai-coach-overview-generate {
+        grid-column: 1 / -1;
+        width: 100%;
+    }
+
+    .ai-coach-overview-sections {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 650px) {
+    .ai-coach-overview-card {
+        grid-template-columns: 1fr;
+    }
+}
+
+</style>
+
 <style id="cs2-upload-error-visible-v1">
 
 #uploadStatus.visible[data-state="error"] {
@@ -9616,9 +9721,9 @@ hidden
         </h1>
 
         <p class="ai-coach-page-text">
-            Разбор матча на основе проверенных метрик и подтверждённых выводов.
-            AI объясняет данные, но не пересчитывает статистику и не выдумывает
-            причины, которых мы не доказали.
+            Два режима: подробный разбор конкретного матча и общий разбор игрока
+            по всей накопленной истории. AI объясняет уже рассчитанные данные,
+            не пересчитывает статистику и не выдумывает причины без подтверждения.
         </p>
     </div>
 
@@ -9667,25 +9772,64 @@ hidden
     >
     </div>
 
-    <div
-    class="ai-coach-empty"
-    id="aiCoachEmpty"
-    >
-        <div class="ai-coach-empty-icon">
+    <div class="ai-coach-overview-card">
+        <div class="ai-coach-overview-icon">
             ✦
         </div>
 
-        <div>
-            <div class="ai-coach-empty-title">
-                Первый живой разбор
+        <div class="ai-coach-overview-copy">
+            <div class="ai-coach-overview-kicker">
+                ВСЯ ИСТОРИЯ
             </div>
 
-            <div class="ai-coach-empty-text">
-                Нажми «Разобрать матч». Тренер получит только verified metrics
-                и verified findings текущего матча. Любая сила, слабость или
-                рекомендация должна быть привязана к нашим подтверждённым данным.
+            <div class="ai-coach-overview-title">
+                Общий разбор игрока
+            </div>
+
+            <div class="ai-coach-overview-text">
+                Тренер соберёт Player DNA, динамику, карты, CT / T,
+                повторяющиеся сильные и слабые сигналы и последние матчи
+                в одну общую картину. В конце даст приоритеты на следующие
+                3–5 матчей.
+            </div>
+
+            <div
+            class="ai-coach-overview-meta"
+            id="aiCoachOverviewMeta"
+            >
+                Считаем доступные матчи…
             </div>
         </div>
+
+        <button
+        class="ai-coach-generate ai-coach-overview-generate"
+        id="aiCoachOverviewButton"
+        type="button"
+        disabled
+        >
+            ПОЛУЧИТЬ ОБЩИЙ РАЗБОР
+        </button>
+    </div>
+
+    <div
+    class="ai-coach-status"
+    id="aiCoachOverviewStatus"
+    aria-live="polite"
+    >
+        Общий разбор строится только по уже проанализированным матчам.
+    </div>
+
+    <div
+    class="ai-coach-usage"
+    id="aiCoachOverviewUsage"
+    hidden
+    ></div>
+
+    <div
+    class="ai-coach-result ai-coach-overview-result"
+    id="aiCoachOverviewResult"
+    hidden
+    >
     </div>
 </section>
 
@@ -22517,6 +22661,538 @@ document
 
     window.cs2PrepareAICoach =
         prepareMatch;
+})();
+</script>
+
+
+<script id="cs2-ai-coach-overview-js-v1">
+(function () {
+    const button =
+        document.getElementById(
+            "aiCoachOverviewButton"
+        );
+
+    const meta =
+        document.getElementById(
+            "aiCoachOverviewMeta"
+        );
+
+    const status =
+        document.getElementById(
+            "aiCoachOverviewStatus"
+        );
+
+    const result =
+        document.getElementById(
+            "aiCoachOverviewResult"
+        );
+
+    const usage =
+        document.getElementById(
+            "aiCoachOverviewUsage"
+        );
+
+    const navButton =
+        document.querySelector(
+            ".ai-coach-button"
+        );
+
+    if (
+        !button
+        || !meta
+        || !status
+        || !result
+    ) {
+        return;
+    }
+
+    let fingerprint =
+        null;
+
+    const cache =
+        new Map();
+
+
+    function setStatus(
+        text,
+        state = ""
+    ) {
+        status.textContent =
+            text;
+
+        if (state) {
+            status.dataset.state =
+                state;
+        } else {
+            delete status.dataset.state;
+        }
+    }
+
+
+    async function readError(
+        response
+    ) {
+        try {
+            const body =
+                await response.json();
+
+            return (
+                body.detail
+                || "AI запрос завершился ошибкой."
+            );
+        } catch (_) {
+            return "AI запрос завершился ошибкой.";
+        }
+    }
+
+
+    async function prepareOverview() {
+        button.disabled =
+            true;
+
+        meta.textContent =
+            "Считаем доступные матчи…";
+
+        try {
+            const response =
+                await fetch(
+                    "/me/summary?limit=100",
+                    {
+                        credentials:
+                            "same-origin",
+                        cache:
+                            "no-store",
+                        headers: {
+                            Accept:
+                                "application/json"
+                        }
+                    }
+                );
+
+            if (!response.ok) {
+                if (response.status === 404) {
+                    fingerprint =
+                        null;
+
+                    meta.textContent =
+                        "Пока нет матчей для общего разбора.";
+
+                    setStatus(
+                        "Сначала проанализируй хотя бы одну .dem.",
+                        "error"
+                    );
+
+                    return;
+                }
+
+                throw new Error(
+                    await readError(
+                        response
+                    )
+                );
+            }
+
+            const summary =
+                await response.json();
+
+            const matches =
+                Number(
+                    summary.matches_analyzed
+                    || 0
+                );
+
+            const rounds =
+                Number(
+                    summary.stats?.rounds_played
+                    || 0
+                );
+
+            fingerprint =
+                matches
+                + ":"
+                + rounds;
+
+            meta.textContent =
+                matches
+                + " матч."
+                + " · "
+                + rounds
+                + " раундов доступны для общего разбора";
+
+            button.disabled =
+                matches < 1;
+
+            setStatus(
+                "Общий разбор готов к запуску."
+            );
+
+        } catch (error) {
+            fingerprint =
+                null;
+
+            meta.textContent =
+                "Не удалось получить историю.";
+
+            setStatus(
+                error.message
+                || "Не удалось получить историю матчей.",
+                "error"
+            );
+        }
+    }
+
+
+    function element(
+        tag,
+        className,
+        text
+    ) {
+        const node =
+            document.createElement(
+                tag
+            );
+
+        if (className) {
+            node.className =
+                className;
+        }
+
+        if (text != null) {
+            node.textContent =
+                String(text);
+        }
+
+        return node;
+    }
+
+
+    function renderUsage(
+        data
+    ) {
+        if (!usage) {
+            return;
+        }
+
+        const stats =
+            data?.usage;
+
+        if (
+            !stats
+            || !stats.total_tokens
+        ) {
+            usage.hidden =
+                true;
+
+            return;
+        }
+
+        usage.textContent =
+            "API: "
+            + Number(
+                stats.input_tokens || 0
+            ).toLocaleString("ru-RU")
+            + " вход · "
+            + Number(
+                stats.output_tokens || 0
+            ).toLocaleString("ru-RU")
+            + " выход · "
+            + Number(
+                stats.total_tokens || 0
+            ).toLocaleString("ru-RU")
+            + " всего";
+
+        usage.hidden =
+            false;
+    }
+
+
+    function renderSection(
+        label,
+        kind,
+        items
+    ) {
+        const section =
+            element(
+                "section",
+                "ai-coach-section"
+            );
+
+        section.dataset.kind =
+            kind;
+
+        section.appendChild(
+            element(
+                "div",
+                "ai-coach-section-label",
+                label
+            )
+        );
+
+        if (!items?.length) {
+            section.appendChild(
+                element(
+                    "div",
+                    "ai-coach-empty-section",
+                    "По текущей выборке недостаточно подтверждённых данных для отдельного вывода."
+                )
+            );
+
+            return section;
+        }
+
+        const list =
+            element(
+                "div",
+                "ai-coach-items"
+            );
+
+        items.forEach(
+            item => {
+                const row =
+                    element(
+                        "div",
+                        "ai-coach-item"
+                    );
+
+                row.append(
+                    element(
+                        "div",
+                        "ai-coach-item-title",
+                        item.title
+                    ),
+                    element(
+                        "div",
+                        "ai-coach-item-text",
+                        item.text
+                    )
+                );
+
+                list.appendChild(
+                    row
+                );
+            }
+        );
+
+        section.appendChild(
+            list
+        );
+
+        return section;
+    }
+
+
+    function renderOverview(
+        data
+    ) {
+        result.replaceChildren();
+
+        renderUsage(
+            data
+        );
+
+        const summary =
+            element(
+                "section",
+                "ai-coach-summary"
+            );
+
+        summary.append(
+            element(
+                "div",
+                "ai-coach-summary-label",
+                "ОБЩАЯ ХАРАКТЕРИСТИКА"
+            ),
+            element(
+                "div",
+                "ai-coach-summary-text",
+                data.summary
+            )
+        );
+
+        const sections =
+            element(
+                "div",
+                "ai-coach-overview-sections"
+            );
+
+        sections.append(
+            renderSection(
+                "КАКОЙ ТЫ ИГРОК",
+                "profile",
+                data.profile
+            ),
+            renderSection(
+                "УСТОЙЧИВЫЕ СИЛЬНЫЕ СТОРОНЫ",
+                "strength",
+                data.strengths
+            ),
+            renderSection(
+                "СИСТЕМНЫЕ ЗОНЫ РОСТА",
+                "weakness",
+                data.weaknesses
+            ),
+            renderSection(
+                "ДИНАМИКА",
+                "trend",
+                data.trends
+            ),
+            renderSection(
+                "КАРТЫ",
+                "map",
+                data.maps
+            ),
+            renderSection(
+                "ФОКУС НА СЛЕДУЮЩИЕ 3–5 МАТЧЕЙ",
+                "focus",
+                data.focus
+            )
+        );
+
+        const caveat =
+            element(
+                "section",
+                "ai-coach-caveat"
+            );
+
+        caveat.append(
+            element(
+                "div",
+                "ai-coach-caveat-label",
+                "ГРАНИЦЫ ВЫВОДА"
+            ),
+            element(
+                "div",
+                "ai-coach-caveat-text",
+                data.caveat
+            )
+        );
+
+        result.append(
+            summary,
+            sections,
+            caveat
+        );
+
+        result.hidden =
+            false;
+    }
+
+
+    async function generateOverview() {
+        if (!fingerprint) {
+            await prepareOverview();
+
+            if (!fingerprint) {
+                return;
+            }
+        }
+
+        const cached =
+            cache.get(
+                fingerprint
+            );
+
+        if (cached) {
+            renderOverview(
+                cached
+            );
+
+            setStatus(
+                "Показываем уже полученный общий разбор этой выборки.",
+                "success"
+            );
+
+            return;
+        }
+
+        button.disabled =
+            true;
+
+        const oldText =
+            button.textContent;
+
+        button.textContent =
+            "АНАЛИЗИРУЕМ…";
+
+        setStatus(
+            "Тренер собирает общую картину по истории матчей…",
+            "loading"
+        );
+
+        try {
+            const response =
+                await fetch(
+                    "/me/ai-overview",
+                    {
+                        method:
+                            "POST",
+                        credentials:
+                            "same-origin",
+                        cache:
+                            "no-store",
+                        headers: {
+                            Accept:
+                                "application/json"
+                        }
+                    }
+                );
+
+            if (!response.ok) {
+                throw new Error(
+                    await readError(
+                        response
+                    )
+                );
+            }
+
+            const data =
+                await response.json();
+
+            cache.set(
+                fingerprint,
+                data
+            );
+
+            renderOverview(
+                data
+            );
+
+            setStatus(
+                "Общий разбор готов. Выводы ниже собраны из накопленной истории.",
+                "success"
+            );
+
+        } catch (error) {
+            setStatus(
+                error.message
+                || "Не удалось получить общий AI-разбор.",
+                "error"
+            );
+
+        } finally {
+            button.disabled =
+                !fingerprint;
+
+            button.textContent =
+                oldText;
+        }
+    }
+
+
+    button.addEventListener(
+        "click",
+        generateOverview
+    );
+
+    if (navButton) {
+        navButton.addEventListener(
+            "click",
+            prepareOverview
+        );
+    }
+
+    window.cs2PrepareAIOverview =
+        prepareOverview;
 })();
 </script>
 

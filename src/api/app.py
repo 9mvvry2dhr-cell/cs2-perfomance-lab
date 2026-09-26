@@ -26,9 +26,16 @@ from src.ai.client import (
     AIProviderError,
     AIResponseValidationError,
     OpenAIMatchExplainer,
+    OpenAIPlayerExplainer,
 )
-from src.ai.models import MatchAIResponse
-from src.ai.payload import build_match_ai_payload
+from src.ai.models import (
+    MatchAIResponse,
+    PlayerAIResponse,
+)
+from src.ai.payload import (
+    build_match_ai_payload,
+    build_player_ai_payload,
+)
 from src.auth.steam_openid import (
     SteamOpenIDError,
     build_steam_login_url,
@@ -46,6 +53,7 @@ from src.api.dependencies import (
     get_database_session,
     get_demo_ingestion_service,
     get_match_ai_explainer,
+    get_player_ai_explainer,
 )
 from src.api.schemas import (
     AnalysisJobResponse,
@@ -69,6 +77,9 @@ from src.database.bug_report_repository import (
 )
 from src.database.job_repository import AnalysisJobRepository
 from src.database.repository import AnalysisRepository
+from src.domain.history import (
+    build_player_history_summary,
+)
 from src.domain.identity import CurrentUser
 from src.ingestion.service import (
     AnalysisQueueFullError,
@@ -552,6 +563,73 @@ def explain_match_with_ai(
     payload = build_match_ai_payload(
         analysis,
         steam_id=player.steam_id,
+    )
+
+    try:
+        return explainer.explain_with_usage(
+            payload
+        )
+    except AIResponseValidationError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail="AI response failed evidence validation",
+        ) from exc
+    except AIProviderError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail="AI provider request failed",
+        ) from exc
+
+
+@app.post(
+    "/me/ai-overview",
+    response_model=PlayerAIResponse,
+)
+def explain_player_with_ai(
+    repository: Annotated[
+        AnalysisRepository,
+        Depends(get_analysis_repository),
+    ],
+    explainer: Annotated[
+        OpenAIPlayerExplainer,
+        Depends(get_player_ai_explainer),
+    ],
+    current_user: Annotated[
+        CurrentUser,
+        Depends(get_current_user),
+    ],
+) -> PlayerAIResponse:
+    history = (
+        repository
+        .get_player_match_history(
+            current_user.steam_id,
+            limit=100,
+            owner_steam_id=(
+                current_user.steam_id
+            ),
+        )
+    )
+
+    if not history:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Player history not found",
+        )
+
+    summary = build_player_history_summary(
+        current_user.steam_id,
+        history,
+    )
+
+    if summary is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Player history not found",
+        )
+
+    payload = build_player_ai_payload(
+        summary,
+        history,
     )
 
     try:

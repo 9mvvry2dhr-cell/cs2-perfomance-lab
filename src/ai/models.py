@@ -51,3 +51,28 @@ class AIUsage(BaseModel):
 
 class MatchAIResponse(MatchAIExplanation):
     usage: AIUsage
+
+
+class PlayerAIExplanation(BaseModel):
+    model_config = ConfigDict(
+        extra="forbid",
+    )
+
+    summary: str = Field(
+        min_length=1,
+        max_length=3200,
+    )
+    profile: list[AIExplanationItem]
+    strengths: list[AIExplanationItem]
+    weaknesses: list[AIExplanationItem]
+    trends: list[AIExplanationItem]
+    maps: list[AIExplanationItem]
+    focus: list[AIExplanationItem]
+    caveat: str = Field(
+        min_length=1,
+        max_length=1600,
+    )
+
+
+class PlayerAIResponse(PlayerAIExplanation):
+    usage: AIUsage

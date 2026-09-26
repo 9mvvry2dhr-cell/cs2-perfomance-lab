@@ -9,8 +9,13 @@ from src.ai.models import (
     AIUsage,
     MatchAIExplanation,
     MatchAIResponse,
+    PlayerAIExplanation,
+    PlayerAIResponse,
 )
-from src.ai.prompt import build_match_ai_prompt
+from src.ai.prompt import (
+    build_match_ai_prompt,
+    build_player_ai_prompt,
+)
 
 
 DEFAULT_OPENAI_MODEL = "gpt-5.6"
@@ -298,6 +303,202 @@ class OpenAIMatchExplainer:
         )
 
         return MatchAIExplanation(
+            **result.model_dump(
+                exclude={
+                    "usage",
+                }
+            )
+        )
+
+
+
+def _player_evidence_kinds(
+    payload: Mapping[str, Any],
+) -> dict[str, str]:
+    result: dict[str, str] = {}
+
+    for evidence in payload.get(
+        "evidence_catalog",
+        [],
+    ):
+        code = str(
+            evidence.get(
+                "code",
+                "",
+            )
+        )
+
+        kind = str(
+            evidence.get(
+                "kind",
+                "",
+            )
+        )
+
+        if code:
+            result[code] = kind
+
+    return result
+
+
+def validate_player_explanation_grounding(
+    explanation: PlayerAIExplanation,
+    payload: Mapping[str, Any],
+) -> None:
+    evidence_kinds = (
+        _player_evidence_kinds(
+            payload
+        )
+    )
+
+    def validate_items(
+        section: str,
+        items,
+        *,
+        allowed_kinds: set[str] | None,
+    ) -> None:
+        for item in items:
+            if not item.evidence_codes:
+                raise AIResponseValidationError(
+                    f"{section} item has no evidence codes"
+                )
+
+            for code in item.evidence_codes:
+                kind = evidence_kinds.get(
+                    code
+                )
+
+                if kind is None:
+                    raise AIResponseValidationError(
+                        f"{section} references unknown evidence code: {code}"
+                    )
+
+                if (
+                    allowed_kinds is not None
+                    and kind not in allowed_kinds
+                ):
+                    raise AIResponseValidationError(
+                        f"{section} references {kind} evidence: {code}"
+                    )
+
+    validate_items(
+        "profile",
+        explanation.profile,
+        allowed_kinds=None,
+    )
+    validate_items(
+        "strengths",
+        explanation.strengths,
+        allowed_kinds={
+            "strength",
+        },
+    )
+    validate_items(
+        "weaknesses",
+        explanation.weaknesses,
+        allowed_kinds={
+            "weakness",
+        },
+    )
+    validate_items(
+        "trends",
+        explanation.trends,
+        allowed_kinds={
+            "trend",
+        },
+    )
+    validate_items(
+        "maps",
+        explanation.maps,
+        allowed_kinds={
+            "map",
+        },
+    )
+    validate_items(
+        "focus",
+        explanation.focus,
+        allowed_kinds=None,
+    )
+
+    if (
+        evidence_kinds
+        and not explanation.focus
+    ):
+        raise AIResponseValidationError(
+            "focus must not be empty when profile evidence exists"
+        )
+
+
+class OpenAIPlayerExplainer(
+    OpenAIMatchExplainer
+):
+    def _request(
+        self,
+        payload: Mapping[str, Any],
+    ):
+        prompt = build_player_ai_prompt(
+            payload
+        )
+
+        try:
+            return self.client.responses.parse(
+                model=self.model,
+                store=False,
+                input=[
+                    {
+                        "role": "system",
+                        "content": prompt.instructions,
+                    },
+                    {
+                        "role": "user",
+                        "content": prompt.input_text,
+                    },
+                ],
+                text_format=PlayerAIExplanation,
+            )
+        except Exception as exc:
+            raise AIProviderError(
+                "OpenAI request failed"
+            ) from exc
+
+    def explain_with_usage(
+        self,
+        payload: Mapping[str, Any],
+    ) -> PlayerAIResponse:
+        response = self._request(
+            payload
+        )
+
+        explanation = (
+            response.output_parsed
+        )
+
+        if explanation is None:
+            raise AIResponseValidationError(
+                "OpenAI response did not contain parsed output"
+            )
+
+        validate_player_explanation_grounding(
+            explanation,
+            payload,
+        )
+
+        return PlayerAIResponse(
+            **explanation.model_dump(),
+            usage=self._usage_from_response(
+                response
+            ),
+        )
+
+    def explain(
+        self,
+        payload: Mapping[str, Any],
+    ) -> PlayerAIExplanation:
+        result = self.explain_with_usage(
+            payload
+        )
+
+        return PlayerAIExplanation(
             **result.model_dump(
                 exclude={
                     "usage",

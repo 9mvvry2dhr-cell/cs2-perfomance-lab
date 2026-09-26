@@ -18,6 +18,7 @@ from sqlalchemy.orm import Session, sessionmaker
 from src.ai.client import (
     AIConfigurationError,
     OpenAIMatchExplainer,
+    OpenAIPlayerExplainer,
 )
 from src.auth.session import SESSION_COOKIE_NAME
 from src.database.auth_repository import AuthRepository
@@ -169,6 +170,16 @@ def get_demo_ingestion_service(
 def get_match_ai_explainer() -> OpenAIMatchExplainer:
     try:
         return OpenAIMatchExplainer()
+    except AIConfigurationError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="AI coach is not configured",
+        ) from exc
+
+
+def get_player_ai_explainer() -> OpenAIPlayerExplainer:
+    try:
+        return OpenAIPlayerExplainer()
     except AIConfigurationError as exc:
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
