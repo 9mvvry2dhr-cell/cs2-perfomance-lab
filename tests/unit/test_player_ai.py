@@ -10,6 +10,9 @@ from src.ai.models import (
     AIExplanationItem,
     PlayerAIExplanation,
 )
+from src.ai.prompt import (
+    PLAYER_AI_INSTRUCTIONS,
+)
 
 
 class FakeResponses:
@@ -209,6 +212,41 @@ class PlayerAIExplainerTest(unittest.TestCase):
                 bad,
                 make_payload(),
             )
+
+
+
+    def test_prompt_keeps_summary_compact(self):
+        self.assertIn(
+            "exactly 4-5 sentences",
+            PLAYER_AI_INSTRUCTIONS,
+        )
+
+    def test_prompt_separates_profile_from_strengths(self):
+        self.assertIn(
+            "profile describes the emerging player",
+            PLAYER_AI_INSTRUCTIONS,
+        )
+
+        self.assertIn(
+            "strengths lists only repeatable positive signals",
+            PLAYER_AI_INSTRUCTIONS,
+        )
+
+    def test_prompt_handles_partial_trade_clutch_coverage(self):
+        self.assertIn(
+            "trade_known_matches",
+            PLAYER_AI_INSTRUCTIONS,
+        )
+
+        self.assertIn(
+            "clutch_known_matches",
+            PLAYER_AI_INSTRUCTIONS,
+        )
+
+        self.assertIn(
+            "trade/clutch conversion",
+            PLAYER_AI_INSTRUCTIONS,
+        )
 
 
 if __name__ == "__main__":

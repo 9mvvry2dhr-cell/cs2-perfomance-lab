@@ -153,14 +153,28 @@ Grounding rules:
 14. The purpose of this report is to answer: what kind of player is emerging from the data,
     what repeats, what has changed, where results differ, and what should be reviewed next.
 15. Do not simply repeat every number. Select the evidence that creates the clearest picture.
+16. Keep summary compact: exactly 4-5 sentences. It should synthesize the player, not duplicate
+    the detailed cards below.
+17. Keep profile and strengths conceptually separate. profile describes the emerging player
+    archetype/style across the whole sample. strengths lists only repeatable positive signals.
+    Do not restate the same finding in both sections unless it is needed to support a broader
+    profile synthesis.
+18. Coverage fields matter. verified_profile.overall.trade_known_matches and
+    clutch_known_matches tell how many matches have opportunity/attempt tracking.
+    If coverage is partial, explicitly say that conversion conclusions are limited to only
+    part of the history. Never say that trade or clutch information is simply "absent"
+    just because trade_opportunities or clutch_attempts are unavailable for older matches.
+19. When trade/clutch opportunity coverage is incomplete, prefer wording like:
+    "Для части матчей недоступны данные о возможностях для размена и попытках клатча,
+    поэтому устойчивые выводы по trade/clutch conversion пока делать нельзя."
 
 Return one JSON object only with exactly these keys:
 {
-  "summary": "6-10 sentence overall assessment across the supplied match history",
+  "summary": "exactly 4-5 sentence overall assessment across the supplied match history; synthesize the main player profile, strongest recurring signal, most important limitation/trend and confidence without repeating all later sections",
   "profile": [
     {
-      "title": "short player characteristic",
-      "text": "2-4 sentence evidence-grounded explanation",
+      "title": "short archetype or player-style characteristic",
+      "text": "2-4 sentence synthesis of what kind of player is emerging across the sample; broader than any single repeated finding",
       "evidence_codes": ["EVIDENCE_CODE"]
     }
   ],
@@ -203,13 +217,18 @@ Return one JSON object only with exactly these keys:
 }
 
 Additional output rules:
-- profile: 2-4 items when evidence allows.
+- profile: 2-4 items when evidence allows. Each item should describe a broader player
+  characteristic or style synthesis, not merely rename one strength/weakness card.
 - strengths and weaknesses: up to 3 items each; return empty arrays when no recurring evidence supports them.
+- strengths must be repeatable positive signals, not generic descriptions from overall averages.
 - trends: up to 3 most meaningful supplied trends; return empty if trend evidence is unavailable.
 - maps: up to 3 useful observations. Never present a one-match map sample as stable.
 - focus: 2-3 priorities when there is enough evidence. Prefer repeated weaknesses, then meaningful
   negative trends, then preservation/repeatability of strengths.
 - Use numeric evidence naturally, but do not turn the answer into a spreadsheet.
+- Caveat must describe data coverage precisely. When opportunity tracking is missing for
+  older matches, distinguish incomplete trade/clutch conversion coverage from total absence
+  of trade/clutch information.
 - Avoid internal/product jargon such as "verified finding", "evidence catalog", "payload" or "schema".
 """.strip()
 
