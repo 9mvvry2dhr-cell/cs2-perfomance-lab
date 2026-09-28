@@ -7,6 +7,7 @@ from collections.abc import Callable
 from dataclasses import replace
 from pathlib import Path
 
+from src.audit import audit_event
 from src.database.job_repository import (
     AnalysisJobRepository,
 )
@@ -448,6 +449,13 @@ class AnalysisWorker:
                 )
             )
 
+            audit_event(
+                "analysis.completed",
+                steam_id=job.owner_steam_id,
+                job_id=job.id,
+                match_id=analysis.match_id,
+            )
+
         except Exception as exc:
             error = (
                 "Authenticated Steam account "
@@ -462,6 +470,21 @@ class AnalysisWorker:
             self.job_repository.mark_failed(
                 job.id,
                 error=error,
+            )
+
+            audit_event(
+                "analysis.failed",
+                steam_id=job.owner_steam_id,
+                status="failed",
+                job_id=job.id,
+                reason=(
+                    "owner_not_found"
+                    if isinstance(
+                        exc,
+                        DemoOwnerNotFoundError,
+                    )
+                    else "analysis_failed"
+                ),
             )
 
             try:
