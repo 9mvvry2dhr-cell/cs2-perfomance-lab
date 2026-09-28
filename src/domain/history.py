@@ -30,6 +30,7 @@ class PlayerMatchHistoryItem:
     )
 
     player_result: str = "unknown"
+    match_source: str = "unknown"
 
 
 @dataclass(frozen=True)
