@@ -2736,6 +2736,9 @@ tr.selected td {
         28px
         18px
         22px;
+
+    overflow-y: auto;
+    overflow-x: hidden;
 }
 
 .nav-button {
@@ -7251,9 +7254,11 @@ button.dashboard-match-row:hover {
    ========================================================= */
 
 .project-support {
-    margin-top: 14px;
+    margin-top: 18px;
 
     padding: 14px;
+
+    flex-shrink: 0;
 
     border:
         1px solid
@@ -9692,6 +9697,7 @@ id="demoUploadForm"
 
 <div class="upload-sub">
 Выбери источник демки — Premier и FACEIT считаются отдельно.
+FACEIT: можно загружать .dem.zst напрямую.
 </div>
 
 </div>
@@ -20459,6 +20465,7 @@ document
     height: auto !important;
     min-height: 50px;
     overflow: visible !important;
+    flex-shrink: 0;
 }
 
 .current-user-auth-actions {

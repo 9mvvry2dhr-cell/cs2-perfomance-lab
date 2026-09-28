@@ -7,6 +7,12 @@
 
     encode zstd gzip
 
+    @frontend_html {
+        path / /index.html
+    }
+
+    header @frontend_html Cache-Control "no-store, no-cache, must-revalidate, max-age=0"
+
     @scanner_paths {
         path /.git /.git/* /.svn /.svn/* /.env /.env.* /wp-login.php /wp-admin/* /wp-content/* /wordpress/* /xmlrpc.php /phpmyadmin* /vendor/phpunit/* /.aws/*
     }
