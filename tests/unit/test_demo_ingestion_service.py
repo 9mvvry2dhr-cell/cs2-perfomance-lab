@@ -314,7 +314,7 @@ class DemoIngestionServiceTest(
         with self.assertRaisesRegex(
             DuplicateDemoError,
             "This demo has already been analyzed",
-        ):
+        ) as raised:
             service.ingest(
                 owner_steam_id="76561198055629469",
                 original_filename="duplicate.dem",
@@ -322,6 +322,15 @@ class DemoIngestionServiceTest(
                     b"demo-content"
                 ),
             )
+
+        self.assertEqual(
+            raised.exception.match_id,
+            request_match_id := (
+                analysis_repository.calls[
+                    0
+                ]["match_id"]
+            ),
+        )
 
         self.assertEqual(
             repository.calls,
@@ -334,6 +343,11 @@ class DemoIngestionServiceTest(
         )
 
         request = analysis_repository.calls[0]
+
+        self.assertEqual(
+            request["match_id"],
+            request_match_id,
+        )
 
         self.assertEqual(
             request["owner_steam_id"],

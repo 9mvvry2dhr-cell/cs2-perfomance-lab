@@ -589,10 +589,13 @@ def create_analysis_job(
         )
 
     except DuplicateDemoError as exc:
-        raise HTTPException(
+        return JSONResponse(
             status_code=status.HTTP_409_CONFLICT,
-            detail=str(exc),
-        ) from exc
+            content={
+                "detail": str(exc),
+                "match_id": exc.match_id,
+            },
+        )
 
     except AnalysisQueueFullError as exc:
         raise HTTPException(

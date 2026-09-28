@@ -272,7 +272,7 @@ class AnalysisJobUploadApiTest(
     ):
         service = StubIngestionService(
             error=DuplicateDemoError(
-                "This demo has already been analyzed"
+                match_id="a" * 64
             )
         )
 
@@ -303,7 +303,8 @@ class AnalysisJobUploadApiTest(
             {
                 "detail": (
                     "This demo has already been analyzed"
-                )
+                ),
+                "match_id": "a" * 64,
             },
         )
 

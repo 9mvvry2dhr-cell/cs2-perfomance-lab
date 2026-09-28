@@ -1,10 +1,12 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from gzip import BadGzipFile, GzipFile
 from hashlib import sha256
 from pathlib import Path
 from typing import BinaryIO
 from uuid import uuid4
+from zlib import error as ZlibError
 
 
 DEFAULT_MAX_DEMO_BYTES = (
@@ -58,14 +60,17 @@ def normalize_original_filename(
         .strip()
     )
 
+    lower_name = normalized.lower()
+
     if (
         len(normalized) <= 4
-        or not normalized.lower().endswith(
-            ".dem"
+        or not (
+            lower_name.endswith(".dem")
+            or lower_name.endswith(".dem.gz")
         )
     ):
         raise InvalidDemoFileError(
-            "Only .dem files are supported"
+            "Only .dem and .dem.gz files are supported"
         )
 
     return normalized
@@ -146,14 +151,35 @@ class LocalDemoStorage:
         digest = sha256()
         size_bytes = 0
 
+        gzip_stream = None
+        input_stream = source
+
+        if filename.lower().endswith(
+            ".dem.gz"
+        ):
+            gzip_stream = GzipFile(
+                fileobj=source,
+                mode="rb",
+            )
+            input_stream = gzip_stream
+
         try:
             with temporary_path.open(
                 "xb"
             ) as destination:
                 while True:
-                    chunk = source.read(
-                        CHUNK_SIZE
-                    )
+                    try:
+                        chunk = input_stream.read(
+                            CHUNK_SIZE
+                        )
+                    except (
+                        BadGzipFile,
+                        EOFError,
+                        ZlibError,
+                    ) as exc:
+                        raise InvalidDemoFileError(
+                            "Invalid .dem.gz file"
+                        ) from exc
 
                     if not chunk:
                         break
@@ -215,6 +241,10 @@ class LocalDemoStorage:
             )
 
             raise
+
+        finally:
+            if gzip_stream is not None:
+                gzip_stream.close()
 
     def _current_size_bytes(
         self,

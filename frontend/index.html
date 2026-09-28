@@ -2597,6 +2597,32 @@ tr.selected td {
         rgba(255,110,100,0.28);
 }
 
+.upload-status-action {
+    margin-left: 10px;
+    padding: 6px 10px;
+
+    border:
+        1px solid
+        rgba(73,168,255,0.35);
+
+    border-radius: 7px;
+
+    color: #dcefff;
+    background:
+        rgba(73,168,255,0.10);
+
+    font: inherit;
+    font-size: 10px;
+    font-weight: 800;
+
+    cursor: pointer;
+}
+
+.upload-status-action:hover {
+    border-color:
+        rgba(73,168,255,0.60);
+}
+
 .analysis-loaded {
     margin-top: 7px;
 
@@ -9700,7 +9726,7 @@ class="demo-file-input"
 id="demoFile"
 name="file"
 type="file"
-accept=".dem"
+accept=".dem,.gz"
 required
 >
 
@@ -11110,6 +11136,100 @@ function setUploadStatus(
 
     uploadStatus.dataset.state =
         state;
+
+    uploadStatus.classList.add(
+        "visible"
+    );
+}
+
+
+function setDuplicateUploadStatus(
+    matchId
+) {
+    uploadStatus.replaceChildren();
+
+    uploadStatus.append(
+        document.createTextNode(
+            "Эта демка уже проанализирована."
+        )
+    );
+
+    const button =
+        document.createElement(
+            "button"
+        );
+
+    button.type =
+        "button";
+
+    button.className =
+        "upload-status-action";
+
+    button.textContent =
+        "ОТКРЫТЬ АНАЛИЗ";
+
+    button.addEventListener(
+        "click",
+        async () => {
+            button.disabled =
+                true;
+
+            try {
+                const analysis =
+                    await loadMatchAnalysis(
+                        matchId
+                    );
+
+                renderMatchAnalysis(
+                    analysis
+                );
+
+                showAnalysisState();
+
+                if (
+                    typeof window
+                        .cs2OpenAnalysis
+                    === "function"
+                ) {
+                    window
+                        .cs2OpenAnalysis();
+                }
+
+                window.scrollTo(
+                    {
+                        top: 0,
+                        behavior: "smooth",
+                    }
+                );
+
+                setUploadStatus(
+                    "Открыт сохранённый анализ: "
+                    + analysis.map_name
+                    + " · "
+                    + analysis.score_ct
+                    + ":"
+                    + analysis.score_t,
+                    "success"
+                );
+            } catch (error) {
+                setUploadStatus(
+                    error.message
+                    || "Не удалось открыть сохранённый анализ.",
+                    "error"
+                );
+            } finally {
+                button.disabled =
+                    false;
+            }
+        }
+    );
+
+    uploadStatus.appendChild(
+        button
+    );
+
+    uploadStatus.dataset.state =
+        "success";
 
     uploadStatus.classList.add(
         "visible"
@@ -15271,8 +15391,20 @@ function uploadDemoForm(
                         detail
                         === "This demo has already been analyzed"
                     ) {
-                        detail =
-                            "Эта демка уже проанализирована.";
+                        const duplicateError =
+                            new Error(
+                                "Эта демка уже проанализирована."
+                            );
+
+                        duplicateError.matchId =
+                            body.match_id
+                            || null;
+
+                        reject(
+                            duplicateError
+                        );
+
+                        return;
                     }
 
                     reject(
@@ -15334,17 +15466,39 @@ demoUploadForm.addEventListener(
             return;
         }
 
-        if (
-            !file.name
-                .toLowerCase()
-                .endsWith(".dem")
-        ) {
+        const demoMatchSource =
+            document.getElementById(
+                "demoMatchSource"
+            );
+
+        const selectedMatchSource =
+            demoMatchSource?.value
+            || "premier";
+
+        const lowerFilename =
+            file.name.toLowerCase();
+
+        const supportedDemo =
+            lowerFilename.endsWith(
+                ".dem"
+            )
+            || (
+                selectedMatchSource
+                === "faceit"
+                && lowerFilename.endsWith(
+                    ".dem.gz"
+                )
+            );
+
+        if (!supportedDemo) {
             setUploadStatus(
-                "\u041d\u0443\u0436\u0435\u043d "
-                + "\u0444\u0430\u0439\u043b "
-                + "\u0441 "
-                + "\u0440\u0430\u0441\u0448\u0438\u0440\u0435\u043d\u0438\u0435\u043c "
-                + ".dem.",
+                selectedMatchSource
+                    === "faceit"
+                    ? (
+                        "Для FACEIT нужен файл .dem "
+                        + "или скачанный архив .dem.gz."
+                    )
+                    : "Нужен файл с расширением .dem.",
                 "error"
             );
 
@@ -15389,15 +15543,9 @@ demoUploadForm.addEventListener(
                 file
             );
 
-            const demoMatchSource =
-                document.getElementById(
-                    "demoMatchSource"
-                );
-
             formData.append(
                 "match_source",
-                demoMatchSource?.value
-                || "premier"
+                selectedMatchSource
             );
 
             const createdJob =
@@ -15500,10 +15648,16 @@ demoUploadForm.addEventListener(
                 showIdleState();
             }
 
-            setUploadStatus(
-                `\u041e\u0448\u0438\u0431\u043a\u0430: ${error.message}`,
-                "error"
-            );
+            if (error.matchId) {
+                setDuplicateUploadStatus(
+                    error.matchId
+                );
+            } else {
+                setUploadStatus(
+                    `\u041e\u0448\u0438\u0431\u043a\u0430: ${error.message}`,
+                    "error"
+                );
+            }
 
         } finally {
             window.cs2CurrentAnalysisJobId =

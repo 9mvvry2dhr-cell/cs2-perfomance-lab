@@ -1,4 +1,5 @@
 import unittest
+from gzip import compress as gzip_compress
 from hashlib import sha256
 from io import BytesIO
 from pathlib import Path
@@ -81,6 +82,81 @@ class LocalDemoStorageTest(
                 self.root.glob(
                     "*.part"
                 )
+            ),
+            [],
+        )
+
+    def test_store_faceit_gzip_demo_decompresses_before_hashing(
+        self,
+    ):
+        payload = (
+            b"fake-faceit-demo-content"
+        )
+
+        storage = LocalDemoStorage(
+            self.root
+        )
+
+        stored = storage.store(
+            original_filename=(
+                "faceit-match.dem.gz"
+            ),
+            source=BytesIO(
+                gzip_compress(
+                    payload
+                )
+            ),
+        )
+
+        self.assertEqual(
+            stored.original_filename,
+            "faceit-match.dem.gz",
+        )
+
+        self.assertEqual(
+            stored.file_sha256,
+            sha256(
+                payload
+            ).hexdigest(),
+        )
+
+        self.assertEqual(
+            stored.size_bytes,
+            len(payload),
+        )
+
+        saved_path = (
+            self.root
+            / stored.storage_key
+        )
+
+        self.assertEqual(
+            saved_path.read_bytes(),
+            payload,
+        )
+
+    def test_rejects_invalid_faceit_gzip_demo(
+        self,
+    ):
+        storage = LocalDemoStorage(
+            self.root
+        )
+
+        with self.assertRaises(
+            InvalidDemoFileError
+        ):
+            storage.store(
+                original_filename=(
+                    "broken.dem.gz"
+                ),
+                source=BytesIO(
+                    b"not-gzip"
+                ),
+            )
+
+        self.assertEqual(
+            list(
+                self.root.iterdir()
             ),
             [],
         )

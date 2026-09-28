@@ -35,7 +35,18 @@ class AnalysisAlreadyActiveError(
 class DuplicateDemoError(
     RuntimeError
 ):
-    pass
+    def __init__(
+        self,
+        message: str = (
+            "This demo has already been analyzed"
+        ),
+        *,
+        match_id: str | None = None,
+    ):
+        super().__init__(
+            message
+        )
+        self.match_id = match_id
 
 
 class DemoIngestionService:
@@ -115,7 +126,9 @@ class DemoIngestionService:
 
                 if existing_position is not None:
                     raise DuplicateDemoError(
-                        "This demo has already been analyzed"
+                        match_id=(
+                            stored.file_sha256
+                        )
                     )
 
                 return self.job_repository.create_job(
