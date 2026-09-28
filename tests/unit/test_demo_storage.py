@@ -5,6 +5,8 @@ from io import BytesIO
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
+import zstandard as zstd
+
 from src.ingestion.storage import (
     DemoStorageFullError,
     DemoTooLargeError,
@@ -133,6 +135,86 @@ class LocalDemoStorageTest(
         self.assertEqual(
             saved_path.read_bytes(),
             payload,
+        )
+
+    def test_store_faceit_zstd_demo_decompresses_before_hashing(
+        self,
+    ):
+        payload = (
+            b"fake-faceit-zstd-demo-content"
+        )
+
+        storage = LocalDemoStorage(
+            self.root
+        )
+
+        compressed = (
+            zstd.ZstdCompressor()
+            .compress(
+                payload
+            )
+        )
+
+        stored = storage.store(
+            original_filename=(
+                "faceit-match.dem.zst"
+            ),
+            source=BytesIO(
+                compressed
+            ),
+        )
+
+        self.assertEqual(
+            stored.original_filename,
+            "faceit-match.dem.zst",
+        )
+
+        self.assertEqual(
+            stored.file_sha256,
+            sha256(
+                payload
+            ).hexdigest(),
+        )
+
+        self.assertEqual(
+            stored.size_bytes,
+            len(payload),
+        )
+
+        saved_path = (
+            self.root
+            / stored.storage_key
+        )
+
+        self.assertEqual(
+            saved_path.read_bytes(),
+            payload,
+        )
+
+    def test_rejects_invalid_faceit_zstd_demo(
+        self,
+    ):
+        storage = LocalDemoStorage(
+            self.root
+        )
+
+        with self.assertRaises(
+            InvalidDemoFileError
+        ):
+            storage.store(
+                original_filename=(
+                    "broken.dem.zst"
+                ),
+                source=BytesIO(
+                    b"not-zstd"
+                ),
+            )
+
+        self.assertEqual(
+            list(
+                self.root.iterdir()
+            ),
+            [],
         )
 
     def test_rejects_invalid_faceit_gzip_demo(

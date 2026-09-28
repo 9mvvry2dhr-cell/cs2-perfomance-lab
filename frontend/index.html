@@ -9726,7 +9726,7 @@ class="demo-file-input"
 id="demoFile"
 name="file"
 type="file"
-accept=".dem,.gz"
+accept=".dem,.gz,.zst"
 required
 >
 
@@ -15485,8 +15485,13 @@ demoUploadForm.addEventListener(
             || (
                 selectedMatchSource
                 === "faceit"
-                && lowerFilename.endsWith(
-                    ".dem.gz"
+                && (
+                    lowerFilename.endsWith(
+                        ".dem.gz"
+                    )
+                    || lowerFilename.endsWith(
+                        ".dem.zst"
+                    )
                 )
             );
 
@@ -15495,8 +15500,8 @@ demoUploadForm.addEventListener(
                 selectedMatchSource
                     === "faceit"
                     ? (
-                        "Для FACEIT нужен файл .dem "
-                        + "или скачанный архив .dem.gz."
+                        "Для FACEIT нужен файл .dem, "
+                        + ".dem.gz или .dem.zst."
                     )
                     : "Нужен файл с расширением .dem.",
                 "error"

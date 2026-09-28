@@ -8,6 +8,8 @@ from typing import BinaryIO
 from uuid import uuid4
 from zlib import error as ZlibError
 
+import zstandard as zstd
+
 
 DEFAULT_MAX_DEMO_BYTES = (
     512 * 1024 * 1024
@@ -67,10 +69,11 @@ def normalize_original_filename(
         or not (
             lower_name.endswith(".dem")
             or lower_name.endswith(".dem.gz")
+            or lower_name.endswith(".dem.zst")
         )
     ):
         raise InvalidDemoFileError(
-            "Only .dem and .dem.gz files are supported"
+            "Only .dem, .dem.gz and .dem.zst files are supported"
         )
 
     return normalized
@@ -151,19 +154,39 @@ class LocalDemoStorage:
         digest = sha256()
         size_bytes = 0
 
-        gzip_stream = None
+        compressed_stream = None
         input_stream = source
 
-        if filename.lower().endswith(
-            ".dem.gz"
-        ):
-            gzip_stream = GzipFile(
-                fileobj=source,
-                mode="rb",
-            )
-            input_stream = gzip_stream
-
         try:
+            lower_filename = (
+                filename.lower()
+            )
+
+            if lower_filename.endswith(
+                ".dem.gz"
+            ):
+                compressed_stream = GzipFile(
+                    fileobj=source,
+                    mode="rb",
+                )
+                input_stream = (
+                    compressed_stream
+                )
+
+            elif lower_filename.endswith(
+                ".dem.zst"
+            ):
+                compressed_stream = (
+                    zstd.ZstdDecompressor()
+                    .stream_reader(
+                        source,
+                        closefd=False,
+                    )
+                )
+                input_stream = (
+                    compressed_stream
+                )
+
             with temporary_path.open(
                 "xb"
             ) as destination:
@@ -176,9 +199,10 @@ class LocalDemoStorage:
                         BadGzipFile,
                         EOFError,
                         ZlibError,
+                        zstd.ZstdError,
                     ) as exc:
                         raise InvalidDemoFileError(
-                            "Invalid .dem.gz file"
+                            "Invalid compressed demo file"
                         ) from exc
 
                     if not chunk:
@@ -243,8 +267,8 @@ class LocalDemoStorage:
             raise
 
         finally:
-            if gzip_stream is not None:
-                gzip_stream.close()
+            if compressed_stream is not None:
+                compressed_stream.close()
 
     def _current_size_bytes(
         self,
