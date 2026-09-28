@@ -390,27 +390,77 @@ class DemoParser:
         else:
             df_valid_rounds = df_rounds.copy()
 
+        # --------------------------------------------------------------
+        # Официальный старт live-матча.
+        #
+        # FACEIT demo может содержать технический round_end и
+        # knife round до begin_new_match. Они не являются частью
+        # итогового счёта и не должны участвовать в статистике.
+        # --------------------------------------------------------------
+
+        match_start_tick = None
+
+        try:
+            match_start_events = (
+                self.raw_parser.parse_events(
+                    ["begin_new_match"]
+                )
+            )
+
+            df_match_start = self._extract_dataframe(
+                match_start_events
+            )
+
+            if (
+                df_match_start is not None
+                and not df_match_start.empty
+                and "tick" in df_match_start.columns
+            ):
+                candidate_tick = self._safe_int(
+                    df_match_start["tick"].max(),
+                    default=-1
+                )
+
+                if candidate_tick >= 0:
+                    match_start_tick = candidate_tick
+
+        except Exception:
+            match_start_tick = None
+
+        if (
+            match_start_tick is not None
+            and "tick" in df_valid_rounds.columns
+        ):
+            df_valid_rounds = df_valid_rounds[
+                df_valid_rounds["tick"]
+                > match_start_tick
+            ].copy()
+
         parsed_rounds: List[ParsedRound] = []
 
         # --------------------------------------------------------------
-        # Нормализация раундов
+        # Нормализация раундов.
+        #
+        # После удаления pre-live событий номера делаем
+        # каноническими: 1..N.
         # --------------------------------------------------------------
 
-        for index, row in df_valid_rounds.iterrows():
+        for _, row in df_valid_rounds.iterrows():
 
             winner_side = self._normalize_side(
                 row.get("winner")
             )
 
-            round_num = self._safe_int(
-                row.get("round"),
-                default=index + 1
-            )
+            if winner_side not in {"CT", "T"}:
+                continue
 
             end_tick = self._safe_int(
                 row.get("tick"),
                 default=0
             )
+
+            if end_tick <= 0:
+                continue
 
             win_reason = str(
                 row.get(
@@ -421,7 +471,7 @@ class DemoParser:
 
             parsed_rounds.append(
                 ParsedRound(
-                    round_num=round_num,
+                    round_num=len(parsed_rounds) + 1,
                     winner_side=winner_side,
                     win_reason=win_reason,
                     end_tick=end_tick,

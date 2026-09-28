@@ -126,6 +126,42 @@ def _build_round_contexts_uncached(
     except Exception:
         pass
 
+    # --------------------------------------------------------------
+    # Официальный старт live-матча.
+    #
+    # FACEIT demo может содержать knife round до
+    # begin_new_match. Такой round_end нельзя использовать
+    # ни в KAST, ни в entry/trade/clutch/utility метриках.
+    # --------------------------------------------------------------
+
+    try:
+        match_start_events = raw_parser.parse_events(
+            ["begin_new_match"]
+        )
+
+        df_match_start = extract_dataframe(
+            match_start_events
+        )
+
+        if (
+            df_match_start is not None
+            and not df_match_start.empty
+            and "tick" in df_match_start.columns
+        ):
+            match_start_tick = safe_int(
+                df_match_start["tick"].max(),
+                default=-1
+            )
+
+            if match_start_tick >= 0:
+                df_end = df_end[
+                    df_end["tick"]
+                    > match_start_tick
+                ].copy()
+
+    except Exception:
+        pass
+
     df_end = (
         df_end
         .sort_values("tick")
