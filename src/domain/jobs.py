@@ -12,6 +12,12 @@ JobStatus = Literal[
     "failed",
 ]
 
+MatchSource = Literal[
+    "premier",
+    "faceit",
+    "unknown",
+]
+
 
 @dataclass(frozen=True)
 class AnalysisJob:
@@ -30,3 +36,4 @@ class AnalysisJob:
     finished_at: datetime | None
 
     owner_steam_id: str | None = None
+    match_source: MatchSource = "unknown"
