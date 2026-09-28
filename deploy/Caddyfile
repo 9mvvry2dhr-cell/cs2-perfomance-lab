@@ -14,6 +14,12 @@
 
     respond @unsafe_methods 405
 
+    @internal_endpoints {
+        path /docs /docs/* /redoc /redoc/* /openapi.json /health /ready
+    }
+
+    respond @internal_endpoints 404
+
 
     @demo_upload {
         method POST
