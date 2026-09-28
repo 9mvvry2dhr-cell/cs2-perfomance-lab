@@ -479,6 +479,7 @@ class AnalysisWorker:
                 steam_id=job.owner_steam_id,
                 status="failed",
                 job_id=job.id,
+                match_source=job.match_source,
                 reason=(
                     "owner_not_found"
                     if isinstance(
