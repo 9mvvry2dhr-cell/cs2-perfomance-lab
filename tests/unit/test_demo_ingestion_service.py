@@ -84,6 +84,7 @@ class StubJobRepository:
         original_filename,
         storage_key,
         file_sha256,
+        match_source="unknown",
     ):
         self.calls.append(
             {
@@ -95,6 +96,7 @@ class StubJobRepository:
                 ),
                 "storage_key": storage_key,
                 "file_sha256": file_sha256,
+                "match_source": match_source,
             }
         )
 
@@ -173,6 +175,7 @@ class DemoIngestionServiceTest(
             source=BytesIO(
                 b"demo-content"
             ),
+            match_source="faceit",
         )
 
         self.assertIs(
@@ -200,6 +203,11 @@ class DemoIngestionServiceTest(
         self.assertEqual(
             len(call["file_sha256"]),
             64,
+        )
+
+        self.assertEqual(
+            call["match_source"],
+            "faceit",
         )
 
         self.assertTrue(
