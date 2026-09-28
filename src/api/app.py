@@ -36,6 +36,7 @@ from src.ai.payload import (
     build_match_ai_payload,
     build_player_ai_payload,
 )
+from src.audit import audit_event
 from src.auth.steam_openid import (
     SteamOpenIDError,
     build_steam_login_url,
@@ -222,6 +223,11 @@ def steam_callback(
         steam_id
     )
 
+    audit_event(
+        "auth.login",
+        steam_id=steam_id,
+    )
+
     response = RedirectResponse(
         url="/",
         status_code=status.HTTP_303_SEE_OTHER,
@@ -258,9 +264,26 @@ def logout(
         SESSION_COOKIE_NAME
     )
 
+    steam_id = None
+
     if token:
+        authenticated = (
+            auth_repository.resolve_session(
+                token
+            )
+        )
+
+        if authenticated is not None:
+            steam_id = authenticated.steam_id
+
         auth_repository.revoke_session(
             token
+        )
+
+    if steam_id is not None:
+        audit_event(
+            "auth.logout",
+            steam_id=steam_id,
         )
 
     response = RedirectResponse(
@@ -372,6 +395,12 @@ def create_analysis_job(
             owner_steam_id=current_user.steam_id,
             original_filename=filename,
             source=file.file,
+        )
+
+        audit_event(
+            "demo.upload.accepted",
+            steam_id=current_user.steam_id,
+            job_id=job.id,
         )
 
     except DuplicateDemoError as exc:
@@ -630,6 +659,12 @@ def explain_match_with_ai(
     )
 
     if cached is not None:
+        audit_event(
+            "ai.match.cached",
+            steam_id=current_user.steam_id,
+            match_id=match_id,
+        )
+
         return MatchAIResponse.model_validate(
             cached
         )
@@ -645,10 +680,36 @@ def explain_match_with_ai(
             )
         )
 
+        audit_event(
+            "ai.match.generated",
+            steam_id=current_user.steam_id,
+            match_id=match_id,
+            input_tokens=(
+                result.usage.input_tokens
+            ),
+            output_tokens=(
+                result.usage.output_tokens
+            ),
+            reasoning_tokens=(
+                result.usage.reasoning_tokens
+            ),
+            total_tokens=(
+                result.usage.total_tokens
+            ),
+        )
+
         return result
 
     except AIResponseValidationError as exc:
         report_repository.cancel_generation()
+
+        audit_event(
+            "ai.match.failed",
+            steam_id=current_user.steam_id,
+            status="failed",
+            match_id=match_id,
+            reason="evidence_validation",
+        )
 
         raise HTTPException(
             status_code=status.HTTP_502_BAD_GATEWAY,
@@ -658,6 +719,14 @@ def explain_match_with_ai(
     except AIProviderError as exc:
         report_repository.cancel_generation()
 
+        audit_event(
+            "ai.match.failed",
+            steam_id=current_user.steam_id,
+            status="failed",
+            match_id=match_id,
+            reason="provider",
+        )
+
         raise HTTPException(
             status_code=status.HTTP_502_BAD_GATEWAY,
             detail="AI provider request failed",
@@ -665,6 +734,15 @@ def explain_match_with_ai(
 
     except Exception:
         report_repository.cancel_generation()
+
+        audit_event(
+            "ai.match.failed",
+            steam_id=current_user.steam_id,
+            status="failed",
+            match_id=match_id,
+            reason="internal",
+        )
+
         raise
 
 
@@ -801,6 +879,12 @@ def explain_player_with_ai(
             current_user.steam_id
         )
     except AIOverviewRateLimitError as exc:
+        audit_event(
+            "ai.overview.rate_limited",
+            steam_id=current_user.steam_id,
+            status="failed",
+        )
+
         raise HTTPException(
             status_code=(
                 status.HTTP_429_TOO_MANY_REQUESTS
@@ -828,10 +912,35 @@ def explain_player_with_ai(
             )
         )
 
+        audit_event(
+            "ai.overview.generated",
+            steam_id=current_user.steam_id,
+            matches=len(history),
+            input_tokens=(
+                result.usage.input_tokens
+            ),
+            output_tokens=(
+                result.usage.output_tokens
+            ),
+            reasoning_tokens=(
+                result.usage.reasoning_tokens
+            ),
+            total_tokens=(
+                result.usage.total_tokens
+            ),
+        )
+
         return result
 
     except AIResponseValidationError as exc:
         quota_repository.cancel_generation()
+
+        audit_event(
+            "ai.overview.failed",
+            steam_id=current_user.steam_id,
+            status="failed",
+            reason="evidence_validation",
+        )
 
         raise HTTPException(
             status_code=status.HTTP_502_BAD_GATEWAY,
@@ -841,6 +950,13 @@ def explain_player_with_ai(
     except AIProviderError as exc:
         quota_repository.cancel_generation()
 
+        audit_event(
+            "ai.overview.failed",
+            steam_id=current_user.steam_id,
+            status="failed",
+            reason="provider",
+        )
+
         raise HTTPException(
             status_code=status.HTTP_502_BAD_GATEWAY,
             detail="AI provider request failed",
@@ -848,6 +964,14 @@ def explain_player_with_ai(
 
     except Exception:
         quota_repository.cancel_generation()
+
+        audit_event(
+            "ai.overview.failed",
+            steam_id=current_user.steam_id,
+            status="failed",
+            reason="internal",
+        )
+
         raise
 
 
@@ -1140,6 +1264,14 @@ def create_bug_report(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=str(exc),
         ) from exc
+
+    audit_event(
+        "bug_report.created",
+        steam_id=current_user.steam_id,
+        category=report.category,
+        match_id=report.match_id,
+        job_id=report.job_id,
+    )
 
     return BugReportResponse.model_validate(
         report
