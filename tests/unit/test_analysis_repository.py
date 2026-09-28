@@ -1197,5 +1197,62 @@ class AnalysisRepositoryTest(unittest.TestCase):
         )
 
 
+    def test_player_history_filters_match_source(self):
+        first, second = self._save_history_pair()
+
+        owner_steam_id = (
+            "76561198055629469"
+        )
+
+        self.repository.link_user_match(
+            owner_steam_id=owner_steam_id,
+            match_id=first.match_id,
+            player_position=0,
+            match_source="premier",
+        )
+
+        self.repository.link_user_match(
+            owner_steam_id=owner_steam_id,
+            match_id=second.match_id,
+            player_position=0,
+            match_source="faceit",
+        )
+
+        premier = (
+            self.repository
+            .get_player_match_history(
+                owner_steam_id,
+                limit=20,
+                match_source="premier",
+            )
+        )
+
+        faceit = (
+            self.repository
+            .get_player_match_history(
+                owner_steam_id,
+                limit=20,
+                match_source="faceit",
+            )
+        )
+
+        self.assertEqual(
+            [item.match_id for item in premier],
+            [first.match_id],
+        )
+        self.assertEqual(
+            [item.match_source for item in premier],
+            ["premier"],
+        )
+        self.assertEqual(
+            [item.match_id for item in faceit],
+            [second.match_id],
+        )
+        self.assertEqual(
+            [item.match_source for item in faceit],
+            ["faceit"],
+        )
+
+
 if __name__ == "__main__":
     unittest.main()
