@@ -24066,6 +24066,385 @@ document
 </script>
 
 
+
+<style id="cs2-ai-coming-soon-v1">
+
+.ai-coming-soon-modal[hidden] {
+    display: none !important;
+}
+
+.ai-coming-soon-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 1200;
+
+    padding: 20px;
+
+    display: grid;
+    place-items: center;
+
+    background:
+        rgba(2, 8, 13, 0.80);
+
+    backdrop-filter:
+        blur(9px);
+}
+
+.ai-coming-soon-dialog {
+    width:
+        min(
+            500px,
+            calc(100vw - 32px)
+        );
+
+    border:
+        1px solid
+        rgba(240, 165, 47, 0.24);
+
+    border-radius: 17px;
+
+    overflow: hidden;
+
+    background:
+        linear-gradient(
+            145deg,
+            #0b1c2b,
+            #07121d
+        );
+
+    box-shadow:
+        0 28px 90px
+        rgba(0,0,0,0.50);
+}
+
+.ai-coming-soon-head {
+    padding:
+        21px
+        22px
+        17px;
+
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 18px;
+
+    border-bottom:
+        1px solid
+        rgba(125,171,210,0.10);
+}
+
+.ai-coming-soon-kicker {
+    color: #d89b42;
+
+    font-size: 8px;
+    font-weight: 850;
+    letter-spacing: 0.12em;
+}
+
+.ai-coming-soon-title {
+    margin-top: 6px;
+
+    color: #f4f8fb;
+
+    font-size: 21px;
+    font-weight: 780;
+    letter-spacing: -0.025em;
+}
+
+.ai-coming-soon-close {
+    width: 32px;
+    height: 32px;
+
+    flex: 0 0 auto;
+
+    display: grid;
+    place-items: center;
+
+    border:
+        1px solid
+        rgba(125,171,210,0.14);
+
+    border-radius: 9px;
+
+    color: #7891a5;
+    background:
+        rgba(255,255,255,0.018);
+
+    font-size: 17px;
+
+    cursor: pointer;
+}
+
+.ai-coming-soon-close:hover {
+    color: #ffffff;
+
+    border-color:
+        rgba(125,171,210,0.28);
+}
+
+.ai-coming-soon-body {
+    padding:
+        21px
+        22px
+        22px;
+}
+
+.ai-coming-soon-text {
+    color: #91a7b7;
+
+    font-size: 12px;
+    line-height: 1.65;
+}
+
+.ai-coming-soon-note {
+    margin-top: 15px;
+    padding:
+        12px
+        13px;
+
+    border:
+        1px solid
+        rgba(73,168,255,0.12);
+
+    border-radius: 10px;
+
+    color: #b6c9d7;
+    background:
+        rgba(73,168,255,0.045);
+
+    font-size: 10.5px;
+    line-height: 1.55;
+}
+
+.ai-coming-soon-actions {
+    margin-top: 18px;
+
+    display: flex;
+    justify-content: flex-end;
+}
+
+.ai-coming-soon-ok {
+    min-height: 39px;
+    padding:
+        0
+        17px;
+
+    border:
+        1px solid
+        rgba(240,165,47,0.34);
+
+    border-radius: 9px;
+
+    color: #fff8eb;
+    background:
+        linear-gradient(
+            135deg,
+            rgba(240,165,47,0.22),
+            rgba(240,165,47,0.08)
+        );
+
+    font: inherit;
+    font-size: 9px;
+    font-weight: 850;
+    letter-spacing: 0.05em;
+
+    cursor: pointer;
+}
+
+.ai-coming-soon-ok:hover {
+    border-color:
+        rgba(240,165,47,0.56);
+}
+
+@media (max-width: 560px) {
+    .ai-coming-soon-modal {
+        padding: 12px;
+    }
+
+    .ai-coming-soon-dialog {
+        width: 100%;
+    }
+
+    .ai-coming-soon-ok {
+        width: 100%;
+    }
+}
+
+</style>
+
+
+<div
+class="ai-coming-soon-modal"
+id="aiComingSoonModal"
+hidden
+aria-hidden="true"
+>
+    <div
+    class="ai-coming-soon-dialog"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="aiComingSoonTitle"
+    >
+        <div class="ai-coming-soon-head">
+            <div>
+                <div class="ai-coming-soon-kicker">
+                    CS2 PERFORMANCE LAB · AI
+                </div>
+
+                <div
+                class="ai-coming-soon-title"
+                id="aiComingSoonTitle"
+                >
+                    Тренер AI пока в разработке
+                </div>
+            </div>
+
+            <button
+            class="ai-coming-soon-close"
+            id="aiComingSoonClose"
+            type="button"
+            aria-label="Закрыть"
+            >
+                ×
+            </button>
+        </div>
+
+        <div class="ai-coming-soon-body">
+            <div class="ai-coming-soon-text">
+                Мы ещё дорабатываем AI-тренера и временно закрыли к нему доступ.
+            </div>
+
+            <div class="ai-coming-soon-note">
+                Все цифры, расчёты, Player DNA, карты, статистика и советы
+                в остальных разделах работают штатно — ими уже можно пользоваться.
+            </div>
+
+            <div class="ai-coming-soon-actions">
+                <button
+                class="ai-coming-soon-ok"
+                id="aiComingSoonOk"
+                type="button"
+                >
+                    ПОНЯТНО
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<script id="cs2-ai-coming-soon-js-v1">
+(function () {
+    const button =
+        document.querySelector(
+            ".ai-coach-button"
+        );
+
+    const modal =
+        document.getElementById(
+            "aiComingSoonModal"
+        );
+
+    const closeButton =
+        document.getElementById(
+            "aiComingSoonClose"
+        );
+
+    const okButton =
+        document.getElementById(
+            "aiComingSoonOk"
+        );
+
+    if (
+        !button
+        || !modal
+    ) {
+        return;
+    }
+
+
+    function openModal() {
+        modal.hidden =
+            false;
+
+        modal.setAttribute(
+            "aria-hidden",
+            "false"
+        );
+
+        window.setTimeout(
+            () => {
+                okButton?.focus();
+            },
+            0
+        );
+    }
+
+
+    function closeModal() {
+        modal.hidden =
+            true;
+
+        modal.setAttribute(
+            "aria-hidden",
+            "true"
+        );
+
+        button.focus();
+    }
+
+
+    button.addEventListener(
+        "click",
+        event => {
+            event.preventDefault();
+            event.stopImmediatePropagation();
+
+            openModal();
+        },
+        true
+    );
+
+
+    closeButton?.addEventListener(
+        "click",
+        closeModal
+    );
+
+    okButton?.addEventListener(
+        "click",
+        closeModal
+    );
+
+
+    modal.addEventListener(
+        "click",
+        event => {
+            if (
+                event.target
+                === modal
+            ) {
+                closeModal();
+            }
+        }
+    );
+
+
+    document.addEventListener(
+        "keydown",
+        event => {
+            if (
+                event.key === "Escape"
+                && !modal.hidden
+            ) {
+                closeModal();
+            }
+        }
+    );
+})();
+</script>
+
+
 <script id="cs2-bug-report-js-v1">
 (function () {
     const openButton =
