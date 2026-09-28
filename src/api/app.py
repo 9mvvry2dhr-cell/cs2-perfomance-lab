@@ -124,6 +124,9 @@ app = FastAPI(
     title="CS2 Performance Lab API",
     version="0.1.0",
     lifespan=lifespan,
+    docs_url=None,
+    redoc_url=None,
+    openapi_url=None,
 )
 
 
@@ -134,6 +137,37 @@ _SAFE_HTTP_METHODS = frozenset(
         "OPTIONS",
     }
 )
+
+
+def _ai_coach_enabled() -> bool:
+    return (
+        os.environ.get(
+            "AI_COACH_ENABLED",
+            "true",
+        )
+        .strip()
+        .lower()
+        in {
+            "1",
+            "true",
+            "yes",
+            "on",
+        }
+    )
+
+
+def _require_ai_coach_enabled() -> None:
+    if _ai_coach_enabled():
+        return
+
+    raise HTTPException(
+        status_code=(
+            status.HTTP_503_SERVICE_UNAVAILABLE
+        ),
+        detail=(
+            "AI coach is temporarily disabled"
+        ),
+    )
 
 
 def _default_port(
@@ -763,6 +797,8 @@ def explain_match_with_ai(
         Depends(get_current_user),
     ],
 ) -> MatchAIResponse:
+    _require_ai_coach_enabled()
+
     player_position = (
         repository.get_user_match_position(
             owner_steam_id=current_user.steam_id,
@@ -992,6 +1028,8 @@ def explain_player_with_ai(
         Depends(get_current_user),
     ],
 ) -> PlayerAIResponse:
+    _require_ai_coach_enabled()
+
     history = (
         repository
         .get_player_match_history(
