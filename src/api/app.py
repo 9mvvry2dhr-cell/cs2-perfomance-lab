@@ -4,12 +4,13 @@ from contextlib import asynccontextmanager
 from dataclasses import replace
 from pathlib import Path
 import os
-from typing import Annotated
+from typing import Annotated, Literal
 
 from fastapi import (
     Depends,
     FastAPI,
     File,
+    Form,
     HTTPException,
     Query,
     Request,
@@ -387,6 +388,14 @@ def create_analysis_job(
         CurrentUser,
         Depends(get_current_user),
     ],
+    match_source: Annotated[
+        Literal[
+            "premier",
+            "faceit",
+            "unknown",
+        ],
+        Form(),
+    ] = "unknown",
 ) -> AnalysisJobResponse:
     filename = file.filename or ""
 
@@ -395,12 +404,14 @@ def create_analysis_job(
             owner_steam_id=current_user.steam_id,
             original_filename=filename,
             source=file.file,
+            match_source=match_source,
         )
 
         audit_event(
             "demo.upload.accepted",
             steam_id=current_user.steam_id,
             job_id=job.id,
+            match_source=job.match_source,
         )
 
     except DuplicateDemoError as exc:
@@ -998,6 +1009,14 @@ def get_player_match_history(
             le=100,
         ),
     ] = 20,
+    source: Annotated[
+        Literal[
+            "premier",
+            "faceit",
+            "unknown",
+        ] | None,
+        Query(),
+    ] = None,
 ) -> list[PlayerMatchHistoryResponse]:
     require_owned_steam_id(
         steam_id,
@@ -1012,6 +1031,7 @@ def get_player_match_history(
             owner_steam_id=(
                 current_user.steam_id
             ),
+            match_source=source,
         )
     )
 
@@ -1057,6 +1077,14 @@ def get_player_history_summary(
             le=100,
         ),
     ] = 10,
+    source: Annotated[
+        Literal[
+            "premier",
+            "faceit",
+            "unknown",
+        ] | None,
+        Query(),
+    ] = None,
 ) -> PlayerHistorySummaryResponse:
     require_owned_steam_id(
         steam_id,
@@ -1071,6 +1099,7 @@ def get_player_history_summary(
             owner_steam_id=(
                 current_user.steam_id
             ),
+            match_source=source,
         )
     )
 
@@ -1123,11 +1152,20 @@ def get_my_match_history(
             le=100,
         ),
     ] = 20,
+    source: Annotated[
+        Literal[
+            "premier",
+            "faceit",
+            "unknown",
+        ] | None,
+        Query(),
+    ] = None,
 ) -> list[PlayerMatchHistoryResponse]:
     history = repository.get_player_match_history(
         current_user.steam_id,
         limit=limit,
         owner_steam_id=current_user.steam_id,
+        match_source=source,
     )
 
     steam_player_name = (
@@ -1171,11 +1209,20 @@ def get_my_history_summary(
             le=100,
         ),
     ] = 10,
+    source: Annotated[
+        Literal[
+            "premier",
+            "faceit",
+            "unknown",
+        ] | None,
+        Query(),
+    ] = None,
 ) -> PlayerHistorySummaryResponse:
     summary = repository.get_player_history_summary(
         current_user.steam_id,
         limit=limit,
         owner_steam_id=current_user.steam_id,
+        match_source=source,
     )
 
     if summary is None:
