@@ -8,7 +8,10 @@ from src.database.job_repository import (
     AnalysisJobRepository,
 )
 from src.database.repository import AnalysisRepository
-from src.domain.jobs import AnalysisJob
+from src.domain.jobs import (
+    AnalysisJob,
+    MatchSource,
+)
 from src.ingestion.storage import (
     LocalDemoStorage,
 )
@@ -67,6 +70,7 @@ class DemoIngestionService:
         owner_steam_id: str,
         original_filename: str,
         source: BinaryIO,
+        match_source: MatchSource = "unknown",
     ) -> AnalysisJob:
         with self._admission_lock:
             owner_active_jobs = (
@@ -125,6 +129,7 @@ class DemoIngestionService:
                     file_sha256=(
                         stored.file_sha256
                     ),
+                    match_source=match_source,
                 )
 
             except Exception as exc:
