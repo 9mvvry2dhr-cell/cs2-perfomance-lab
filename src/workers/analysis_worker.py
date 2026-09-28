@@ -437,6 +437,7 @@ class AnalysisWorker:
                     owner_steam_id=job.owner_steam_id,
                     match_id=analysis.match_id,
                     player_position=owner_player_position,
+                    match_source=job.match_source,
                 )
 
             completed_job = (
@@ -454,6 +455,7 @@ class AnalysisWorker:
                 steam_id=job.owner_steam_id,
                 job_id=job.id,
                 match_id=analysis.match_id,
+                match_source=job.match_source,
             )
 
         except Exception as exc:
