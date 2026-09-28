@@ -31,6 +31,26 @@ from src.domain.insights import (
 
 ANALYSIS_VERSION = "v1"
 
+MATCH_SOURCES = {
+    "premier",
+    "faceit",
+    "unknown",
+}
+
+
+def _normalize_match_source(
+    match_source: str,
+) -> str:
+    normalized = match_source.strip().lower()
+
+    if normalized not in MATCH_SOURCES:
+        raise ValueError(
+            "match_source must be premier, "
+            "faceit, or unknown"
+        )
+
+    return normalized
+
 
 def _anonymous_player_steam_id(
     position: int,
@@ -88,6 +108,7 @@ class AnalysisRepository:
                     (
                         item.owner_steam_id,
                         item.player_position,
+                        item.match_source,
                         item.created_at,
                     )
                     for item in user_match_models
@@ -250,6 +271,7 @@ class AnalysisRepository:
             for (
                 owner_steam_id,
                 player_position,
+                match_source,
                 created_at,
             ) in existing_user_matches:
                 self.session.add(
@@ -257,6 +279,7 @@ class AnalysisRepository:
                         owner_steam_id=owner_steam_id,
                         match_id=analysis.match_id,
                         player_position=player_position,
+                        match_source=match_source,
                         created_at=created_at,
                     )
                 )
@@ -273,6 +296,7 @@ class AnalysisRepository:
         owner_steam_id: str,
         match_id: str,
         player_position: int,
+        match_source: str = "unknown",
     ) -> None:
         """
         Persist the authenticated user's position in one match.
@@ -283,6 +307,9 @@ class AnalysisRepository:
         """
         owner_steam_id = owner_steam_id.strip()
         match_id = match_id.strip()
+        match_source = _normalize_match_source(
+            match_source
+        )
 
         if not owner_steam_id:
             raise ValueError(
@@ -318,11 +345,15 @@ class AnalysisRepository:
                     owner_steam_id=owner_steam_id,
                     match_id=match_id,
                     player_position=player_position,
+                    match_source=match_source,
                 )
             )
         else:
             existing.player_position = (
                 player_position
+            )
+            existing.match_source = (
+                match_source
             )
 
         self.session.commit()
@@ -571,6 +602,7 @@ class AnalysisRepository:
         *,
         limit: int = 20,
         owner_steam_id: str | None = None,
+        match_source: str | None = None,
     ) -> list[PlayerMatchHistoryItem]:
         """
         Load the newest valid persisted matches for one player.
@@ -600,10 +632,19 @@ class AnalysisRepository:
                 "owner_steam_id must not be empty"
             )
 
+        normalized_match_source = (
+            _normalize_match_source(
+                match_source
+            )
+            if match_source is not None
+            else None
+        )
+
         stmt = (
             select(
                 MatchPlayerModel,
                 MatchModel,
+                UserMatchModel.match_source,
             )
             .join(
                 MatchModel,
@@ -642,8 +683,15 @@ class AnalysisRepository:
                 MatchModel.created_at.desc(),
                 MatchModel.match_id.desc(),
             )
-            .limit(limit)
         )
+
+        if normalized_match_source is not None:
+            stmt = stmt.where(
+                UserMatchModel.match_source
+                == normalized_match_source
+            )
+
+        stmt = stmt.limit(limit)
 
         rows = self.session.execute(
             stmt
@@ -653,7 +701,11 @@ class AnalysisRepository:
             PlayerMatchHistoryItem
         ] = []
 
-        for player_model, match_model in rows:
+        for (
+            player_model,
+            match_model,
+            row_match_source,
+        ) in rows:
             findings = [
                 Finding(
                     code=finding.code,
@@ -782,6 +834,9 @@ class AnalysisRepository:
                     player_result=(
                         player_model.result
                     ),
+                    match_source=(
+                        row_match_source
+                    ),
                 )
             )
 
@@ -794,11 +849,13 @@ class AnalysisRepository:
         *,
         limit: int = 10,
         owner_steam_id: str | None = None,
+        match_source: str | None = None,
     ) -> PlayerHistorySummary | None:
         history = self.get_player_match_history(
             steam_id,
             limit=limit,
             owner_steam_id=owner_steam_id,
+            match_source=match_source,
         )
 
         return build_player_history_summary(
