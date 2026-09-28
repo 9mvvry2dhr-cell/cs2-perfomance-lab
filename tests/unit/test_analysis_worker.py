@@ -113,6 +113,7 @@ class StubAnalysisRepository:
     def __init__(self):
         self.saved = None
         self.user_match_links = []
+        self.user_match_sources = []
 
     def save_analysis(
         self,
@@ -126,6 +127,7 @@ class StubAnalysisRepository:
         owner_steam_id,
         match_id,
         player_position,
+        match_source="unknown",
     ):
         self.user_match_links.append(
             (
@@ -133,6 +135,9 @@ class StubAnalysisRepository:
                 match_id,
                 player_position,
             )
+        )
+        self.user_match_sources.append(
+            match_source
         )
 
 
@@ -248,6 +253,11 @@ class AnalysisWorkerTest(
                     0,
                 )
             ],
+        )
+
+        self.assertEqual(
+            analyses.user_match_sources,
+            ["unknown"],
         )
 
         self.assertFalse(
