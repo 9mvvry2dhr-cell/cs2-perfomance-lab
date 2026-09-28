@@ -1,5 +1,10 @@
 {$APP_DOMAIN} {
 
+    log {
+        output stdout
+        format json
+    }
+
     encode zstd gzip
 
     @scanner_paths {
