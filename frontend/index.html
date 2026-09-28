@@ -7330,6 +7330,128 @@ button.dashboard-match-row:hover {
         rgba(240, 165, 47, 0.18);
 }
 
+
+/* MATCH SOURCE UI */
+
+.demo-source-field {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+}
+
+.demo-source-label {
+    color: #657f94;
+    font-size: 8px;
+    font-weight: 850;
+    letter-spacing: 0.10em;
+}
+
+.demo-source-select {
+    min-height: 34px;
+    padding: 7px 30px 7px 10px;
+
+    border: 1px solid rgba(88, 159, 216, 0.24);
+    border-radius: 8px;
+
+    color: #dce9f2;
+    background: #081722;
+
+    font: inherit;
+    font-size: 10px;
+    font-weight: 750;
+
+    outline: none;
+    cursor: pointer;
+}
+
+.demo-source-select:hover,
+.demo-source-select:focus {
+    border-color: rgba(91, 178, 255, 0.52);
+}
+
+.match-source-scope {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 7px;
+    margin: 0 0 18px;
+}
+
+.match-source-scope-button {
+    min-height: 32px;
+    padding: 7px 12px;
+
+    border: 1px solid rgba(137,167,187,0.14);
+    border-radius: 999px;
+
+    color: #8299ac;
+    background: rgba(8,19,29,0.48);
+
+    font: inherit;
+    font-size: 9px;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+
+    cursor: pointer;
+}
+
+.match-source-scope-button:hover {
+    color: #dceaf3;
+    border-color: rgba(95,174,240,0.28);
+}
+
+.match-source-scope-button.active {
+    color: #f4f8fb;
+    border-color: rgba(240,165,47,0.38);
+    background: rgba(240,165,47,0.10);
+}
+
+.player-history-badge.source {
+    text-transform: uppercase;
+}
+
+.player-history-badge.source.premier {
+    color: #79bdf2;
+    border-color: rgba(95,174,240,0.25);
+}
+
+.player-history-badge.source.faceit {
+    color: #f0b15a;
+    border-color: rgba(240,165,47,0.30);
+}
+
+.player-history-badge.source.unknown {
+    color: #71899a;
+}
+
+.dashboard-match-source {
+    margin-top: 4px;
+
+    color: #71899a;
+
+    font-size: 8px;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+}
+
+.dashboard-match-source.premier {
+    color: #6eafe2;
+}
+
+.dashboard-match-source.faceit {
+    color: #dba04d;
+}
+
+@media (max-width: 900px) {
+    .demo-source-field {
+        width: 100%;
+        justify-content: space-between;
+    }
+
+    .demo-source-select {
+        min-width: 130px;
+    }
+}
+
 </style>
 
 
@@ -9542,12 +9664,36 @@ id="demoUploadForm"
 Загрузить новый матч
 </div>
 
-
+<div class="upload-sub">
+Выбери источник демки — Premier и FACEIT считаются отдельно.
+</div>
 
 </div>
 
 
 <div class="upload-actions">
+
+<label
+class="demo-source-field"
+for="demoMatchSource"
+>
+<span class="demo-source-label">
+ИСТОЧНИК
+</span>
+
+<select
+class="demo-source-select"
+id="demoMatchSource"
+name="match_source"
+>
+<option value="premier" selected>
+Premier
+</option>
+<option value="faceit">
+FACEIT
+</option>
+</select>
+</label>
 
 <input
 class="demo-file-input"
@@ -13145,6 +13291,160 @@ function buildPlayerDnaSummary(
 }
 
 
+window.CS2_MATCH_SOURCE_SCOPE =
+    window.CS2_MATCH_SOURCE_SCOPE
+    || "all";
+
+
+function matchSourceLabel(
+    source
+) {
+    const labels = {
+        premier: "PREMIER",
+        faceit: "FACEIT",
+        unknown: "НЕ УКАЗАН",
+    };
+
+    return (
+        labels[
+            String(
+                source
+                || "unknown"
+            ).toLowerCase()
+        ]
+        || labels.unknown
+    );
+}
+
+
+function matchSourceQuery() {
+    const source =
+        String(
+            window.CS2_MATCH_SOURCE_SCOPE
+            || "all"
+        );
+
+    if (source === "all") {
+        return "";
+    }
+
+    return (
+        "&source="
+        + encodeURIComponent(
+            source
+        )
+    );
+}
+
+
+function filterMatchesBySource(
+    matches
+) {
+    const source =
+        String(
+            window.CS2_MATCH_SOURCE_SCOPE
+            || "all"
+        );
+
+    if (source === "all") {
+        return matches;
+    }
+
+    return matches.filter(
+        item =>
+            String(
+                item.match_source
+                || "unknown"
+            ).toLowerCase()
+            === source
+    );
+}
+
+
+function makeMatchSourceScopeControl(
+    onChange
+) {
+    const root =
+        document.createElement(
+            "div"
+        );
+
+    root.className =
+        "match-source-scope";
+
+    [
+        ["all", "Все матчи"],
+        ["premier", "Premier"],
+        ["faceit", "FACEIT"],
+    ].forEach(
+        ([value, label]) => {
+            const button =
+                document.createElement(
+                    "button"
+                );
+
+            button.type =
+                "button";
+
+            button.className =
+                "match-source-scope-button";
+
+            button.textContent =
+                label;
+
+            button.classList.toggle(
+                "active",
+                String(
+                    window.CS2_MATCH_SOURCE_SCOPE
+                    || "all"
+                ) === value
+            );
+
+            button.addEventListener(
+                "click",
+                () => {
+                    if (
+                        window.CS2_MATCH_SOURCE_SCOPE
+                        === value
+                    ) {
+                        return;
+                    }
+
+                    window.CS2_MATCH_SOURCE_SCOPE =
+                        value;
+
+                    if (
+                        typeof onChange
+                        === "function"
+                    ) {
+                        onChange();
+                    }
+                }
+            );
+
+            root.appendChild(
+                button
+            );
+        }
+    );
+
+    return root;
+}
+
+
+window.cs2MatchSourceLabel =
+    matchSourceLabel;
+
+window.cs2MatchSourceQuery =
+    matchSourceQuery;
+
+window.cs2FilterMatchesBySource =
+    filterMatchesBySource;
+
+window.cs2CreateMatchSourceScopeControl =
+    makeMatchSourceScopeControl;
+
+
 function renderPlayerHistory(
     summary,
     matches
@@ -13155,6 +13455,12 @@ function renderPlayerHistory(
         );
 
     body.replaceChildren();
+
+    body.appendChild(
+        makeMatchSourceScopeControl(
+            loadPlayerHistory
+        )
+    );
 
     const stats =
         summary.stats || {};
@@ -13988,6 +14294,23 @@ function renderPlayerHistory(
                     "player-history-badges"
                 );
 
+            const source =
+                String(
+                    item.match_source
+                    || "unknown"
+                ).toLowerCase();
+
+            badges.appendChild(
+                historyElement(
+                    "span",
+                    "player-history-badge source "
+                    + source,
+                    matchSourceLabel(
+                        source
+                    )
+                )
+            );
+
             if (counts.weaknesses > 0) {
                 badges.appendChild(
                     historyElement(
@@ -14141,7 +14464,8 @@ async function loadPlayerHistory() {
         ] = await Promise.all(
             [
                 fetch(
-                    "/me/summary?limit=100",
+                    "/me/summary?limit=100"
+                    + matchSourceQuery(),
                     {
                         credentials:
                             "same-origin",
@@ -14152,7 +14476,8 @@ async function loadPlayerHistory() {
                 ),
 
                 fetch(
-                    "/me/matches?limit=100",
+                    "/me/matches?limit=100"
+                    + matchSourceQuery(),
                     {
                         credentials:
                             "same-origin",
@@ -14176,6 +14501,9 @@ async function loadPlayerHistory() {
             === 404
         ) {
             body.replaceChildren(
+                makeMatchSourceScopeControl(
+                    loadPlayerHistory
+                ),
                 historyElement(
                     "div",
                     "player-history-loading",
@@ -15063,6 +15391,17 @@ demoUploadForm.addEventListener(
                 file
             );
 
+            const demoMatchSource =
+                document.getElementById(
+                    "demoMatchSource"
+                );
+
+            formData.append(
+                "match_source",
+                demoMatchSource?.value
+                || "premier"
+            );
+
             const createdJob =
                 await uploadDemoForm(
                     formData,
@@ -15121,7 +15460,12 @@ demoUploadForm.addEventListener(
                 "\u0413\u043e\u0442\u043e\u0432\u043e: "
                 + `${analysis.map_name} \u00b7 `
                 + `${analysis.score_ct}:`
-                + `${analysis.score_t}`,
+                + `${analysis.score_t}`
+                + " · "
+                + matchSourceLabel(
+                    createdJob.match_source
+                    || "unknown"
+                ),
                 "success"
             );
 
@@ -16696,12 +17040,26 @@ document
                 "dashboard-match-main"
             );
 
+        const source =
+            String(
+                match.match_source
+                || "unknown"
+            ).toLowerCase();
+
         main.append(
             makeElement(
                 "div",
                 "dashboard-match-map",
                 prettyMapName(
                     match.map_name
+                )
+            ),
+            makeElement(
+                "div",
+                "dashboard-match-source "
+                + source,
+                matchSourceLabel(
+                    source
                 )
             ),
             makeElement(
@@ -17471,11 +17829,33 @@ document
     function renderMapsDashboard(
         matches
     ) {
+        const allMatches =
+            matches;
+
+        matches =
+            filterMatchesBySource(
+                allMatches
+            );
+
         placeholderBody.replaceChildren();
 
+        placeholderBody.appendChild(
+            makeMatchSourceScopeControl(
+                () => {
+                    renderMapsDashboard(
+                        allMatches
+                    );
+                }
+            )
+        );
+
         if (!matches.length) {
-            showDashboardMessage(
-                "Пока нет проанализированных матчей. Загрузи .dem — здесь появится разбор по картам."
+            placeholderBody.appendChild(
+                makeElement(
+                    "div",
+                    "dashboard-empty",
+                    "В этой выборке пока нет проанализированных матчей."
+                )
             );
             return;
         }
@@ -19046,11 +19426,33 @@ document
     function renderStatsDashboard(
         matches
     ) {
+        const allMatches =
+            matches;
+
+        matches =
+            filterMatchesBySource(
+                allMatches
+            );
+
         placeholderBody.replaceChildren();
 
+        placeholderBody.appendChild(
+            makeMatchSourceScopeControl(
+                () => {
+                    renderStatsDashboard(
+                        allMatches
+                    );
+                }
+            )
+        );
+
         if (!matches.length) {
-            showDashboardMessage(
-                "Пока нет проанализированных матчей. После первой .dem здесь появится динамика."
+            placeholderBody.appendChild(
+                makeElement(
+                    "div",
+                    "dashboard-empty",
+                    "В этой выборке пока нет проанализированных матчей."
+                )
             );
             return;
         }
