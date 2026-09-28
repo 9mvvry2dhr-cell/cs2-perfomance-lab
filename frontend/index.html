@@ -13292,8 +13292,15 @@ function buildPlayerDnaSummary(
 
 
 window.CS2_MATCH_SOURCE_SCOPE =
-    window.CS2_MATCH_SOURCE_SCOPE
-    || "all";
+    (
+        String(
+            window.CS2_MATCH_SOURCE_SCOPE
+            || ""
+        ).toLowerCase()
+        === "faceit"
+    )
+        ? "faceit"
+        : "premier";
 
 
 function matchSourceLabel(
@@ -13321,12 +13328,8 @@ function matchSourceQuery() {
     const source =
         String(
             window.CS2_MATCH_SOURCE_SCOPE
-            || "all"
+            || "premier"
         );
-
-    if (source === "all") {
-        return "";
-    }
 
     return (
         "&source="
@@ -13343,12 +13346,8 @@ function filterMatchesBySource(
     const source =
         String(
             window.CS2_MATCH_SOURCE_SCOPE
-            || "all"
+            || "premier"
         );
-
-    if (source === "all") {
-        return matches;
-    }
 
     return matches.filter(
         item =>
@@ -13373,7 +13372,6 @@ function makeMatchSourceScopeControl(
         "match-source-scope";
 
     [
-        ["all", "Все матчи"],
         ["premier", "Premier"],
         ["faceit", "FACEIT"],
     ].forEach(
@@ -13396,7 +13394,7 @@ function makeMatchSourceScopeControl(
                 "active",
                 String(
                     window.CS2_MATCH_SOURCE_SCOPE
-                    || "all"
+                    || "premier"
                 ) === value
             );
 
