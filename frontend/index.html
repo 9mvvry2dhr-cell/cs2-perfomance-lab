@@ -11323,6 +11323,27 @@ async function pollAnalysisJob(
             );
 
         if (!response.ok) {
+            if (
+                [
+                    502,
+                    503,
+                    504,
+                ].includes(
+                    response.status
+                )
+            ) {
+                setUploadStatus(
+                    "Связь с анализатором временно прервалась. "
+                    + "Ждём восстановления…"
+                );
+
+                await sleep(
+                    2000
+                );
+
+                continue;
+            }
+
             throw new Error(
                 await readApiError(
                     response
