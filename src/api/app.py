@@ -5,6 +5,7 @@ from dataclasses import replace
 from pathlib import Path
 import os
 from typing import Annotated, Literal
+from urllib.parse import urlsplit
 
 from fastapi import (
     Depends,
@@ -124,6 +125,145 @@ app = FastAPI(
     version="0.1.0",
     lifespan=lifespan,
 )
+
+
+_SAFE_HTTP_METHODS = frozenset(
+    {
+        "GET",
+        "HEAD",
+        "OPTIONS",
+    }
+)
+
+
+def _default_port(
+    scheme: str,
+) -> int | None:
+    if scheme == "https":
+        return 443
+
+    if scheme == "http":
+        return 80
+
+    return None
+
+
+def _request_is_cross_site_mutation(
+    request: Request,
+) -> bool:
+    if (
+        request.method.upper()
+        in _SAFE_HTTP_METHODS
+    ):
+        return False
+
+    fetch_site = (
+        request.headers
+        .get(
+            "sec-fetch-site",
+            "",
+        )
+        .strip()
+        .lower()
+    )
+
+    if fetch_site == "cross-site":
+        return True
+
+    origin = (
+        request.headers
+        .get(
+            "origin",
+            "",
+        )
+        .strip()
+    )
+
+    if not origin:
+        return False
+
+    try:
+        parsed = urlsplit(
+            origin
+        )
+
+        origin_scheme = (
+            parsed.scheme.lower()
+        )
+
+        origin_host = (
+            parsed.hostname
+            or ""
+        ).lower()
+
+        origin_port = (
+            parsed.port
+            or _default_port(
+                origin_scheme
+            )
+        )
+
+        request_scheme = (
+            request.url.scheme
+            .lower()
+        )
+
+        request_host = (
+            request.url.hostname
+            or ""
+        ).lower()
+
+        request_port = (
+            request.url.port
+            or _default_port(
+                request_scheme
+            )
+        )
+
+    except ValueError:
+        return True
+
+    return (
+        not origin_scheme
+        or not origin_host
+        or origin_scheme
+        != request_scheme
+        or origin_host
+        != request_host
+        or origin_port
+        != request_port
+    )
+
+
+@app.middleware("http")
+async def block_cross_site_mutations(
+    request: Request,
+    call_next,
+):
+    if _request_is_cross_site_mutation(
+        request
+    ):
+        audit_event(
+            "security.cross_site_blocked",
+            status="blocked",
+            method=request.method,
+            path=request.url.path,
+        )
+
+        return JSONResponse(
+            status_code=(
+                status.HTTP_403_FORBIDDEN
+            ),
+            content={
+                "detail": (
+                    "Cross-site request blocked"
+                ),
+            },
+        )
+
+    return await call_next(
+        request
+    )
 
 
 @app.exception_handler(SQLAlchemyError)
