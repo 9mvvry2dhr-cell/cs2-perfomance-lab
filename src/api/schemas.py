@@ -43,6 +43,11 @@ class AnalysisJobResponse(ApiModel):
         "failed",
     ]
     original_filename: str
+    match_source: Literal[
+        "premier",
+        "faceit",
+        "unknown",
+    ] = "unknown"
 
     match_id: str | None
     error: str | None
@@ -179,6 +184,12 @@ class PlayerMatchHistoryResponse(ApiModel):
         "win",
         "loss",
         "draw",
+        "unknown",
+    ] = "unknown"
+
+    match_source: Literal[
+        "premier",
+        "faceit",
         "unknown",
     ] = "unknown"
 
