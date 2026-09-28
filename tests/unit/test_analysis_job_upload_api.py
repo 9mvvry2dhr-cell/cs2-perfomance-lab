@@ -61,6 +61,7 @@ class StubIngestionService:
         self.filename = None
         self.payload = None
         self.owner_steam_id = None
+        self.match_source = None
 
     def ingest(
         self,
@@ -68,10 +69,12 @@ class StubIngestionService:
         owner_steam_id,
         original_filename,
         source,
+        match_source="unknown",
     ):
         self.owner_steam_id = owner_steam_id
         self.filename = original_filename
         self.payload = source.read()
+        self.match_source = match_source
 
         if self.error is not None:
             raise self.error
@@ -109,6 +112,9 @@ class AnalysisJobUploadApiTest(
 
         response = client.post(
             "/analysis-jobs",
+            data={
+                "match_source": "faceit",
+            },
             files={
                 "file": (
                     "match.dem",
@@ -131,6 +137,11 @@ class AnalysisJobUploadApiTest(
         self.assertEqual(
             service.filename,
             "match.dem",
+        )
+
+        self.assertEqual(
+            service.match_source,
+            "faceit",
         )
 
         self.assertEqual(
