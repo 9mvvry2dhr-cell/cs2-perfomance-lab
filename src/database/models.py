@@ -225,6 +225,10 @@ class UserMatchModel(Base):
             "player_position >= 0",
             name="ck_user_matches_player_position",
         ),
+        CheckConstraint(
+            "match_source IN ('premier', 'faceit', 'unknown')",
+            name="ck_user_matches_match_source",
+        ),
         Index(
             "ix_user_matches_match_id",
             "match_id",
@@ -258,6 +262,13 @@ class UserMatchModel(Base):
     player_position: Mapped[int] = mapped_column(
         Integer,
         nullable=False,
+    )
+
+    match_source: Mapped[str] = mapped_column(
+        String(16),
+        nullable=False,
+        default="unknown",
+        server_default="unknown",
     )
 
     ai_explanation_generated_at: Mapped[
@@ -612,6 +623,10 @@ class AnalysisJobModel(Base):
             "status IN ('queued', 'processing', 'completed', 'failed')",
             name="ck_analysis_jobs_status",
         ),
+        CheckConstraint(
+            "match_source IN ('premier', 'faceit', 'unknown')",
+            name="ck_analysis_jobs_match_source",
+        ),
         Index(
             ACTIVE_ANALYSIS_OWNER_INDEX,
             "owner_steam_id",
@@ -646,6 +661,13 @@ class AnalysisJobModel(Base):
         ),
         nullable=True,
         index=True,
+    )
+
+    match_source: Mapped[str] = mapped_column(
+        String(16),
+        nullable=False,
+        default="unknown",
+        server_default="unknown",
     )
 
     original_filename: Mapped[str] = mapped_column(
