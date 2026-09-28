@@ -14,6 +14,7 @@ from src.database.models import (
 from src.domain.jobs import (
     AnalysisJob,
     JobStatus,
+    MatchSource,
 )
 
 
@@ -45,9 +46,11 @@ class AnalysisJobRepository:
         original_filename: str,
         storage_key: str,
         file_sha256: str,
+        match_source: MatchSource = "unknown",
     ) -> AnalysisJob:
         model = AnalysisJobModel(
             owner_steam_id=owner_steam_id,
+            match_source=match_source,
             original_filename=original_filename,
             storage_key=storage_key,
             file_sha256=file_sha256,
@@ -531,4 +534,8 @@ class AnalysisJobRepository:
             started_at=model.started_at,
             finished_at=model.finished_at,
             owner_steam_id=model.owner_steam_id,
+            match_source=cast(
+                MatchSource,
+                model.match_source,
+            ),
         )
