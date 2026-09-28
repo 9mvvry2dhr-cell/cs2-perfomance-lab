@@ -2,6 +2,19 @@
 
     encode zstd gzip
 
+    @scanner_paths {
+        path /.git /.git/* /.svn /.svn/* /.env /.env.* /wp-login.php /wp-admin/* /wp-content/* /wordpress/* /xmlrpc.php /phpmyadmin* /vendor/phpunit/* /.aws/*
+    }
+
+    respond @scanner_paths 404
+
+    @unsafe_methods {
+        method TRACE CONNECT
+    }
+
+    respond @unsafe_methods 405
+
+
     @demo_upload {
         method POST
         path /analysis-jobs
@@ -25,6 +38,14 @@
         Permissions-Policy "camera=(), microphone=(), geolocation=()"
 
         Strict-Transport-Security "max-age=31536000"
+
+        Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: https:; connect-src 'self'; object-src 'none'; base-uri 'self'; frame-src 'none'; frame-ancestors 'none'; form-action 'self'; upgrade-insecure-requests"
+
+        Cross-Origin-Opener-Policy "same-origin"
+
+        Cross-Origin-Resource-Policy "same-origin"
+
+        X-Permitted-Cross-Domain-Policies "none"
 
     }
 
