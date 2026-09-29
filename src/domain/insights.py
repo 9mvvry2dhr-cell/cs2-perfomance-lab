@@ -2,12 +2,16 @@ from dataclasses import dataclass
 from typing import Dict, List, Literal, Mapping
 
 
-FINDINGS_VERSION = "v2"
+FINDINGS_VERSION = "v3"
 
 
 MIN_SIDE_ROUNDS = 6
 MIN_ADR_GAP = 20.0
 MIN_KAST_GAP_PCT = 15.0
+
+MIN_LIMITED_SIDE_ROUNDS = 4
+LIMITED_SAMPLE_MIN_ADR_GAP = 50.0
+LIMITED_SAMPLE_MIN_KAST_GAP_PCT = 30.0
 
 MIN_ENTRY_SIDE_ROUNDS = 6
 
@@ -111,9 +115,14 @@ def generate_side_findings(
         )
     )
 
-    if (
+    limited_sample = (
         ct_rounds < MIN_SIDE_ROUNDS
         or t_rounds < MIN_SIDE_ROUNDS
+    )
+
+    if (
+        ct_rounds < MIN_LIMITED_SIDE_ROUNDS
+        or t_rounds < MIN_LIMITED_SIDE_ROUNDS
     ):
         return []
 
@@ -127,7 +136,14 @@ def generate_side_findings(
         1,
     )
 
-    if (
+    if limited_sample:
+        if (
+            adr_gap < LIMITED_SAMPLE_MIN_ADR_GAP
+            or kast_gap
+            < LIMITED_SAMPLE_MIN_KAST_GAP_PCT
+        ):
+            return []
+    elif (
         adr_gap < MIN_ADR_GAP
         or kast_gap < MIN_KAST_GAP_PCT
     ):
@@ -164,6 +180,11 @@ def generate_side_findings(
                 "t_kast_pct": t_kast,
                 "adr_gap": adr_gap,
                 "kast_gap_pct": kast_gap,
+                **(
+                    {"limited_sample": True}
+                    if limited_sample
+                    else {}
+                ),
             },
         )
     ]

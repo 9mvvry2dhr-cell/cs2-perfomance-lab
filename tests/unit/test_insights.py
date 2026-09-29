@@ -133,12 +133,85 @@ class TestSideFindings(unittest.TestCase):
             [],
         )
 
+    def test_extreme_gap_with_four_rounds_creates_limited_sample_finding(self):
+        stats = {
+            "CT": {
+                "rounds_played": 12,
+                "damage": 1200.0,
+                "kast_rounds": 9,
+            },
+            "T": {
+                "rounds_played": 4,
+                "damage": 100.0,
+                "kast_rounds": 1,
+            },
+        }
+
+        findings = generate_side_findings(
+            stats
+        )
+
+        self.assertEqual(
+            len(findings),
+            1,
+        )
+
+        self.assertEqual(
+            findings[0].code,
+            "SIDE_PERFORMANCE_GAP",
+        )
+
+        self.assertEqual(
+            findings[0].side,
+            "T",
+        )
+
+        self.assertEqual(
+            findings[0].severity,
+            "medium",
+        )
+
+        self.assertTrue(
+            findings[0].evidence[
+                "limited_sample"
+            ]
+        )
+
+        self.assertEqual(
+            findings[0].evidence["adr_gap"],
+            75.0,
+        )
+
+        self.assertEqual(
+            findings[0].evidence["kast_gap_pct"],
+            50.0,
+        )
+
+    def test_non_extreme_gap_with_four_rounds_creates_no_finding(self):
+        stats = {
+            "CT": {
+                "rounds_played": 12,
+                "damage": 1200.0,
+                "kast_rounds": 9,
+            },
+            "T": {
+                "rounds_played": 4,
+                "damage": 240.0,
+                "kast_rounds": 2,
+            },
+        }
+
+        self.assertEqual(
+            generate_side_findings(stats),
+            [],
+        )
+
     def test_insufficient_rounds_create_no_finding(self):
         stats = {
             "CT": {
-                "rounds_played": 5,
-                "damage": 600.0,
-                "kast_rounds": 5,
+                "rounds_played": 3,
+                "damage": 360.0,
+                "kast_rounds": 3,
             },
             "T": {
                 "rounds_played": 12,

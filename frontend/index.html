@@ -2205,6 +2205,180 @@ tr.selected td {
         rgba(229, 149, 34, 0.18);
 }
 
+.auth-landing-actions {
+    margin-top: 25px;
+
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+
+    gap: 10px;
+}
+
+.auth-landing-actions .auth-landing-login {
+    margin-top: 0;
+}
+
+.auth-landing-demo {
+    min-height: 44px;
+
+    padding:
+        0
+        20px;
+
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    border:
+        1px solid
+        rgba(73, 168, 255, 0.30);
+
+    border-radius: 10px;
+
+    color: #dbeaf5;
+
+    background:
+        rgba(73, 168, 255, 0.07);
+
+    font: inherit;
+    font-size: 11px;
+    font-weight: 850;
+
+    cursor: pointer;
+
+    transition:
+        transform 150ms ease,
+        border-color 150ms ease,
+        background 150ms ease;
+}
+
+.auth-landing-demo:hover {
+    transform:
+        translateY(-1px);
+
+    border-color:
+        rgba(73, 168, 255, 0.55);
+
+    background:
+        rgba(73, 168, 255, 0.11);
+}
+
+.auth-landing-demo:disabled {
+    opacity: 0.65;
+    cursor: wait;
+}
+
+.public-demo-cta {
+    margin-top: 18px;
+    padding: 22px 24px;
+
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    gap: 24px;
+
+    border:
+        1px solid
+        rgba(240, 165, 47, 0.28);
+
+    border-radius: 14px;
+
+    background:
+        linear-gradient(
+            145deg,
+            rgba(240, 165, 47, 0.08),
+            rgba(8, 23, 34, 0.92)
+        );
+}
+
+.public-demo-cta[hidden] {
+    display: none;
+}
+
+.public-demo-cta-copy {
+    display: grid;
+    gap: 6px;
+}
+
+.public-demo-cta-kicker {
+    color: var(--orange);
+
+    font-size: 8px;
+    font-weight: 900;
+
+    letter-spacing: 0.14em;
+}
+
+.public-demo-cta-copy strong {
+    color: #f4f8fb;
+
+    font-size: 17px;
+    font-weight: 820;
+}
+
+.public-demo-cta-copy span {
+    color: #7890a3;
+
+    font-size: 10px;
+    line-height: 1.6;
+}
+
+.public-demo-cta-button {
+    min-height: 42px;
+
+    padding:
+        0
+        18px;
+
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    flex: 0 0 auto;
+
+    border-radius: 10px;
+
+    color: #18120a;
+
+    background:
+        linear-gradient(
+            145deg,
+            #ffc252,
+            #e79522
+        );
+
+    font-size: 10px;
+    font-weight: 900;
+
+    text-decoration: none;
+
+    transition:
+        transform 150ms ease,
+        box-shadow 150ms ease;
+}
+
+.public-demo-cta-button:hover {
+    transform:
+        translateY(-1px);
+
+    box-shadow:
+        0 10px 28px
+        rgba(229, 149, 34, 0.16);
+}
+
+@media (max-width: 700px) {
+    .public-demo-cta {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .public-demo-cta-button {
+        width: 100%;
+    }
+}
+
 .auth-landing-note {
     margin-top: 10px;
 
@@ -8926,8 +9100,16 @@ table {
 
 <style id="cs2-upload-error-visible-v1">
 
-#uploadStatus.visible[data-state="error"] {
+#uploadStatus.visible[data-state="error"],
+#uploadStatus.visible[data-state="duplicate"] {
     display: block !important;
+}
+
+#uploadStatus.visible[data-state="duplicate"] {
+    color: #8be6be;
+
+    border-color:
+        rgba(82,211,159,0.25);
 }
 
 </style>
@@ -9782,16 +9964,29 @@ CT / T, клатчи и повторяющиеся
 паттерны.
 </p>
 
+<div class="auth-landing-actions">
+
 <a
 class="auth-landing-login"
 href="/auth/steam/login"
 >
-Войти через Steam
+Разобрать свою демку
 </a>
 
+<button
+class="auth-landing-demo"
+id="openDemoAnalysis"
+type="button"
+>
+Посмотреть пример анализа
+</button>
+
+</div>
+
 <div class="auth-landing-note">
-Steam нужен для привязки
-твоих матчей и истории.
+Steam нужен для привязки матчей и истории.<br>
+Авторизация проходит через Steam OpenID.
+Пароль Steam сайт не получает.
 </div>
 
 </div>
@@ -9800,50 +9995,49 @@ Steam нужен для привязки
 <div class="auth-preview">
 
 <div class="auth-preview-head">
-<span>ПРИМЕР АНАЛИЗА</span>
+<span>РЕАЛЬНЫЙ ПРИМЕР</span>
 <span class="auth-preview-verified">
 ● DATA VERIFIED
 </span>
 </div>
 
 <div class="auth-preview-match">
-Ancient
-<span>13 : 8</span>
+Nuke
+<span>13 : 3</span>
 </div>
 
 <div class="auth-preview-metrics">
 
 <div>
 <span>K/D</span>
-<strong>1.33</strong>
+<strong>0.86</strong>
 </div>
 
 <div>
 <span>ADR</span>
-<strong>82.4</strong>
+<strong>80.2</strong>
 </div>
 
 <div>
 <span>KAST</span>
-<strong>88.2%</strong>
+<strong>62.5%</strong>
 </div>
 
 </div>
 
 <div class="auth-preview-finding">
 <div class="auth-preview-finding-label">
-СИЛЬНАЯ СТОРОНА
+КЛЮЧЕВОЙ ВЫВОД
 </div>
 
 <strong>
-Размены · 4
+Сильная просадка на T
 </strong>
 
 <span>
-Команда часто
-возвращает игрока
-в раунд после твоего
-контакта.
+На T сыграно всего 4 раунда.
+ADR 24.5 против 98.8 на CT,
+KAST 25% против 75%.
 </span>
 </div>
 
@@ -10802,6 +10996,34 @@ CT / T сравнение
 
 
 
+<section
+class="public-demo-cta"
+id="publicDemoCta"
+hidden
+>
+<div class="public-demo-cta-copy">
+<div class="public-demo-cta-kicker">
+ТВОЯ ДЕМКА
+</div>
+
+<strong>
+Хочешь такой же разбор своей игры?
+</strong>
+
+<span>
+Загрузи свой матч и получи анализ
+по тем же метрикам и правилам.
+</span>
+</div>
+
+<a
+class="public-demo-cta-button"
+href="/auth/steam/login"
+>
+Разобрать свою демку
+</a>
+</section>
+
 </div><!-- analysisView -->
 
 </div>
@@ -11235,7 +11457,7 @@ function setDuplicateUploadStatus(
     );
 
     uploadStatus.dataset.state =
-        "success";
+        "duplicate";
 
     uploadStatus.classList.add(
         "visible"
@@ -11755,6 +11977,49 @@ function renderFinding(
                 );
 
             case "SIDE_PERFORMANCE_GAP":
+                if (e.limited_sample) {
+                    const weakAdr =
+                        finding.side === "CT"
+                            ? e.ct_adr
+                            : e.t_adr;
+
+                    const strongAdr =
+                        finding.side === "CT"
+                            ? e.t_adr
+                            : e.ct_adr;
+
+                    const weakKast =
+                        finding.side === "CT"
+                            ? e.ct_kast_pct
+                            : e.t_kast_pct;
+
+                    const strongKast =
+                        finding.side === "CT"
+                            ? e.t_kast_pct
+                            : e.ct_kast_pct;
+
+                    const weakRounds =
+                        finding.side === "CT"
+                            ? e.ct_rounds
+                            : e.t_rounds;
+
+                    return (
+                        `\u041d\u0430 ${finding.side} `
+                        + `\u0441\u044b\u0433\u0440\u0430\u043d\u043e \u0432\u0441\u0435\u0433\u043e ${weakRounds} `
+                        + "\u0440\u0430\u0443\u043d\u0434\u0430, "
+                        + "\u043f\u043e\u044d\u0442\u043e\u043c\u0443 "
+                        + "\u0432\u044b\u0431\u043e\u0440\u043a\u0430 "
+                        + "\u043e\u0433\u0440\u0430\u043d\u0438\u0447\u0435\u043d\u0430. "
+                        + "\u041d\u043e \u0432 \u044d\u0442\u043e\u043c "
+                        + "\u043c\u0430\u0442\u0447\u0435 "
+                        + "\u0438\u043c\u043f\u0430\u043a\u0442 "
+                        + "\u0437\u0430\u043c\u0435\u0442\u043d\u043e "
+                        + "\u0441\u043d\u0438\u0437\u0438\u043b\u0441\u044f: "
+                        + `ADR ${weakAdr} \u043f\u0440\u043e\u0442\u0438\u0432 ${strongAdr}, `
+                        + `KAST ${weakKast}% \u043f\u0440\u043e\u0442\u0438\u0432 ${strongKast}%`
+                    );
+                }
+
                 return (
                     `\u041d\u0430 ${finding.side} `
                     + "\u0431\u044b\u043b\u0430 "
@@ -11800,6 +12065,9 @@ function renderFinding(
     function weaknessAdvice(
         finding
     ) {
+        const e =
+            finding.evidence;
+
         switch (
             finding.code
         ) {
@@ -11821,6 +12089,23 @@ function renderFinding(
                 );
 
             case "SIDE_PERFORMANCE_GAP":
+                if (e.limited_sample) {
+                    return (
+                        `\u041f\u0435\u0440\u0435\u0441\u043c\u043e\u0442\u0440\u0438 ${finding.side}-`
+                        + "\u0440\u0430\u0443\u043d\u0434\u044b "
+                        + "\u044d\u0442\u043e\u0433\u043e \u043c\u0430\u0442\u0447\u0430 "
+                        + "\u0438 \u043f\u0440\u043e\u0432\u0435\u0440\u044c, "
+                        + "\u0433\u0434\u0435 \u043f\u0440\u043e\u043f\u0430\u043b\u043e "
+                        + "\u0432\u043b\u0438\u044f\u043d\u0438\u0435 "
+                        + "\u043d\u0430 \u0440\u0430\u0443\u043d\u0434. "
+                        + "\u041e\u0434\u043d\u043e\u0433\u043e \u043c\u0430\u0442\u0447\u0430 "
+                        + "\u043f\u043e\u043a\u0430 \u043d\u0435\u0434\u043e\u0441\u0442\u0430\u0442\u043e\u0447\u043d\u043e, "
+                        + "\u0447\u0442\u043e\u0431\u044b \u0441\u0447\u0438\u0442\u0430\u0442\u044c "
+                        + "\u044d\u0442\u043e \u0443\u0441\u0442\u043e\u0439\u0447\u0438\u0432\u043e\u0439 "
+                        + "\u043f\u0440\u043e\u0431\u043b\u0435\u043c\u043e\u0439."
+                    );
+                }
+
                 return (
                     `\u041f\u0435\u0440\u0435\u0441\u043c\u043e\u0442\u0440\u0438 ${finding.side}-`
                     + "\u0440\u0430\u0443\u043d\u0434\u044b "
@@ -12008,6 +12293,16 @@ function renderFinding(
                             : e.t_kast_pct
                     }%`
                 );
+
+                if (e.limited_sample) {
+                    setChip(
+                        chips,
+                        "\u0420\u0430\u0443\u043d\u0434\u043e\u0432",
+                        finding.side === "CT"
+                            ? e.ct_rounds
+                            : e.t_rounds
+                    );
+                }
 
                 break;
 
@@ -14842,7 +15137,14 @@ function renderPlayer(
     document.querySelector(
         ".steam"
     ).textContent =
-        `Steam ID: ${player.steam_id}`;
+        (
+            window.CS2_PUBLIC_DEMO_OPEN
+            && String(
+                player.steam_id || ""
+            ) === "demo"
+        )
+            ? "Обезличенный пример реального матча"
+            : `Steam ID: ${player.steam_id}`;
 
     if (
         typeof window
@@ -20621,7 +20923,10 @@ document
 
         if (authLanding) {
             authLanding.hidden =
-                loggedIn;
+                loggedIn
+                || Boolean(
+                    window.CS2_PUBLIC_DEMO_OPEN
+                );
         }
 
         if (aiCoachNav) {
@@ -20629,7 +20934,10 @@ document
                 !loggedIn;
         }
 
-        if (!loggedIn) {
+        if (
+            !loggedIn
+            && !window.CS2_PUBLIC_DEMO_OPEN
+        ) {
             if (emptyState) {
                 emptyState.hidden =
                     true;
@@ -25038,6 +25346,139 @@ aria-hidden="true"
 })();
 </script>
 
+
+
+<script id="cs2-public-demo-js">
+(function () {
+    const button =
+        document.getElementById(
+            "openDemoAnalysis"
+        );
+
+    const landing =
+        document.getElementById(
+            "authLanding"
+        );
+
+    if (!button) {
+        return;
+    }
+
+
+    button.addEventListener(
+        "click",
+        async () => {
+            const originalText =
+                button.textContent;
+
+            button.disabled =
+                true;
+
+            button.textContent =
+                "Загружаем пример…";
+
+            try {
+                const response =
+                    await fetch(
+                        "/demo-analysis",
+                        {
+                            cache:
+                                "no-store",
+
+                            headers: {
+                                Accept:
+                                    "application/json",
+                            },
+                        }
+                    );
+
+                if (!response.ok) {
+                    throw new Error(
+                        "Demo analysis request failed"
+                    );
+                }
+
+                const analysis =
+                    await response.json();
+
+
+                window.CS2_PUBLIC_DEMO_OPEN =
+                    true;
+
+
+                renderMatchAnalysis(
+                    analysis
+                );
+
+                if (landing) {
+                    landing.hidden =
+                        true;
+                }
+
+                showAnalysisState();
+
+
+                const publicDemoCta =
+                    document.getElementById(
+                        "publicDemoCta"
+                    );
+
+                if (publicDemoCta) {
+                    publicDemoCta.hidden =
+                        false;
+                }
+
+
+                if (
+                    typeof window
+                        .cs2OpenAnalysis
+                    === "function"
+                ) {
+                    window
+                        .cs2OpenAnalysis();
+                }
+
+
+                window.scrollTo(
+                    {
+                        top: 0,
+                        behavior: "smooth",
+                    }
+                );
+            }
+            catch (error) {
+                console.error(
+                    "Public demo failed",
+                    error
+                );
+
+                button.textContent =
+                    "Не удалось открыть пример";
+
+                setTimeout(
+                    () => {
+                        button.textContent =
+                            originalText;
+
+                        button.disabled =
+                            false;
+                    },
+                    2500
+                );
+
+                return;
+            }
+
+
+            button.disabled =
+                false;
+
+            button.textContent =
+                originalText;
+        }
+    );
+})();
+</script>
 
 </body>
 </html>

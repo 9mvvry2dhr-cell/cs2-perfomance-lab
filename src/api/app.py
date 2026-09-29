@@ -737,6 +737,64 @@ def get_match_analysis(
         owned_analysis
     )
 
+
+# Public read-only showcase generated from one real verified match.
+# It exposes only one anonymized player and does not require Steam auth.
+_DEMO_ANALYSIS_MATCH_ID = (
+    "4016d7df54312b596014941979f22711"
+    "048eb8905beb54914c178e6f4be018f7"
+)
+_DEMO_ANALYSIS_PLAYER_POSITION = 4
+
+
+@app.get(
+    "/demo-analysis",
+    response_model=MatchAnalysisResponse,
+)
+def get_demo_analysis(
+    repository: Annotated[
+        AnalysisRepository,
+        Depends(get_analysis_repository),
+    ],
+) -> MatchAnalysisResponse:
+    analysis = repository.get_analysis(
+        _DEMO_ANALYSIS_MATCH_ID
+    )
+
+    if (
+        analysis is None
+        or not analysis.is_valid
+        or _DEMO_ANALYSIS_PLAYER_POSITION < 0
+        or _DEMO_ANALYSIS_PLAYER_POSITION >= len(analysis.players)
+    ):
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Demo analysis not available",
+        )
+
+    player = analysis.players[
+        _DEMO_ANALYSIS_PLAYER_POSITION
+    ]
+
+    demo_player = replace(
+        player,
+        steam_id="demo",
+        name="Demo Player",
+    )
+
+    demo_analysis = replace(
+        analysis,
+        match_id="demo-showcase",
+        players=[
+            demo_player
+        ],
+    )
+
+    return MatchAnalysisResponse.model_validate(
+        demo_analysis
+    )
+
+
 @app.get(
     "/matches/{match_id}/ai-explanation/latest",
     response_model=MatchAIResponse,
