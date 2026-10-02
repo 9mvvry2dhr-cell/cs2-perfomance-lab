@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from datetime import datetime
 from typing import Literal
+from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -16,6 +17,7 @@ class CurrentUserResponse(ApiModel):
     steam_id: str
     player_name: str | None = None
     avatar_url: str | None = None
+    founding_tester_number: int | None = None
 
 
 class HealthResponse(ApiModel):
@@ -24,6 +26,36 @@ class HealthResponse(ApiModel):
 
 class ReadyResponse(ApiModel):
     status: Literal["ready"]
+
+
+class PresenceHeartbeatRequest(ApiModel):
+    visitor_id: UUID
+
+
+class PresenceSummaryResponse(ApiModel):
+    online: int
+    visitors_24h: int
+    logged_in_online: int
+
+
+class FoundingTesterSummaryResponse(ApiModel):
+    total: int
+    claimed: int
+    remaining: int
+
+
+class FoundingTesterAdminItem(ApiModel):
+    number: int
+    steam_id: str
+    awarded_at: datetime
+    premium_days: int
+
+
+class FoundingTesterAdminResponse(ApiModel):
+    total: int
+    claimed: int
+    remaining: int
+    testers: list[FoundingTesterAdminItem]
 
 
 class AIOverviewQuotaResponse(ApiModel):
@@ -157,12 +189,31 @@ class PlayerStatsResponse(ApiModel):
     trade_opportunities: int | None = None
 
 
+class MatchStoryEventResponse(ApiModel):
+    round_num: int
+    event_type: Literal[
+        "highlight",
+        "growth",
+        "key",
+    ]
+    score: float
+    evidence: dict[
+        str,
+        int | float | bool,
+    ]
+
+
 class PlayerAnalysisResponse(ApiModel):
     steam_id: str
     name: str
     stats: PlayerStatsResponse
     sides: dict[str, SideStatsResponse]
     findings: list[FindingResponse]
+    match_story: list[
+        MatchStoryEventResponse
+    ] = Field(
+        default_factory=list
+    )
 
 
 class PlayerMatchHistoryResponse(ApiModel):

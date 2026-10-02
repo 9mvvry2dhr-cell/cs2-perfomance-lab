@@ -8,6 +8,7 @@ from src.database.models import (
     FindingModel,
     MatchModel,
     MatchPlayerModel,
+    MatchStoryEventModel,
     PlayerSideStatsModel,
     UserMatchModel,
 )
@@ -22,6 +23,8 @@ from src.domain.history import (
     PlayerMatchHistoryItem,
     build_player_history_summary,
 )
+from src.metrics.match_story import MatchStoryEvent
+
 from src.domain.insights import (
     FINDINGS_VERSION,
     Finding,
@@ -261,6 +264,27 @@ class AnalysisRepository:
                         )
                     )
 
+                for story_position, story_event in enumerate(
+                    player.match_story
+                ):
+                    player_model.match_story.append(
+                        MatchStoryEventModel(
+                            position=story_position,
+                            round_num=int(
+                                story_event.round_num
+                            ),
+                            event_type=(
+                                story_event.event_type
+                            ),
+                            score=float(
+                                story_event.score
+                            ),
+                            evidence=dict(
+                                story_event.evidence
+                            ),
+                        )
+                    )
+
                 match_model.players.append(
                     player_model
                 )
@@ -410,6 +434,11 @@ class AnalysisRepository:
                     MatchModel.players
                 ).selectinload(
                     MatchPlayerModel.findings
+                ),
+                selectinload(
+                    MatchModel.players
+                ).selectinload(
+                    MatchPlayerModel.match_story
                 ),
             )
             .where(
@@ -561,6 +590,19 @@ class AnalysisRepository:
                 in player_model.findings
             ]
 
+            match_story = [
+                MatchStoryEvent(
+                    steam_id=player_model.steam_id,
+                    round_num=story.round_num,
+                    event_type=story.event_type,
+                    score=story.score,
+                    evidence=dict(
+                        story.evidence
+                    ),
+                )
+                for story in player_model.match_story
+            ]
+
             players.append(
                 PlayerAnalysis(
                     steam_id=player_model.steam_id,
@@ -568,6 +610,7 @@ class AnalysisRepository:
                     stats=stats,
                     sides=sides,
                     findings=findings,
+                    match_story=match_story,
                 )
             )
 

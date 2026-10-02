@@ -458,6 +458,39 @@ class AnalysisWorker:
                 match_source=job.match_source,
             )
 
+            if job.owner_steam_id is not None:
+                try:
+                    founding_number = (
+                        self.job_repository
+                        .claim_founding_tester(
+                            job.owner_steam_id
+                        )
+                    )
+
+                    if founding_number is not None:
+                        audit_event(
+                            "founding_tester.awarded",
+                            steam_id=job.owner_steam_id,
+                            job_id=job.id,
+                            match_id=analysis.match_id,
+                            founding_number=(
+                                founding_number
+                            ),
+                            premium_days=30,
+                        )
+
+                except Exception:
+                    logger.exception(
+                        "Failed to award "
+                        "Founding Tester",
+                        extra={
+                            "job_id": job.id,
+                            "steam_id": (
+                                job.owner_steam_id
+                            ),
+                        },
+                    )
+
         except Exception as exc:
             error = (
                 "Authenticated Steam account "

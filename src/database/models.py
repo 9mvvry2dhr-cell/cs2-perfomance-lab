@@ -81,6 +81,49 @@ class UserModel(Base):
     )
 
 
+class FoundingTesterModel(Base):
+    __tablename__ = "founding_testers"
+
+    __table_args__ = (
+        CheckConstraint(
+            "number BETWEEN 1 AND 10",
+            name="ck_founding_testers_number",
+        ),
+        CheckConstraint(
+            "premium_days >= 0",
+            name="ck_founding_testers_premium_days",
+        ),
+    )
+
+    number: Mapped[int] = mapped_column(
+        Integer,
+        primary_key=True,
+    )
+
+    steam_id: Mapped[str | None] = mapped_column(
+        String(32),
+        ForeignKey(
+            "users.steam_id",
+            ondelete="SET NULL",
+        ),
+        nullable=True,
+        unique=True,
+        index=True,
+    )
+
+    awarded_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True),
+        nullable=True,
+    )
+
+    premium_days: Mapped[int] = mapped_column(
+        Integer,
+        nullable=False,
+        default=30,
+        server_default="30",
+    )
+
+
 class AuthSessionModel(Base):
     __tablename__ = "auth_sessions"
 
@@ -137,6 +180,32 @@ class AuthSessionModel(Base):
 
     user: Mapped["UserModel"] = relationship(
         back_populates="sessions",
+    )
+
+
+class SiteVisitorModel(Base):
+    __tablename__ = "site_visitors"
+
+    visitor_id: Mapped[str] = mapped_column(
+        String(36),
+        primary_key=True,
+    )
+
+    first_seen_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=False,
+        default=lambda: datetime.now(
+            timezone.utc
+        ),
+    )
+
+    last_seen_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=False,
+        default=lambda: datetime.now(
+            timezone.utc
+        ),
+        index=True,
     )
 
 
@@ -413,6 +482,83 @@ class MatchPlayerModel(Base):
         back_populates="player",
         cascade="all, delete-orphan",
         order_by="FindingModel.position",
+    )
+
+    match_story: Mapped[
+        list["MatchStoryEventModel"]
+    ] = relationship(
+        back_populates="player",
+        cascade="all, delete-orphan",
+        order_by="MatchStoryEventModel.position",
+    )
+
+
+class MatchStoryEventModel(Base):
+    __tablename__ = "match_story_events"
+
+    __table_args__ = (
+        UniqueConstraint(
+            "match_player_id",
+            "position",
+            name="uq_match_story_player_position",
+        ),
+        CheckConstraint(
+            "position >= 0",
+            name="ck_match_story_position",
+        ),
+        CheckConstraint(
+            "round_num >= 1",
+            name="ck_match_story_round_num",
+        ),
+        CheckConstraint(
+            "event_type IN ('highlight', 'growth', 'key')",
+            name="ck_match_story_event_type",
+        ),
+    )
+
+    id: Mapped[int] = mapped_column(
+        Integer,
+        primary_key=True,
+        autoincrement=True,
+    )
+
+    match_player_id: Mapped[int] = mapped_column(
+        Integer,
+        ForeignKey(
+            "match_players.id",
+            ondelete="CASCADE",
+        ),
+        nullable=False,
+        index=True,
+    )
+
+    position: Mapped[int] = mapped_column(
+        Integer,
+        nullable=False,
+    )
+
+    round_num: Mapped[int] = mapped_column(
+        Integer,
+        nullable=False,
+    )
+
+    event_type: Mapped[str] = mapped_column(
+        String(16),
+        nullable=False,
+    )
+
+    score: Mapped[float] = mapped_column(
+        Float,
+        nullable=False,
+    )
+
+    evidence: Mapped[dict[str, Any]] = mapped_column(
+        JSON,
+        nullable=False,
+    )
+
+    player: Mapped["MatchPlayerModel"] = relationship(
+        back_populates="match_story",
     )
 
 

@@ -13,6 +13,7 @@ from src.database.job_repository import (
 from src.database.models import (
     AnalysisJobModel,
     Base,
+    FoundingTesterModel,
     MatchModel,
     UserModel,
 )
@@ -51,6 +52,15 @@ class AnalysisJobRepositoryTest(
                 ),
             ]
         )
+        self.session.add_all(
+            [
+                FoundingTesterModel(
+                    number=number
+                )
+                for number in range(1, 11)
+            ]
+        )
+
         self.session.commit()
 
         self.repository = (
@@ -638,6 +648,122 @@ class AnalysisJobRepositoryTest(
 
         self.assertIsNotNone(
             completed.finished_at
+        )
+
+    def test_claim_founding_tester_gets_first_slot(
+        self,
+    ):
+        number = (
+            self.repository
+            .claim_founding_tester(
+                TEST_STEAM_ID
+            )
+        )
+
+        self.assertEqual(
+            number,
+            1,
+        )
+
+        slot = self.session.get(
+            FoundingTesterModel,
+            1,
+        )
+
+        self.assertEqual(
+            slot.steam_id,
+            TEST_STEAM_ID,
+        )
+
+        self.assertIsNotNone(
+            slot.awarded_at
+        )
+
+        self.assertEqual(
+            slot.premium_days,
+            30,
+        )
+
+    def test_claim_founding_tester_is_idempotent(
+        self,
+    ):
+        first = (
+            self.repository
+            .claim_founding_tester(
+                TEST_STEAM_ID
+            )
+        )
+
+        second = (
+            self.repository
+            .claim_founding_tester(
+                TEST_STEAM_ID
+            )
+        )
+
+        self.assertEqual(
+            first,
+            1,
+        )
+
+        self.assertIsNone(
+            second
+        )
+
+        first_slot = self.session.get(
+            FoundingTesterModel,
+            1,
+        )
+
+        second_slot = self.session.get(
+            FoundingTesterModel,
+            2,
+        )
+
+        self.assertEqual(
+            first_slot.steam_id,
+            TEST_STEAM_ID,
+        )
+
+        self.assertIsNone(
+            second_slot.steam_id
+        )
+
+    def test_claim_founding_tester_uses_next_slot(
+        self,
+    ):
+        first = (
+            self.repository
+            .claim_founding_tester(
+                TEST_STEAM_ID
+            )
+        )
+
+        second = (
+            self.repository
+            .claim_founding_tester(
+                OTHER_STEAM_ID
+            )
+        )
+
+        self.assertEqual(
+            first,
+            1,
+        )
+
+        self.assertEqual(
+            second,
+            2,
+        )
+
+        second_slot = self.session.get(
+            FoundingTesterModel,
+            2,
+        )
+
+        self.assertEqual(
+            second_slot.steam_id,
+            OTHER_STEAM_ID,
         )
 
     def test_mark_failed(self):

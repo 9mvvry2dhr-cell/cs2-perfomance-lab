@@ -10,6 +10,7 @@ from sqlalchemy.orm import Session
 from src.database.models import (
     ACTIVE_ANALYSIS_OWNER_INDEX,
     AnalysisJobModel,
+    FoundingTesterModel,
 )
 from src.domain.jobs import (
     AnalysisJob,
@@ -429,6 +430,72 @@ class AnalysisJobRepository:
             return self._to_domain(
                 model
             )
+
+        except Exception:
+            self.session.rollback()
+            raise
+
+    def claim_founding_tester(
+        self,
+        steam_id: str,
+    ) -> int | None:
+        """
+        Claim the lowest free founding tester slot.
+
+        Returns the newly awarded number, or None when
+        the user already has a slot or all slots are taken.
+        """
+
+        existing = self.session.scalar(
+            select(
+                FoundingTesterModel.number
+            ).where(
+                FoundingTesterModel.steam_id
+                == steam_id
+            )
+        )
+
+        if existing is not None:
+            return None
+
+        try:
+            slot = self.session.scalar(
+                select(
+                    FoundingTesterModel
+                )
+                .where(
+                    FoundingTesterModel.steam_id
+                    .is_(None)
+                )
+                .order_by(
+                    FoundingTesterModel.number
+                )
+                .limit(1)
+                .with_for_update(
+                    skip_locked=True
+                )
+            )
+
+            if slot is None:
+                return None
+
+            slot.steam_id = steam_id
+            slot.awarded_at = datetime.now(
+                timezone.utc
+            )
+
+            number = slot.number
+
+            self.session.commit()
+
+            return number
+
+        except IntegrityError:
+            # Another concurrent completion may have
+            # awarded this Steam account first.
+            self.session.rollback()
+
+            return None
 
         except Exception:
             self.session.rollback()

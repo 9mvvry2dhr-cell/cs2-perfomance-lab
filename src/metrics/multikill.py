@@ -198,6 +198,7 @@ def detect_multikill_rounds(
 def calculate_multikill_metrics(
     parser: RawDemoParser,
     player_steam_ids: List[str],
+    events: List[MultikillRound] | None = None,
 ) -> Dict[str, Dict[str, int]]:
     """
     Calculate exact 2K / 3K / 4K / 5K round counts.
@@ -227,9 +228,12 @@ def calculate_multikill_metrics(
     if not player_ids:
         return metrics
 
-    for event in detect_multikill_rounds(
-        parser
-    ):
+    if events is None:
+        events = detect_multikill_rounds(
+            parser
+        )
+
+    for event in events:
         if event.steam_id not in metrics:
             continue
 

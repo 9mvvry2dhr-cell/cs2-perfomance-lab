@@ -11,11 +11,20 @@ from src.metrics.entry import (
     detect_entry_events,
 )
 from src.metrics.clutch import calculate_clutch_metrics
-from src.metrics.trade import calculate_trade_metrics_v2
+from src.metrics.trade import (
+    calculate_trade_metrics_v2,
+    detect_trade_events,
+)
 from src.metrics.kast import (
     detect_kast_rounds,
 )
-from src.metrics.multikill import calculate_multikill_metrics
+from src.metrics.multikill import (
+    calculate_multikill_metrics,
+    detect_multikill_rounds,
+)
+from src.metrics.match_story import (
+    select_match_story_events,
+)
 from src.metrics.survival import (
     detect_survival_rounds,
 )
@@ -793,21 +802,35 @@ class DemoParser:
         # --------------------------------------------------------------
 
         try:
+            trade_events = _timed_metric(
+                "trade_events",
+                detect_trade_events,
+                self.raw_parser,
+            )
+
+            self.trade_events = (
+                trade_events
+            )
+
             (
                 trade_opportunities,
                 trade_kills,
                 traded_deaths,
             ) = _timed_metric(
                 "trade",
-                calculate_trade_metrics_v2,
-                self.raw_parser,
-                steam_ids,
+                lambda: calculate_trade_metrics_v2(
+                    self.raw_parser,
+                    steam_ids,
+                    trade_events=trade_events,
+                ),
             )
 
         except Exception as exc:
             print(
                 f"Trade metrics calculation failed: {exc}"
             )
+            trade_events = []
+            self.trade_events = []
             trade_opportunities = {}
             trade_kills = {}
             traded_deaths = {}
@@ -830,18 +853,59 @@ class DemoParser:
         # Multikill
 
         try:
+            multikill_events = _timed_metric(
+                "multikill_events",
+                detect_multikill_rounds,
+                self.raw_parser,
+            )
+
+            self.multikill_events = (
+                multikill_events
+            )
+
             multikill_stats = _timed_metric(
                 "multikill",
-                calculate_multikill_metrics,
-                self.raw_parser,
-                steam_ids,
+                lambda: calculate_multikill_metrics(
+                    self.raw_parser,
+                    steam_ids,
+                    events=multikill_events,
+                ),
             )
 
         except Exception as exc:
             print(
                 f"Multikill metrics calculation failed: {exc}"
             )
+            multikill_events = []
+            self.multikill_events = []
             multikill_stats = {}
+
+        # --------------------------------------------------------------
+        # Match Story
+        # --------------------------------------------------------------
+
+        try:
+            match_story = _timed_metric(
+                "match_story",
+                lambda: select_match_story_events(
+                    steam_ids,
+                    entry_events=getattr(
+                        self,
+                        "entry_events",
+                        [],
+                    ),
+                    trade_events=trade_events,
+                    multikill_rounds=(
+                        multikill_events
+                    ),
+                ),
+            )
+
+        except Exception as exc:
+            print(
+                f"Match Story calculation failed: {exc}"
+            )
+            match_story = {}
 
         # Survival
 
@@ -865,6 +929,13 @@ class DemoParser:
         for player in players:
 
             sid = player.steam_id
+
+            player.match_story = list(
+                match_story.get(
+                    sid,
+                    [],
+                )
+            )
 
             # ----------------------------------------------------------
             # Utility

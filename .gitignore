@@ -36,3 +36,5 @@ Thumbs.db
 
 # Deployment secrets
 /deploy/staging.env
+
+/backups/

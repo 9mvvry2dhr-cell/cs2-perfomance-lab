@@ -44,6 +44,11 @@ class ParsedPlayer:
     # Survival
     survived_rounds: int = 0
 
+    # Match Story
+    match_story: List[object] = field(
+        default_factory=list
+    )
+
 
 @dataclass
 class ParsedRound:

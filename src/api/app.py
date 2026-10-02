@@ -20,7 +20,7 @@ from fastapi import (
 )
 from fastapi.responses import JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
-from sqlalchemy import text
+from sqlalchemy import func, select, text
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
@@ -59,6 +59,7 @@ from src.api.dependencies import (
     get_match_ai_explainer,
     get_match_ai_report_repository,
     get_player_ai_explainer,
+    get_presence_repository,
 )
 from src.api.schemas import (
     AIOverviewQuotaResponse,
@@ -66,10 +67,15 @@ from src.api.schemas import (
     BugReportCreateRequest,
     BugReportResponse,
     CurrentUserResponse,
+    FoundingTesterAdminItem,
+    FoundingTesterAdminResponse,
+    FoundingTesterSummaryResponse,
     HealthResponse,
     MatchAnalysisResponse,
     PlayerHistorySummaryResponse,
     PlayerMatchHistoryResponse,
+    PresenceHeartbeatRequest,
+    PresenceSummaryResponse,
     ReadyResponse,
 )
 from src.database.ai_overview_quota_repository import (
@@ -86,10 +92,14 @@ from src.database.bug_report_repository import (
     BugReportRepository,
 )
 from src.database.job_repository import AnalysisJobRepository
+from src.database.models import FoundingTesterModel
 from src.database.match_ai_report_repository import (
     MatchAIReportRepository,
 )
 from src.database.repository import AnalysisRepository
+from src.database.presence_repository import (
+    PresenceRepository,
+)
 from src.domain.history import (
     build_player_history_summary,
 )
@@ -313,6 +323,205 @@ async def database_error_handler(
     )
 
 
+@app.post(
+    "/presence/heartbeat",
+    response_model=PresenceSummaryResponse,
+)
+def presence_heartbeat(
+    payload: PresenceHeartbeatRequest,
+    request: Request,
+    presence_repository: Annotated[
+        PresenceRepository,
+        Depends(get_presence_repository),
+    ],
+    auth_repository: Annotated[
+        AuthRepository,
+        Depends(get_auth_repository),
+    ],
+) -> PresenceSummaryResponse:
+    presence_repository.touch(
+        str(payload.visitor_id)
+    )
+
+    token = request.cookies.get(
+        SESSION_COOKIE_NAME
+    )
+
+    if token:
+        auth_repository.resolve_session(
+            token
+        )
+
+    summary = (
+        presence_repository.get_summary()
+    )
+
+    return PresenceSummaryResponse(
+        online=summary.online,
+        visitors_24h=summary.visitors_24h,
+        logged_in_online=(
+            summary.logged_in_online
+        ),
+    )
+
+
+@app.get(
+    "/presence/summary",
+    response_model=PresenceSummaryResponse,
+)
+def presence_summary(
+    presence_repository: Annotated[
+        PresenceRepository,
+        Depends(get_presence_repository),
+    ],
+) -> PresenceSummaryResponse:
+    summary = (
+        presence_repository.get_summary()
+    )
+
+    return PresenceSummaryResponse(
+        online=summary.online,
+        visitors_24h=summary.visitors_24h,
+        logged_in_online=(
+            summary.logged_in_online
+        ),
+    )
+
+
+@app.get(
+    "/founding-testers/summary",
+    response_model=FoundingTesterSummaryResponse,
+)
+def founding_testers_summary(
+    session: Annotated[
+        Session,
+        Depends(get_database_session),
+    ],
+) -> FoundingTesterSummaryResponse:
+    total = int(
+        session.scalar(
+            select(
+                func.count()
+            ).select_from(
+                FoundingTesterModel
+            )
+        )
+        or 0
+    )
+
+    claimed = int(
+        session.scalar(
+            select(
+                func.count()
+            )
+            .select_from(
+                FoundingTesterModel
+            )
+            .where(
+                FoundingTesterModel.steam_id
+                .is_not(None)
+            )
+        )
+        or 0
+    )
+
+    return FoundingTesterSummaryResponse(
+        total=total,
+        claimed=claimed,
+        remaining=max(
+            total - claimed,
+            0,
+        ),
+    )
+
+
+@app.get(
+    "/admin/founding-testers",
+    response_model=FoundingTesterAdminResponse,
+)
+def admin_founding_testers(
+    current_user: Annotated[
+        CurrentUser,
+        Depends(get_current_user),
+    ],
+    session: Annotated[
+        Session,
+        Depends(get_database_session),
+    ],
+) -> FoundingTesterAdminResponse:
+    admin_steam_id = (
+        os.environ.get(
+            "ADMIN_STEAM_ID",
+            "",
+        )
+        .strip()
+    )
+
+    if not admin_steam_id:
+        raise HTTPException(
+            status_code=(
+                status.HTTP_503_SERVICE_UNAVAILABLE
+            ),
+            detail="Admin access is not configured",
+        )
+
+    if current_user.steam_id != admin_steam_id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Admin access required",
+        )
+
+    rows = list(
+        session.scalars(
+            select(
+                FoundingTesterModel
+            )
+            .where(
+                FoundingTesterModel.steam_id
+                .is_not(None)
+            )
+            .order_by(
+                FoundingTesterModel.number
+            )
+        )
+    )
+
+    total = int(
+        session.scalar(
+            select(
+                func.count()
+            ).select_from(
+                FoundingTesterModel
+            )
+        )
+        or 0
+    )
+
+    claimed = len(rows)
+
+    return FoundingTesterAdminResponse(
+        total=total,
+        claimed=claimed,
+        remaining=max(
+            total - claimed,
+            0,
+        ),
+        testers=[
+            FoundingTesterAdminItem(
+                number=row.number,
+                steam_id=row.steam_id,
+                awarded_at=row.awarded_at,
+                premium_days=row.premium_days,
+            )
+            for row in rows
+            if (
+                row.steam_id is not None
+                and row.awarded_at is not None
+            )
+        ],
+    )
+
+
 @app.get(
     "/health",
     response_model=HealthResponse,
@@ -518,6 +727,10 @@ def get_me(
         CurrentUser,
         Depends(get_current_user),
     ],
+    session: Annotated[
+        Session,
+        Depends(get_database_session),
+    ],
 ) -> CurrentUserResponse:
     api_key = os.getenv(
         "STEAM_API_KEY",
@@ -527,6 +740,17 @@ def get_me(
     profile = fetch_steam_profile(
         steam_id=current_user.steam_id,
         api_key=api_key,
+    )
+
+    founding_tester_number = (
+        session.scalar(
+            select(
+                FoundingTesterModel.number
+            ).where(
+                FoundingTesterModel.steam_id
+                == current_user.steam_id
+            )
+        )
     )
 
     return CurrentUserResponse(
@@ -540,6 +764,9 @@ def get_me(
             profile.avatar_url
             if profile
             else None
+        ),
+        founding_tester_number=(
+            founding_tester_number
         ),
     )
 

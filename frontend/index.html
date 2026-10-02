@@ -2219,6 +2219,110 @@ tr.selected td {
     margin-top: 0;
 }
 
+.founding-beta {
+    margin-top: 14px;
+    padding: 15px 16px;
+
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    gap: 18px;
+
+    border:
+        1px solid
+        rgba(240, 165, 47, 0.42);
+
+    border-radius: 11px;
+
+    background:
+        linear-gradient(
+            135deg,
+            rgba(240, 165, 47, 0.105),
+            rgba(240, 165, 47, 0.035)
+        );
+
+    box-shadow:
+        0 10px 30px
+        rgba(0, 0, 0, 0.12);
+}
+
+.founding-beta[hidden] {
+    display: none;
+}
+
+.founding-beta-copy {
+    min-width: 0;
+}
+
+.founding-beta-title {
+    color: #ffc252;
+
+    font-size: 10px;
+    font-weight: 950;
+
+    letter-spacing: 0.09em;
+}
+
+.founding-beta-text {
+    margin-top: 6px;
+
+    color: #9cb0bf;
+
+    font-size: 11px;
+    line-height: 1.55;
+}
+
+.founding-beta-text strong {
+    color: #edf4f8;
+    font-weight: 850;
+}
+
+.founding-beta-spots {
+    flex: 0 0 auto;
+
+    padding:
+        8px
+        11px;
+
+    border:
+        1px solid
+        rgba(240, 165, 47, 0.38);
+
+    border-radius: 999px;
+
+    color: #dce8ef;
+
+    background:
+        rgba(240, 165, 47, 0.09);
+
+    font-size: 10px;
+    font-weight: 900;
+
+    letter-spacing: 0.025em;
+    white-space: nowrap;
+}
+
+.founding-beta-spots strong {
+    color: #ffc252;
+
+    font-size: 12px;
+    font-weight: 950;
+}
+
+@media (max-width: 700px) {
+    .founding-beta {
+        align-items: flex-start;
+        flex-direction: column;
+
+        gap: 10px;
+    }
+
+    .founding-beta-spots {
+        align-self: flex-start;
+    }
+}
+
 .auth-landing-demo {
     min-height: 44px;
 
@@ -4835,6 +4939,157 @@ button.dashboard-match-row:hover {
     font-size: 13px;
     font-weight: 780;
 }
+
+
+.match-story-section {
+    margin: 18px 0;
+    padding: 18px;
+    border: 1px solid rgba(137,167,187,.14);
+    border-radius: 14px;
+    background: rgba(6,18,28,.72);
+}
+
+.match-story-section[hidden] {
+    display: none;
+}
+
+.match-story-head {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 16px;
+}
+
+.match-story-kicker {
+    color: #718da1;
+    font-size: 9px;
+    font-weight: 820;
+    letter-spacing: .08em;
+}
+
+.match-story-title {
+    margin-top: 4px;
+    color: #edf5f9;
+    font-size: 18px;
+    font-weight: 830;
+    letter-spacing: -.02em;
+}
+
+.match-story-subtitle {
+    margin-top: 5px;
+    color: #70889b;
+    font-size: 10px;
+    line-height: 1.5;
+}
+
+.match-story-grid {
+    display: grid;
+    grid-template-columns:
+        repeat(auto-fit, minmax(220px, 1fr));
+    gap: 12px;
+    margin-top: 14px;
+}
+
+.match-story-card {
+    min-width: 0;
+    min-height: 132px;
+    padding: 15px 16px;
+    border: 1px solid rgba(137,167,187,.13);
+    border-radius: 11px;
+    background: rgba(255,255,255,.025);
+}
+
+.match-story-card.highlight {
+    border-color: rgba(89,196,139,.25);
+}
+
+.match-story-card.growth {
+    border-color: rgba(231,168,68,.27);
+}
+
+.match-story-card.key {
+    border-color: rgba(84,164,230,.27);
+}
+
+.match-story-card.watch-first {
+    border-color: rgba(229,167,68,.48);
+    background: rgba(229,167,68,.035);
+    box-shadow:
+        inset 0 0 0 1px rgba(229,167,68,.035);
+}
+
+.match-story-card-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+.match-story-round-wrap {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    min-width: 0;
+}
+
+.match-story-round {
+    color: #dce8ef;
+    font-size: 12px;
+    font-weight: 800;
+}
+
+.match-story-watch-first {
+    padding: 4px 7px;
+    border: 1px solid rgba(229,167,68,.34);
+    border-radius: 999px;
+
+    color: #e5a744;
+    background: rgba(229,167,68,.10);
+
+    font-size: 8px;
+    font-weight: 850;
+    line-height: 1;
+    letter-spacing: .06em;
+    white-space: nowrap;
+    text-transform: uppercase;
+}
+
+.match-story-type {
+    font-size: 8px;
+    font-weight: 820;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+}
+
+.match-story-card.highlight .match-story-type {
+    color: #6bc995;
+}
+
+.match-story-card.growth .match-story-type {
+    color: #e5a744;
+}
+
+.match-story-card.key .match-story-type {
+    color: #6db5e8;
+}
+
+.match-story-text {
+    margin-top: 20px;
+    color: #aabcc8;
+    font-size: 11px;
+    line-height: 1.55;
+}
+
+@media (max-width: 700px) {
+    .match-story-section {
+        padding: 15px;
+    }
+
+    .match-story-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
 
 .side-compare {
     display: grid;
@@ -9147,6 +9402,43 @@ table {
     white-space: nowrap;
 }
 
+.legal-footer-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.site-presence {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+
+    color: #6f8ca3;
+    white-space: nowrap;
+}
+
+.site-presence[hidden] {
+    display: none !important;
+}
+
+.site-presence-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+
+    background: #52d39f;
+
+    box-shadow:
+        0 0 8px
+        rgba(82, 211, 159, 0.38);
+}
+
+.site-presence strong {
+    color: #8ba7bb;
+    font-weight: 600;
+}
+
 .legal-footer-links {
     display: flex;
     align-items: center;
@@ -9654,6 +9946,221 @@ table {
 
 </style>
 
+
+<style id="cs2-founding-admin-v1">
+
+.founding-admin-card {
+    margin-top: 12px;
+    padding: 12px;
+
+    border:
+        1px solid
+        rgba(240, 165, 47, 0.28);
+
+    border-radius: 10px;
+
+    background:
+        linear-gradient(
+            145deg,
+            rgba(240, 165, 47, 0.08),
+            rgba(255, 255, 255, 0.025)
+        );
+}
+
+.founding-admin-card[hidden] {
+    display: none !important;
+}
+
+.founding-admin-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+
+    gap: 10px;
+}
+
+.founding-admin-kicker {
+    color: #ffc252;
+
+    font-size: 8px;
+    font-weight: 950;
+
+    letter-spacing: 0.08em;
+}
+
+.founding-admin-count {
+    margin-top: 5px;
+
+    color: #edf4f8;
+
+    font-size: 12px;
+    font-weight: 850;
+}
+
+.founding-admin-remaining {
+    flex: 0 0 auto;
+
+    padding: 4px 7px;
+
+    border:
+        1px solid
+        rgba(240, 165, 47, 0.28);
+
+    border-radius: 999px;
+
+    color: #ffc252;
+
+    background:
+        rgba(240, 165, 47, 0.07);
+
+    font-size: 8px;
+    font-weight: 900;
+
+    white-space: nowrap;
+}
+
+.founding-admin-notice {
+    margin-top: 9px;
+    padding: 7px 8px;
+
+    border-radius: 7px;
+
+    color: #ffc252;
+
+    background:
+        rgba(240, 165, 47, 0.10);
+
+    font-size: 9px;
+    font-weight: 850;
+}
+
+.founding-admin-notice[hidden] {
+    display: none !important;
+}
+
+.founding-admin-toggle {
+    width: 100%;
+
+    margin-top: 10px;
+    padding: 7px 9px;
+
+    border:
+        1px solid
+        rgba(255, 255, 255, 0.10);
+
+    border-radius: 7px;
+
+    color: #b9c9d3;
+
+    background:
+        rgba(255, 255, 255, 0.035);
+
+    font: inherit;
+    font-size: 9px;
+    font-weight: 800;
+
+    cursor: pointer;
+}
+
+.founding-admin-toggle:hover {
+    color: #edf4f8;
+
+    border-color:
+        rgba(240, 165, 47, 0.26);
+
+    background:
+        rgba(240, 165, 47, 0.06);
+}
+
+.founding-admin-list {
+    display: grid;
+
+    gap: 7px;
+
+    margin-top: 9px;
+}
+
+.founding-admin-list[hidden] {
+    display: none !important;
+}
+
+.founding-admin-tester {
+    padding: 8px;
+
+    border:
+        1px solid
+        rgba(255, 255, 255, 0.07);
+
+    border-radius: 8px;
+
+    background:
+        rgba(0, 0, 0, 0.12);
+}
+
+.founding-admin-tester-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    gap: 8px;
+}
+
+.founding-admin-tester-number {
+    color: #ffc252;
+
+    font-size: 10px;
+    font-weight: 950;
+}
+
+.founding-admin-premium {
+    color: #8499a7;
+
+    font-size: 8px;
+    font-weight: 800;
+}
+
+.founding-admin-steam {
+    display: block;
+
+    margin-top: 5px;
+
+    color: #c9d7df;
+
+    font-family:
+        ui-monospace,
+        SFMono-Regular,
+        Menlo,
+        Consolas,
+        monospace;
+
+    font-size: 8px;
+    text-decoration: none;
+
+    word-break: break-all;
+}
+
+.founding-admin-steam:hover {
+    color: #ffc252;
+}
+
+.founding-admin-date {
+    margin-top: 4px;
+
+    color: #708693;
+
+    font-size: 8px;
+}
+
+.founding-admin-empty {
+    padding: 8px 0;
+
+    color: #708693;
+
+    font-size: 9px;
+}
+
+</style>
+
 </head>
 
 
@@ -9804,6 +10311,58 @@ id="currentUserSteam"
 >
 Steam ID: —
 </div>
+
+</div>
+
+<div
+class="founding-admin-card"
+id="foundingAdminCard"
+hidden
+>
+
+<div class="founding-admin-head">
+
+<div>
+<div class="founding-admin-kicker">
+ADMIN · FOUNDING TESTERS
+</div>
+
+<div
+class="founding-admin-count"
+id="foundingAdminCount"
+>
+—
+</div>
+</div>
+
+<div
+class="founding-admin-remaining"
+id="foundingAdminRemaining"
+>
+—
+</div>
+
+</div>
+
+<div
+class="founding-admin-notice"
+id="foundingAdminNotice"
+hidden
+></div>
+
+<button
+class="founding-admin-toggle"
+id="foundingAdminToggle"
+type="button"
+>
+Посмотреть участников
+</button>
+
+<div
+class="founding-admin-list"
+id="foundingAdminList"
+hidden
+></div>
 
 </div>
 
@@ -9981,6 +10540,31 @@ type="button"
 Посмотреть пример анализа
 </button>
 
+</div>
+
+<div
+class="founding-beta"
+id="foundingBeta"
+hidden
+>
+    <div class="founding-beta-copy">
+        <div class="founding-beta-title">
+            ★ FOUNDING TESTER · BETA
+        </div>
+
+        <div class="founding-beta-text">
+            Стань одним из первых 10 игроков
+            и получи
+            <strong>Founding Tester #N навсегда</strong>
+            +
+            <strong>30 дней Premium после релиза</strong>.
+        </div>
+    </div>
+
+    <div
+    class="founding-beta-spots"
+    id="foundingBetaSpots"
+    ></div>
 </div>
 
 <div class="auth-landing-note">
@@ -10666,6 +11250,41 @@ utility
 </section>
 
 
+<section
+class="match-story-section"
+id="matchStorySection"
+hidden
+>
+
+<div class="match-story-head">
+
+<div>
+
+<div class="match-story-kicker">
+MATCH STORY
+</div>
+
+<div class="match-story-title">
+Поворотные раунды
+</div>
+
+<div class="match-story-subtitle">
+Эпизоды, которые лучше всего показывают
+твой вклад в этот матч
+</div>
+
+</div>
+
+</div>
+
+<div
+class="match-story-grid"
+id="matchStoryGrid"
+></div>
+
+</section>
+
+
 <div class="section-title">
 
 <span>
@@ -11034,8 +11653,26 @@ href="/auth/steam/login"
     aria-label="Юридическая информация"
 >
 
-    <div class="legal-footer-copy">
-        © 2026 CS2 Performance Lab
+    <div class="legal-footer-left">
+
+        <div class="legal-footer-copy">
+            © 2026 CS2 Performance Lab
+        </div>
+
+        <div
+            class="site-presence"
+            id="sitePresence"
+            hidden
+            aria-live="polite"
+        >
+            <span
+                class="site-presence-dot"
+                aria-hidden="true"
+            ></span>
+
+            <span id="sitePresenceText"></span>
+        </div>
+
     </div>
 
     <nav class="legal-footer-links">
@@ -13615,6 +14252,12 @@ function buildPlayerDnaSummary(
     let strength = "";
     let limiter = "";
 
+    const matches =
+        Number(data.matches) || 0;
+
+    const profileStable =
+        matches >= 10;
+
     if (
         data.openingDuels >= 6
         && data.openingSuccess >= 55
@@ -13711,7 +14354,11 @@ function buildPlayerDnaSummary(
 
     if (limiter) {
         return (
-            "Профиль ещё формируется, но направление уже видно. "
+            (
+                profileStable
+                    ? "Профиль уже достаточно устойчив. "
+                    : "Профиль ещё формируется, но направление уже видно. "
+            )
             + limiter
         );
     }
@@ -13720,9 +14367,23 @@ function buildPlayerDnaSummary(
         data.tradeKnownMatches > 0
         && data.tradeOpportunities < 5
     ) {
+        if (profileStable) {
+            return (
+                "Player DNA уже достаточно устойчив, но без одного доминирующего сигнала. "
+                + "По большинству метрик данных достаточно, а по разменам всё ещё нужно больше реальных trade-ситуаций."
+            );
+        }
+
         return (
             "Player DNA пока формируется без одного доминирующего сигнала. "
             + "По части метрик данных уже достаточно, но для уверенного вывода по разменам нужно больше реальных trade-ситуаций."
+        );
+    }
+
+    if (profileStable) {
+        return (
+            "Player DNA выглядит сбалансированно, без одной явно доминирующей сильной или слабой стороны. "
+            + "На текущем окне матчей это уже устойчивый профиль, а не нехватка данных."
         );
     }
 
@@ -14513,6 +15174,8 @@ function renderPlayerHistory(
     const verdictText =
         buildPlayerDnaSummary(
             {
+                matches:
+                    summary.matches_analyzed,
                 rounds,
                 openingDuels,
                 openingSuccess,
@@ -15031,12 +15694,369 @@ async function loadPlayerHistory() {
 }
 
 
+function matchStoryCount(
+    value,
+    forms
+) {
+    const number =
+        Math.abs(
+            Number(value) || 0
+        );
+
+    const mod100 =
+        number % 100;
+
+    const mod10 =
+        number % 10;
+
+    if (
+        mod100 >= 11
+        && mod100 <= 14
+    ) {
+        return (
+            number
+            + " "
+            + forms[2]
+        );
+    }
+
+    if (mod10 === 1) {
+        return (
+            number
+            + " "
+            + forms[0]
+        );
+    }
+
+    if (
+        mod10 >= 2
+        && mod10 <= 4
+    ) {
+        return (
+            number
+            + " "
+            + forms[1]
+        );
+    }
+
+    return (
+        number
+        + " "
+        + forms[2]
+    );
+}
+
+
+function matchStoryText(
+    event
+) {
+    const evidence =
+        event.evidence || {};
+
+    if (
+        event.event_type
+        === "growth"
+    ) {
+        if (
+            evidence.entry_death
+            && !evidence.was_traded
+        ) {
+            return (
+                "Погиб в первой дуэли; "
+                + "размена не последовало."
+            );
+        }
+
+        if (
+            evidence.entry_death
+            && evidence.was_traded
+        ) {
+            return (
+                "Погиб в первой дуэли; "
+                + "союзник сделал размен."
+            );
+        }
+
+        return (
+            "Раунд отмечен как "
+            + "зона роста."
+        );
+    }
+
+    const parts = [];
+
+    const kills =
+        Number(
+            evidence.kills || 0
+        );
+
+    const trades =
+        Number(
+            evidence.trades_made || 0
+        );
+
+    if (kills > 0) {
+        parts.push(
+            matchStoryCount(
+                kills,
+                [
+                    "убийство",
+                    "убийства",
+                    "убийств",
+                ]
+            )
+        );
+    }
+
+    if (evidence.entry_kill) {
+        parts.push(
+            "первый килл раунда"
+        );
+    }
+
+    if (trades > 0) {
+        parts.push(
+            matchStoryCount(
+                trades,
+                [
+                    "размен",
+                    "размена",
+                    "разменов",
+                ]
+            )
+        );
+    }
+
+    if (!parts.length) {
+        return (
+            "Подтверждённый "
+            + "эпизод раунда."
+        );
+    }
+
+    return (
+        parts.join(", ")
+        + "."
+    );
+}
+
+
+function renderMatchStory(
+    player
+) {
+    const section =
+        document.getElementById(
+            "matchStorySection"
+        );
+
+    const grid =
+        document.getElementById(
+            "matchStoryGrid"
+        );
+
+    if (
+        !section
+        || !grid
+    ) {
+        return;
+    }
+
+    grid.replaceChildren();
+
+    const events =
+        Array.isArray(
+            player.match_story
+        )
+            ? player.match_story.slice(
+                0,
+                3
+            )
+            : [];
+
+    if (!events.length) {
+        section.hidden =
+            true;
+
+        return;
+    }
+
+    const labels = {
+        highlight:
+            "Сильный момент",
+        growth:
+            "Зона роста",
+        key:
+            "Ключевой эпизод",
+    };
+
+    const watchFirst =
+        events.find(
+            event =>
+                event.event_type === "growth"
+        )
+        || events.find(
+            event =>
+                event.event_type === "key"
+        )
+        || events.find(
+            event =>
+                event.event_type === "highlight"
+        )
+        || events[0];
+
+    const orderedEvents = [
+        watchFirst,
+        ...events.filter(
+            event =>
+                event !== watchFirst
+        ),
+    ];
+
+    const subtitle =
+        section.querySelector(
+            ".match-story-subtitle"
+        );
+
+    if (subtitle) {
+        subtitle.textContent =
+            "Начни с отмеченного эпизода — "
+            + "он наиболее полезен для разбора этого матча";
+    }
+
+    orderedEvents.forEach(
+        event => {
+            const type =
+                [
+                    "highlight",
+                    "growth",
+                    "key",
+                ].includes(
+                    event.event_type
+                )
+                    ? event.event_type
+                    : "key";
+
+            const card =
+                document.createElement(
+                    "article"
+                );
+
+            card.className =
+                "match-story-card "
+                + type;
+
+            if (event === watchFirst) {
+                card.classList.add(
+                    "watch-first"
+                );
+            }
+
+            const top =
+                document.createElement(
+                    "div"
+                );
+
+            top.className =
+                "match-story-card-top";
+
+            const roundWrap =
+                document.createElement(
+                    "div"
+                );
+
+            roundWrap.className =
+                "match-story-round-wrap";
+
+            const round =
+                document.createElement(
+                    "div"
+                );
+
+            round.className =
+                "match-story-round";
+
+            round.textContent =
+                "Раунд "
+                + Number(
+                    event.round_num
+                );
+
+            roundWrap.appendChild(
+                round
+            );
+
+            if (event === watchFirst) {
+                const watchBadge =
+                    document.createElement(
+                        "span"
+                    );
+
+                watchBadge.className =
+                    "match-story-watch-first";
+
+                watchBadge.textContent =
+                    "Смотреть первым";
+
+                roundWrap.appendChild(
+                    watchBadge
+                );
+            }
+
+            const label =
+                document.createElement(
+                    "div"
+                );
+
+            label.className =
+                "match-story-type";
+
+            label.textContent =
+                labels[type];
+
+            const body =
+                document.createElement(
+                    "div"
+                );
+
+            body.className =
+                "match-story-text";
+
+            body.textContent =
+                matchStoryText(
+                    event
+                );
+
+            top.append(
+                roundWrap,
+                label
+            );
+
+            card.append(
+                top,
+                body
+            );
+
+            grid.appendChild(
+                card
+            );
+        }
+    );
+
+    section.hidden =
+        false;
+}
+
+
 function renderPlayer(
     player,
     analysis
 ) {
     const stats =
         player.stats;
+
+    renderMatchStory(
+        player
+    );
 
     const avatar =
         document.querySelector(
@@ -21613,6 +22633,32 @@ document
     white-space: nowrap;
 }
 
+.current-user-founding {
+    width: fit-content;
+
+    margin-top: 6px;
+    padding:
+        4px
+        7px;
+
+    border:
+        1px solid
+        rgba(240, 165, 47, 0.34);
+
+    border-radius: 999px;
+
+    color: #ffc252;
+
+    background:
+        rgba(240, 165, 47, 0.08);
+
+    font-size: 8px;
+    font-weight: 900;
+
+    letter-spacing: 0.055em;
+    line-height: 1.25;
+}
+
 .current-user-connection {
     margin-top: 3px;
 
@@ -22621,6 +23667,11 @@ document
                     me.avatar_url || ""
                 ).trim();
 
+            const foundingNumber =
+                Number(
+                    me.founding_tester_number
+                ) || 0;
+
             const nameElement =
                 document.getElementById(
                     "currentUserName"
@@ -22646,6 +23697,40 @@ document
             if (nameElement && name) {
                 nameElement.textContent =
                     name;
+            }
+
+            let foundingBadge =
+                document.getElementById(
+                    "currentUserFounding"
+                );
+
+            if (
+                foundingNumber > 0
+                && nameElement
+            ) {
+                if (!foundingBadge) {
+                    foundingBadge =
+                        document.createElement(
+                            "div"
+                        );
+
+                    foundingBadge.id =
+                        "currentUserFounding";
+
+                    foundingBadge.className =
+                        "current-user-founding";
+
+                    nameElement.insertAdjacentElement(
+                        "afterend",
+                        foundingBadge
+                    );
+                }
+
+                foundingBadge.textContent =
+                    "★ FOUNDING TESTER #"
+                    + foundingNumber;
+            } else if (foundingBadge) {
+                foundingBadge.remove();
             }
 
             if (
@@ -25476,6 +26561,647 @@ aria-hidden="true"
             button.textContent =
                 originalText;
         }
+    );
+})();
+</script>
+
+<script id="cs2-presence-js">
+(function () {
+    const PRESENCE_KEY =
+        "cs2pl_visitor_id";
+
+    const HEARTBEAT_INTERVAL_MS =
+        45 * 1000;
+
+
+    const presence =
+        document.getElementById(
+            "sitePresence"
+        );
+
+    const presenceText =
+        document.getElementById(
+            "sitePresenceText"
+        );
+
+
+    function createVisitorId() {
+        if (
+            window.crypto
+            && typeof window.crypto.randomUUID
+            === "function"
+        ) {
+            return window.crypto.randomUUID();
+        }
+
+        const bytes =
+            new Uint8Array(16);
+
+        window.crypto.getRandomValues(
+            bytes
+        );
+
+        bytes[6] =
+            (bytes[6] & 0x0f)
+            | 0x40;
+
+        bytes[8] =
+            (bytes[8] & 0x3f)
+            | 0x80;
+
+        const hex =
+            Array.from(
+                bytes,
+                value =>
+                    value
+                    .toString(16)
+                    .padStart(2, "0")
+            );
+
+        return [
+            hex.slice(0, 4).join(""),
+            hex.slice(4, 6).join(""),
+            hex.slice(6, 8).join(""),
+            hex.slice(8, 10).join(""),
+            hex.slice(10, 16).join(""),
+        ].join("-");
+    }
+
+
+    function getVisitorId() {
+        try {
+            const existing =
+                localStorage.getItem(
+                    PRESENCE_KEY
+                );
+
+            if (existing) {
+                return existing;
+            }
+
+            const created =
+                createVisitorId();
+
+            localStorage.setItem(
+                PRESENCE_KEY,
+                created
+            );
+
+            return created;
+
+        } catch (_) {
+            return createVisitorId();
+        }
+    }
+
+
+    function renderSummary(summary) {
+        if (
+            !presence
+            || !presenceText
+        ) {
+            return;
+        }
+
+        const online =
+            Number(summary.online) || 0;
+
+        const visitors24h =
+            Number(
+                summary.visitors_24h
+            ) || 0;
+
+        presenceText.textContent =
+            `${online} онлайн · `
+            + `${visitors24h} за 24ч`;
+
+        presence.hidden =
+            false;
+    }
+
+
+    const visitorId =
+        getVisitorId();
+
+
+    async function heartbeat() {
+        if (document.hidden) {
+            return;
+        }
+
+        try {
+            const response =
+                await fetch(
+                    "/presence/heartbeat",
+                    {
+                        method:
+                            "POST",
+
+                        credentials:
+                            "same-origin",
+
+                        cache:
+                            "no-store",
+
+                        headers: {
+                            "Content-Type":
+                                "application/json",
+
+                            Accept:
+                                "application/json",
+                        },
+
+                        body:
+                            JSON.stringify(
+                                {
+                                    visitor_id:
+                                        visitorId,
+                                }
+                            ),
+                    }
+                );
+
+            if (!response.ok) {
+                return;
+            }
+
+            renderSummary(
+                await response.json()
+            );
+
+        } catch (_) {
+            // Presence must never affect
+            // the main product experience.
+        }
+    }
+
+
+    heartbeat();
+
+
+    const timer =
+        window.setInterval(
+            heartbeat,
+            HEARTBEAT_INTERVAL_MS
+        );
+
+
+    document.addEventListener(
+        "visibilitychange",
+        () => {
+            if (!document.hidden) {
+                heartbeat();
+            }
+        }
+    );
+})();
+</script>
+
+<script id="cs2-founding-beta-js">
+(async () => {
+    const root =
+        document.getElementById(
+            "foundingBeta"
+        );
+
+    const spots =
+        document.getElementById(
+            "foundingBetaSpots"
+        );
+
+    if (
+        !root
+        || !spots
+    ) {
+        return;
+    }
+
+    try {
+        const response =
+            await fetch(
+                "/founding-testers/summary",
+                {
+                    credentials:
+                        "same-origin",
+                    cache:
+                        "no-store",
+                }
+            );
+
+        if (!response.ok) {
+            return;
+        }
+
+        const data =
+            await response.json();
+
+        const total =
+            Number(data.total) || 0;
+
+        const remaining =
+            Math.max(
+                Number(data.remaining) || 0,
+                0
+            );
+
+        if (total <= 0) {
+            return;
+        }
+
+        if (remaining > 0) {
+            spots.innerHTML =
+                "ОСТАЛОСЬ <strong>"
+                + remaining
+                + "</strong> ИЗ "
+                + total;
+        } else {
+            spots.textContent =
+                "ВСЕ 10 МЕСТ ЗАНЯТЫ";
+        }
+
+        root.hidden = false;
+    } catch (_) {
+        // Promo must never affect the main page.
+    }
+})();
+</script>
+
+
+<script id="cs2-founding-admin-js">
+(() => {
+    const root =
+        document.getElementById(
+            "foundingAdminCard"
+        );
+
+    const countElement =
+        document.getElementById(
+            "foundingAdminCount"
+        );
+
+    const remainingElement =
+        document.getElementById(
+            "foundingAdminRemaining"
+        );
+
+    const toggle =
+        document.getElementById(
+            "foundingAdminToggle"
+        );
+
+    const list =
+        document.getElementById(
+            "foundingAdminList"
+        );
+
+    const notice =
+        document.getElementById(
+            "foundingAdminNotice"
+        );
+
+    if (
+        !root
+        || !countElement
+        || !remainingElement
+        || !toggle
+        || !list
+        || !notice
+    ) {
+        return;
+    }
+
+    let previousClaimed = null;
+    let noticeTimer = null;
+
+    function formatDate(
+        value
+    ) {
+        if (!value) {
+            return "—";
+        }
+
+        const date =
+            new Date(value);
+
+        if (
+            Number.isNaN(
+                date.getTime()
+            )
+        ) {
+            return "—";
+        }
+
+        return date.toLocaleString(
+            "ru-RU",
+            {
+                day: "2-digit",
+                month: "2-digit",
+                year: "numeric",
+                hour: "2-digit",
+                minute: "2-digit"
+            }
+        );
+    }
+
+    function renderTesters(
+        testers
+    ) {
+        list.replaceChildren();
+
+        if (!testers.length) {
+            const empty =
+                document.createElement(
+                    "div"
+                );
+
+            empty.className =
+                "founding-admin-empty";
+
+            empty.textContent =
+                "Пока никто не получил статус.";
+
+            list.appendChild(
+                empty
+            );
+
+            return;
+        }
+
+        for (
+            const tester
+            of testers
+        ) {
+            const row =
+                document.createElement(
+                    "div"
+                );
+
+            row.className =
+                "founding-admin-tester";
+
+            const head =
+                document.createElement(
+                    "div"
+                );
+
+            head.className =
+                "founding-admin-tester-head";
+
+            const number =
+                document.createElement(
+                    "div"
+                );
+
+            number.className =
+                "founding-admin-tester-number";
+
+            number.textContent =
+                "★ FOUNDING TESTER #"
+                + Number(
+                    tester.number
+                );
+
+            const premium =
+                document.createElement(
+                    "div"
+                );
+
+            premium.className =
+                "founding-admin-premium";
+
+            premium.textContent =
+                Number(
+                    tester.premium_days
+                )
+                + " д. Premium";
+
+            head.append(
+                number,
+                premium
+            );
+
+            const steam =
+                document.createElement(
+                    "a"
+                );
+
+            steam.className =
+                "founding-admin-steam";
+
+            steam.textContent =
+                String(
+                    tester.steam_id
+                    || "—"
+                );
+
+            steam.href =
+                "https://steamcommunity.com/profiles/"
+                + encodeURIComponent(
+                    String(
+                        tester.steam_id
+                        || ""
+                    )
+                );
+
+            steam.target =
+                "_blank";
+
+            steam.rel =
+                "noopener noreferrer";
+
+            const date =
+                document.createElement(
+                    "div"
+                );
+
+            date.className =
+                "founding-admin-date";
+
+            date.textContent =
+                "Выдан: "
+                + formatDate(
+                    tester.awarded_at
+                );
+
+            row.append(
+                head,
+                steam,
+                date
+            );
+
+            list.appendChild(
+                row
+            );
+        }
+    }
+
+    function showNewTesterNotice(
+        testers
+    ) {
+        if (
+            previousClaimed === null
+        ) {
+            return;
+        }
+
+        const newTesters =
+            testers.filter(
+                tester =>
+                    Number(
+                        tester.number
+                    ) > 0
+            );
+
+        if (!newTesters.length) {
+            return;
+        }
+
+        const newest =
+            newTesters[
+                newTesters.length - 1
+            ];
+
+        notice.textContent =
+            "Новый Founding Tester #"
+            + Number(
+                newest.number
+            )
+            + " выдан";
+
+        notice.hidden = false;
+
+        if (noticeTimer) {
+            clearTimeout(
+                noticeTimer
+            );
+        }
+
+        noticeTimer =
+            setTimeout(
+                () => {
+                    notice.hidden =
+                        true;
+                },
+                8000
+            );
+    }
+
+    async function loadAdmin() {
+        try {
+            const response =
+                await fetch(
+                    "/admin/founding-testers",
+                    {
+                        credentials:
+                            "same-origin",
+                        cache:
+                            "no-store",
+                        headers: {
+                            Accept:
+                                "application/json"
+                        }
+                    }
+                );
+
+            if (!response.ok) {
+                return;
+            }
+
+            const data =
+                await response.json();
+
+            const total =
+                Math.max(
+                    Number(
+                        data.total
+                    ) || 0,
+                    0
+                );
+
+            const claimed =
+                Math.max(
+                    Number(
+                        data.claimed
+                    ) || 0,
+                    0
+                );
+
+            const remaining =
+                Math.max(
+                    Number(
+                        data.remaining
+                    ) || 0,
+                    0
+                );
+
+            const testers =
+                Array.isArray(
+                    data.testers
+                )
+                    ? data.testers
+                    : [];
+
+            if (
+                previousClaimed !== null
+                && claimed > previousClaimed
+            ) {
+                showNewTesterNotice(
+                    testers
+                );
+            }
+
+            previousClaimed =
+                claimed;
+
+            countElement.textContent =
+                claimed
+                + " / "
+                + total
+                + " занято";
+
+            remainingElement.textContent =
+                remaining
+                + " свободно";
+
+            renderTesters(
+                testers
+            );
+
+            root.hidden =
+                false;
+        } catch (_) {
+            // Admin UI must never affect the site.
+        }
+    }
+
+    toggle.addEventListener(
+        "click",
+        () => {
+            const willOpen =
+                list.hidden;
+
+            list.hidden =
+                !willOpen;
+
+            toggle.textContent =
+                willOpen
+                    ? "Скрыть участников"
+                    : "Посмотреть участников";
+        }
+    );
+
+    loadAdmin();
+
+    setInterval(
+        () => {
+            if (
+                document.visibilityState
+                === "visible"
+            ) {
+                loadAdmin();
+            }
+        },
+        60000
     );
 })();
 </script>

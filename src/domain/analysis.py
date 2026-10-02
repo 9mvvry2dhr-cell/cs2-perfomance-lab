@@ -4,6 +4,7 @@ from typing import Dict, List, Mapping
 from src.domain.insights import Finding, generate_player_findings
 from src.domain.metrics import calculate_hs_percent, calculate_kd
 from src.parsing.dto import ParsedMatch, ParsedPlayer
+from src.metrics.match_story import MatchStoryEvent
 
 
 @dataclass(frozen=True)
@@ -70,6 +71,9 @@ class PlayerAnalysis:
     stats: PlayerStats
     sides: Dict[str, SideStats]
     findings: List[Finding]
+    match_story: List[MatchStoryEvent] = field(
+        default_factory=list
+    )
 
 
 @dataclass(frozen=True)
@@ -288,6 +292,9 @@ def build_player_analysis(
         name=player.name,
         stats=stats,
         sides=sides,
+        match_story=list(
+            player.match_story
+        ),
         findings=generate_player_findings(
             split_stats,
             overall_stats=(

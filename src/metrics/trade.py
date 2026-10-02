@@ -654,6 +654,7 @@ def calculate_trade_metrics_v2(
     player_steam_ids: List[str],
     trade_window_seconds: float = TRADE_WINDOW_SECONDS,
     opportunity_distance: float = TRADE_OPPORTUNITY_DISTANCE,
+    trade_events: List[TradeEvent] | None = None,
 ) -> Tuple[
     Dict[str, int],
     Dict[str, int],
@@ -676,6 +677,7 @@ def calculate_trade_metrics_v2(
         parser,
         player_steam_ids,
         trade_window_seconds=trade_window_seconds,
+        trade_events=trade_events,
     )
 
     trade_opportunities = (
@@ -710,6 +712,7 @@ def calculate_trade_metrics(
     parser: RawDemoParser,
     player_steam_ids: List[str],
     trade_window_seconds: float = TRADE_WINDOW_SECONDS,
+    trade_events: List[TradeEvent] | None = None,
 ) -> Tuple[
     Dict[str, int],
     Dict[str, int],
@@ -739,10 +742,11 @@ def calculate_trade_metrics(
         if valid_sid(steam_id)
     }
 
-    trade_events = detect_trade_events(
-        parser,
-        trade_window_seconds=trade_window_seconds,
-    )
+    if trade_events is None:
+        trade_events = detect_trade_events(
+            parser,
+            trade_window_seconds=trade_window_seconds,
+        )
 
     retaliation_events = set()
 
