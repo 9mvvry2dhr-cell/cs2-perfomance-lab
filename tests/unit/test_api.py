@@ -79,6 +79,7 @@ class StubAnalysisRepository:
         *,
         limit: int = 20,
         owner_steam_id: str | None = None,
+        match_source: str | None = None,
     ):
         if self.error is not None:
             raise self.error
@@ -91,6 +92,7 @@ class StubAnalysisRepository:
         *,
         limit: int = 10,
         owner_steam_id: str | None = None,
+        match_source: str | None = None,
     ):
         if self.error is not None:
             raise self.error
@@ -102,9 +104,22 @@ class StubSession:
     def execute(self, _):
         return None
 
+    def scalar(self, _):
+        return None
+
 
 class ApiTest(unittest.TestCase):
     def setUp(self):
+        self.steam_profile_patcher = patch(
+            "src.api.app.fetch_steam_profile",
+            return_value=None,
+        )
+        self.steam_profile_patcher.start()
+
+        app.dependency_overrides[
+            get_database_session
+        ] = lambda: StubSession()
+
         app.dependency_overrides[
             get_current_user
         ] = lambda: CurrentUser(
@@ -115,6 +130,7 @@ class ApiTest(unittest.TestCase):
 
     def tearDown(self):
         app.dependency_overrides.clear()
+        self.steam_profile_patcher.stop()
 
     def test_health_returns_ok(self):
         client = TestClient(app)
@@ -498,6 +514,7 @@ class ApiTest(unittest.TestCase):
                 ),
                 "player_name": None,
                 "avatar_url": None,
+                "founding_tester_number": None,
             },
         )
 

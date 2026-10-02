@@ -1,4 +1,6 @@
+import os
 import unittest
+from unittest.mock import patch
 
 from fastapi.testclient import TestClient
 
@@ -17,6 +19,7 @@ from src.api.dependencies import (
     get_analysis_repository,
     get_current_user,
     get_match_ai_explainer,
+    get_match_ai_report_repository,
 )
 from src.domain.identity import CurrentUser
 from tests.unit.test_analysis_repository import make_analysis
@@ -57,6 +60,31 @@ class StubRepository:
             return self.analysis
 
         return None
+
+
+class StubReportRepository:
+    def __init__(self):
+        self.committed = []
+        self.cancelled = 0
+
+    def reserve_generation(
+        self,
+        *,
+        owner_steam_id,
+        match_id,
+    ):
+        return None
+
+    def commit_success(
+        self,
+        payload,
+    ):
+        self.committed.append(
+            payload
+        )
+
+    def cancel_generation(self):
+        self.cancelled += 1
 
 
 class StubExplainer:
@@ -116,6 +144,22 @@ def make_explanation():
 class MatchAIEndpointTest(unittest.TestCase):
 
     def setUp(self):
+        self.ai_env_patcher = patch.dict(
+            os.environ,
+            {
+                "AI_COACH_ENABLED": "true",
+            },
+        )
+        self.ai_env_patcher.start()
+
+        self.report_repository = (
+            StubReportRepository()
+        )
+
+        app.dependency_overrides[
+            get_match_ai_report_repository
+        ] = lambda: self.report_repository
+
         app.dependency_overrides[
             get_current_user
         ] = lambda: CurrentUser(
@@ -124,6 +168,7 @@ class MatchAIEndpointTest(unittest.TestCase):
 
     def tearDown(self):
         app.dependency_overrides.clear()
+        self.ai_env_patcher.stop()
 
     def test_returns_grounded_explanation_for_owned_match(self):
         analysis = make_analysis()
