@@ -18499,6 +18499,40 @@ document
     }
 
 
+    function openHome() {
+        hideAnalysisPage();
+
+        playerHistory.hidden = true;
+
+        if (aiCoachPage) {
+            aiCoachPage.hidden = true;
+        }
+
+        placeholder.hidden = false;
+        placeholder.classList.remove(
+            "dashboard-mode"
+        );
+
+        if (placeholderBody) {
+            placeholderBody.hidden = true;
+            placeholderBody.replaceChildren();
+        }
+
+        eyebrow.textContent =
+            "CS2 PERFORMANCE LAB";
+
+        title.textContent =
+            "\u0422\u0432\u043e\u044f \u0438\u0433\u0440\u0430";
+
+        description.textContent =
+            "\u0417\u0434\u0435\u0441\u044c \u0431\u0443\u0434\u0435\u0442 \u043a\u0440\u0430\u0442\u043a\u0438\u0439 \u043e\u0431\u0437\u043e\u0440 \u0442\u0432\u043e\u0435\u0439 \u0438\u0433\u0440\u044b: \u0444\u043e\u0440\u043c\u0430, \u043c\u0435\u0442\u0440\u0438\u043a\u0438, Player DNA \u0438 \u0433\u043b\u0430\u0432\u043d\u043e\u0435 \u043d\u0430\u043f\u0440\u0430\u0432\u043b\u0435\u043d\u0438\u0435 \u0440\u043e\u0441\u0442\u0430.";
+
+        setActive(
+            analysisNav
+        );
+    }
+
+
     function openAnalysis() {
         placeholder.hidden =
             true;
@@ -18514,10 +18548,13 @@ document
         restoreAnalysisPage();
 
         setActive(
-            analysisNav
+            matchesNav
         );
     }
 
+
+    window.cs2OpenHome =
+        openHome;
 
     window.cs2OpenAnalysis =
         openAnalysis;
@@ -18546,11 +18583,7 @@ document
 
 
     function openMatches() {
-        openPlayers();
-
-        setActive(
-            matchesNav
-        );
+        openAnalysis();
     }
 
 
@@ -22080,7 +22113,7 @@ document
 
     bind(
         analysisNav,
-        openAnalysis
+        openHome
     );
 
 
@@ -22676,6 +22709,13 @@ document
         setAppAuthState(
             true
         );
+
+        if (
+            typeof window.cs2OpenHome
+            === "function"
+        ) {
+            window.cs2OpenHome();
+        }
 
         const logoutRow =
             document.getElementById(
