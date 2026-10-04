@@ -10794,7 +10794,7 @@ CS2 Performance Lab
 <div class="nav" id="nav">
 
 
-<button class="nav-button active">
+<button class="nav-button active" data-nav-page="home">
 
 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
 <path d="M4 19V10"/>
@@ -10803,7 +10803,7 @@ CS2 Performance Lab
 <path d="M22 19H2"/>
 </svg>
 
-Анализ матча
+Главная
 
 </button>
 
@@ -18312,8 +18312,8 @@ document
 
 
     const analysisNav =
-        findNav(
-            "\u0410\u043d\u0430\u043b\u0438\u0437 \u043c\u0430\u0442\u0447\u0430"
+        document.querySelector(
+            '[data-nav-page="home"]'
         );
 
     const playersNav =
