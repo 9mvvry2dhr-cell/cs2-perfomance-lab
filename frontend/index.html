@@ -10808,6 +10808,20 @@ CS2 Performance Lab
 </button>
 
 
+<button class="nav-button" data-nav-page="matches" type="button" disabled>
+
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+<path d="M5 7h14"/>
+<path d="M5 12h14"/>
+<path d="M5 17h14"/>
+</svg>
+
+Матчи
+
+</button>
+
+
+
 <button class="nav-button">
 
 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
@@ -18316,6 +18330,11 @@ document
             '[data-nav-page="home"]'
         );
 
+    const matchesNav =
+        document.querySelector(
+            '[data-nav-page="matches"]'
+        );
+
     const playersNav =
         findNav(
             "\u041f\u0440\u043e\u0444\u0438\u043b\u044c"
@@ -18523,6 +18542,15 @@ document
         );
 
         loadPlayerHistory();
+    }
+
+
+    function openMatches() {
+        openPlayers();
+
+        setActive(
+            matchesNav
+        );
     }
 
 
@@ -22053,6 +22081,12 @@ document
     bind(
         analysisNav,
         openAnalysis
+    );
+
+
+    bind(
+        matchesNav,
+        openMatches
     );
 
 
