@@ -27552,6 +27552,8 @@ aria-hidden="true"
                 window.CS2_PUBLIC_DEMO_OPEN =
                     true;
 
+                sessionStorage.setItem('cs2pl_public_demo_open', '1');
+
 
                 renderMatchAnalysis(
                     analysis
@@ -27624,6 +27626,11 @@ aria-hidden="true"
                 originalText;
         }
     );
+    if (sessionStorage.getItem('cs2pl_public_demo_open') === '1') {
+        fetch('/me',{credentials:'same-origin',cache:'no-store'}).then(r => {
+            if (r.status === 401) button.click();
+        });
+    }
 })();
 </script>
 
