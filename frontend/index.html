@@ -17152,6 +17152,25 @@ body.cs2-update-open {
 
 </style>
 
+
+<style id="cs2-auth-nav-guard-v30">
+
+/*
+    Auth-only navigation guard.
+
+    Hidden by default.
+    Shown only after /me confirms
+    a real authenticated Steam user.
+*/
+
+body:not(.cs2-auth-nav-ok) #nav,
+body:not(.cs2-auth-nav-ok) .ai-coach-nav,
+body:not(.cs2-auth-nav-ok) .side-label {
+    display: none !important;
+}
+
+</style>
+
 </head>
 
 
@@ -39142,6 +39161,214 @@ aria-hidden="true"
 
 })();
 </script>
+
+
+<script id="cs2-auth-nav-guard-script-v30">
+(() => {
+
+    function setAuthenticated(
+        authenticated
+    ) {
+        document.body.classList.toggle(
+            "cs2-auth-nav-ok",
+            authenticated
+        );
+    }
+
+
+    async function checkAuth() {
+
+        setAuthenticated(false);
+
+        try {
+
+            const response =
+                await fetch(
+                    "/me",
+                    {
+                        credentials:
+                            "same-origin",
+
+                        cache:
+                            "no-store",
+
+                        headers: {
+                            Accept:
+                                "application/json"
+                        }
+                    }
+                );
+
+
+            if (!response.ok) {
+                return;
+            }
+
+
+            const me =
+                await response.json();
+
+
+            const steamId =
+                String(
+                    me.steam_id || ""
+                ).trim();
+
+
+            setAuthenticated(
+                Boolean(steamId)
+            );
+
+        } catch (_) {
+
+            setAuthenticated(false);
+
+        }
+
+    }
+
+
+    if (
+        document.readyState
+        === "loading"
+    ) {
+
+        document.addEventListener(
+            "DOMContentLoaded",
+            checkAuth,
+            {
+                once: true
+            }
+        );
+
+    } else {
+
+        checkAuth();
+
+    }
+
+})();
+</script>
+
+
+<style id="cs2-guest-header-final-v31">
+
+/*
+   Guest mode:
+   private navigation must never be visible.
+   This block intentionally lives at the END
+   of the document to beat legacy UI overrides.
+*/
+
+html body:not(.cs2-auth-nav-ok) #nav,
+html body:not(.cs2-auth-nav-ok) .ai-coach-nav,
+html body:not(.cs2-auth-nav-ok) .ai-coach-button,
+html body:not(.cs2-auth-nav-ok) .side-label {
+    display: none !important;
+    visibility: hidden !important;
+}
+
+</style>
+
+
+<style id="cs2-admin-position-v32">
+
+/* =========================================================
+   FOUNDING TESTERS ADMIN — FINAL POSITION
+   ========================================================= */
+
+/* Never show while explicitly hidden. */
+html body #foundingAdminCard[hidden] {
+    display: none !important;
+}
+
+/* Guests must never see the admin UI. */
+html body:not(.cs2-auth-nav-ok) #foundingAdminCard {
+    display: none !important;
+}
+
+/* Visible admin panel floats independently of header layout. */
+html body #foundingAdminCard:not([hidden]) {
+    position: fixed !important;
+
+    top: 82px !important;
+    right: 24px !important;
+    left: auto !important;
+    bottom: auto !important;
+
+    width: 300px !important;
+    max-width: calc(100vw - 32px) !important;
+    max-height: calc(100vh - 106px) !important;
+
+    margin: 0 !important;
+
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+
+    z-index: 1200 !important;
+}
+
+@media (max-width: 620px) {
+
+    html body #foundingAdminCard:not([hidden]) {
+        top: 72px !important;
+        right: 12px !important;
+
+        width: min(
+            300px,
+            calc(100vw - 24px)
+        ) !important;
+
+        max-height:
+            calc(100vh - 88px) !important;
+    }
+
+}
+
+</style>
+
+
+<style id="cs2-admin-layout-v33">
+
+/* =========================================================
+   ADMIN PANEL — RESERVE SPACE, DO NOT COVER CONTENT
+   ========================================================= */
+
+@media (min-width: 1500px) {
+
+    html body:has(
+        #foundingAdminCard:not([hidden])
+    ) .main {
+        padding-right: 350px !important;
+    }
+
+    html body #foundingAdminCard:not([hidden]) {
+        top: 80px !important;
+        right: 22px !important;
+
+        width: 300px !important;
+
+        max-height:
+            calc(100vh - 102px) !important;
+    }
+
+}
+
+/* Smaller screens: keep it usable as a floating admin panel. */
+@media (max-width: 1499px) {
+
+    html body #foundingAdminCard:not([hidden]) {
+        right: 14px !important;
+
+        width: 290px !important;
+
+        max-height:
+            calc(100vh - 96px) !important;
+    }
+
+}
+
+</style>
 
 </body>
 </html>
