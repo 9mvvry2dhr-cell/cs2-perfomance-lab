@@ -29,6 +29,10 @@ from src.metrics.survival import (
     detect_survival_rounds,
 )
 from src.metrics.splits import detect_player_round_sides
+from src.metrics.round_state import (
+    build_round_state_transitions,
+    summarize_round_advantage,
+)
 
 
 logger = logging.getLogger(__name__)
@@ -208,6 +212,41 @@ class DemoParser:
         )
 
         # --------------------------------------------------------------
+        # Round State / Advantage Control
+        # --------------------------------------------------------------
+
+        stage_started = time.perf_counter()
+
+        try:
+            round_state_transitions = (
+                build_round_state_transitions(
+                    self.raw_parser
+                )
+            )
+
+            round_advantage = (
+                summarize_round_advantage(
+                    self.raw_parser,
+                    transitions=(
+                        round_state_transitions
+                    ),
+                )
+            )
+
+        except Exception:
+            logger.exception(
+                "Round State calculation failed"
+            )
+
+            round_state_transitions = []
+            round_advantage = []
+
+        logger.info(
+            "PARSER_STAGE round_state=%.2fs",
+            time.perf_counter() - stage_started,
+        )
+
+        # --------------------------------------------------------------
         # Final DTO
         # --------------------------------------------------------------
 
@@ -224,6 +263,12 @@ class DemoParser:
             is_valid=is_valid,
             validation_error=validation_error,
             player_results=player_results,
+            round_state_transitions=(
+                round_state_transitions
+            ),
+            round_advantage=(
+                round_advantage
+            ),
         )
 
     def _derive_player_results(

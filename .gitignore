@@ -38,3 +38,6 @@ Thumbs.db
 /deploy/staging.env
 
 /backups/
+
+# Local Steam Premier sync cursors
+/data/steam_*_state.json

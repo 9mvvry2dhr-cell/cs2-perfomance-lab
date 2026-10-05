@@ -76,3 +76,12 @@ class ParsedMatch:
     player_results: Dict[str, str] = field(
         default_factory=dict
     )
+
+    round_state_transitions: List[object] = field(
+        default_factory=list
+    )
+
+    round_advantage: List[object] = field(
+        default_factory=list
+    )
+

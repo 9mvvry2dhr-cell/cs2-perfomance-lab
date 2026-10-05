@@ -5,6 +5,10 @@ from src.domain.insights import Finding, generate_player_findings
 from src.domain.metrics import calculate_hs_percent, calculate_kd
 from src.parsing.dto import ParsedMatch, ParsedPlayer
 from src.metrics.match_story import MatchStoryEvent
+from src.metrics.round_state import (
+    RoundAdvantageSummary,
+    RoundStateTransition,
+)
 
 
 @dataclass(frozen=True)
@@ -99,6 +103,18 @@ class MatchAnalysis:
         default_factory=dict,
         repr=False,
         compare=False,
+    )
+
+    round_state_transitions: List[
+        RoundStateTransition
+    ] = field(
+        default_factory=list
+    )
+
+    round_advantage: List[
+        RoundAdvantageSummary
+    ] = field(
+        default_factory=list
     )
 
 
@@ -397,5 +413,11 @@ def build_match_analysis(
         players=players,
         player_results=dict(
             match.player_results
+        ),
+        round_state_transitions=list(
+            match.round_state_transitions
+        ),
+        round_advantage=list(
+            match.round_advantage
         ),
     )
