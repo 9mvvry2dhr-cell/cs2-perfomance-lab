@@ -10750,6 +10750,107 @@ body.is-authenticated .project-support-kicker,body.is-authenticated .project-sup
 body.is-authenticated .project-support-button{min-height:32px!important;margin:0!important;padding:0 11px!important;display:inline-flex!important;align-items:center!important;justify-content:center!important;border-radius:5px!important;font-size:9px!important}
 </style>
 
+<style id="home-top-v1">
+.home-top {
+    width: 100%;
+    margin-top: 22px;
+}
+
+.home-top-head {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 20px;
+    padding-bottom: 16px;
+}
+
+.home-top-name {
+    color: #f2f7fa;
+    font-size: 20px;
+    font-weight: 760;
+    letter-spacing: -.025em;
+}
+
+.home-top-meta {
+    margin-top: 4px;
+    color: #71899b;
+    font-size: 9px;
+}
+
+.home-top-tabs {
+    display: flex;
+    gap: 18px;
+}
+
+.home-top-tab {
+    padding: 6px 1px 7px;
+    border: 0;
+    border-bottom: 2px solid transparent;
+    color: #70889a;
+    background: transparent;
+    font: inherit;
+    font-size: 10px;
+    font-weight: 800;
+    cursor: pointer;
+}
+
+.home-top-tab.active {
+    color: #f0f6fa;
+    border-bottom-color: var(--orange);
+}
+
+.home-top-stats {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    border-top: 1px solid rgba(137, 167, 187, .12);
+    border-bottom: 1px solid rgba(137, 167, 187, .12);
+}
+
+.home-top-stat {
+    padding: 17px 18px;
+    border-left: 1px solid rgba(137, 167, 187, .09);
+}
+
+.home-top-stat:first-child {
+    border-left: 0;
+}
+
+.home-top-label {
+    color: #6b8395;
+    font-size: 8px;
+    font-weight: 800;
+    letter-spacing: .09em;
+}
+
+.home-top-value {
+    margin-top: 5px;
+    color: #f0f6fa;
+    font-size: 26px;
+    font-weight: 700;
+    letter-spacing: -.035em;
+}
+
+@media (max-width: 760px) {
+    .home-top-head {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .home-top-stats {
+        grid-template-columns: 1fr;
+    }
+
+    .home-top-stat {
+        border-left: 0;
+        border-top: 1px solid rgba(137, 167, 187, .09);
+    }
+
+    .home-top-stat:first-child {
+        border-top: 0;
+    }
+}
+</style>
+
 </head>
 
 
@@ -18499,24 +18600,306 @@ document
     }
 
 
+
+    let homeSource =
+        "premier";
+
+    let homeLoadId =
+        0;
+
+
+    function renderHomeTop(
+        summary,
+        source
+    ) {
+        const root =
+            makeElement(
+                "div",
+                "home-top"
+            );
+
+        const head =
+            makeElement(
+                "div",
+                "home-top-head"
+            );
+
+        const who =
+            makeElement(
+                "div"
+            );
+
+        const displayName =
+            String(
+                summary?.player_name
+                || window.CS2_STEAM_DISPLAY_NAME
+                || window.CS2_CURRENT_USER?.name
+                || "\u0418\u0433\u0440\u043e\u043a"
+            ).trim();
+
+        who.append(
+            makeElement(
+                "div",
+                "home-top-name",
+                displayName
+            ),
+            makeElement(
+                "div",
+                "home-top-meta",
+                (
+                    source === "faceit"
+                        ? "FACEIT"
+                        : "Premier"
+                )
+                + " \u00b7 "
+                + (
+                    summary
+                        ? (
+                            "\u043c\u0430\u0442\u0447\u0435\u0439: "
+                            + summary.matches_analyzed
+                        )
+                        : "\u043d\u0435\u0442 \u0430\u043d\u0430\u043b\u0438\u0437\u043e\u0432"
+                )
+            )
+        );
+
+        const tabs =
+            makeElement(
+                "div",
+                "home-top-tabs"
+            );
+
+        [
+            [
+                "premier",
+                "PREMIER"
+            ],
+            [
+                "faceit",
+                "FACEIT"
+            ],
+        ].forEach(
+            ([value, label]) => {
+                const button =
+                    makeElement(
+                        "button",
+                        "home-top-tab"
+                        + (
+                            value === source
+                                ? " active"
+                                : ""
+                        ),
+                        label
+                    );
+
+                button.type =
+                    "button";
+
+                button.addEventListener(
+                    "click",
+                    () => {
+                        if (
+                            value
+                            === homeSource
+                        ) {
+                            return;
+                        }
+
+                        homeSource =
+                            value;
+
+                        loadHomeTop(
+                            value
+                        );
+                    }
+                );
+
+                tabs.appendChild(
+                    button
+                );
+            }
+        );
+
+        head.append(
+            who,
+            tabs
+        );
+
+        const stats =
+            summary?.stats
+            || {};
+
+        const strip =
+            makeElement(
+                "div",
+                "home-top-stats"
+            );
+
+        [
+            [
+                "K/D",
+                summary
+                    ? formatNumber(
+                        stats.kd,
+                        2
+                    )
+                    : "\u2014"
+            ],
+            [
+                "ADR",
+                summary
+                    ? formatNumber(
+                        stats.adr
+                    )
+                    : "\u2014"
+            ],
+            [
+                "KAST",
+                summary
+                    ? (
+                        formatNumber(
+                            stats.kast_pct
+                        )
+                        + "%"
+                    )
+                    : "\u2014"
+            ],
+        ].forEach(
+            ([label, value]) => {
+                const item =
+                    makeElement(
+                        "div",
+                        "home-top-stat"
+                    );
+
+                item.append(
+                    makeElement(
+                        "div",
+                        "home-top-label",
+                        label
+                    ),
+                    makeElement(
+                        "div",
+                        "home-top-value",
+                        value
+                    )
+                );
+
+                strip.appendChild(
+                    item
+                );
+            }
+        );
+
+        root.append(
+            head,
+            strip
+        );
+
+        placeholderBody
+            .replaceChildren(
+                root
+            );
+    }
+
+
+    async function loadHomeTop(
+        source = homeSource
+    ) {
+        const loadId =
+            ++homeLoadId;
+
+        placeholderBody.hidden =
+            false;
+
+        placeholderBody
+            .replaceChildren(
+                makeElement(
+                    "div",
+                    "dashboard-loading",
+                    "\u0417\u0430\u0433\u0440\u0443\u0436\u0430\u0435\u043c \u043e\u0431\u0437\u043e\u0440\u2026"
+                )
+            );
+
+        try {
+            const response =
+                await fetch(
+                    "/me/summary?limit=100&source="
+                    + encodeURIComponent(
+                        source
+                    ),
+                    {
+                        credentials:
+                            "same-origin",
+                        cache:
+                            "no-store",
+                    }
+                );
+
+            if (
+                loadId
+                !== homeLoadId
+            ) {
+                return;
+            }
+
+            if (
+                response.status
+                === 404
+            ) {
+                renderHomeTop(
+                    null,
+                    source
+                );
+
+                return;
+            }
+
+            if (!response.ok) {
+                throw new Error(
+                    "\u041d\u0435 \u0443\u0434\u0430\u043b\u043e\u0441\u044c \u0437\u0430\u0433\u0440\u0443\u0437\u0438\u0442\u044c \u043e\u0431\u0437\u043e\u0440."
+                );
+            }
+
+            renderHomeTop(
+                await response.json(),
+                source
+            );
+        } catch (error) {
+            if (
+                loadId
+                === homeLoadId
+            ) {
+                placeholderBody
+                    .replaceChildren(
+                        makeElement(
+                            "div",
+                            "dashboard-error",
+                            error.message
+                        )
+                    );
+            }
+        }
+    }
+
+
     function openHome() {
         hideAnalysisPage();
 
-        playerHistory.hidden = true;
+        playerHistory.hidden =
+            true;
 
         if (aiCoachPage) {
-            aiCoachPage.hidden = true;
+            aiCoachPage.hidden =
+                true;
         }
 
-        placeholder.hidden = false;
-        placeholder.classList.remove(
+        placeholder.hidden =
+            false;
+
+        placeholder.classList.add(
             "dashboard-mode"
         );
-
-        if (placeholderBody) {
-            placeholderBody.hidden = true;
-            placeholderBody.replaceChildren();
-        }
 
         eyebrow.textContent =
             "CS2 PERFORMANCE LAB";
@@ -18525,10 +18908,14 @@ document
             "\u0422\u0432\u043e\u044f \u0438\u0433\u0440\u0430";
 
         description.textContent =
-            "\u0417\u0434\u0435\u0441\u044c \u0431\u0443\u0434\u0435\u0442 \u043a\u0440\u0430\u0442\u043a\u0438\u0439 \u043e\u0431\u0437\u043e\u0440 \u0442\u0432\u043e\u0435\u0439 \u0438\u0433\u0440\u044b: \u0444\u043e\u0440\u043c\u0430, \u043c\u0435\u0442\u0440\u0438\u043a\u0438, Player DNA \u0438 \u0433\u043b\u0430\u0432\u043d\u043e\u0435 \u043d\u0430\u043f\u0440\u0430\u0432\u043b\u0435\u043d\u0438\u0435 \u0440\u043e\u0441\u0442\u0430.";
+            "\u041a\u043e\u0440\u043e\u0442\u043a\u0438\u0439 \u043e\u0431\u0437\u043e\u0440 \u043f\u043e \u0443\u0436\u0435 \u043f\u0440\u043e\u0430\u043d\u0430\u043b\u0438\u0437\u0438\u0440\u043e\u0432\u0430\u043d\u043d\u044b\u043c \u043c\u0430\u0442\u0447\u0430\u043c.";
 
         setActive(
             analysisNav
+        );
+
+        loadHomeTop(
+            homeSource
         );
     }
 
