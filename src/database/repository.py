@@ -10,6 +10,8 @@ from src.database.models import (
     MatchPlayerModel,
     MatchStoryEventModel,
     PlayerSideStatsModel,
+    RoundAdvantageModel,
+    RoundStateTransitionModel,
     UserMatchModel,
 )
 from src.domain.analysis import (
@@ -24,6 +26,10 @@ from src.domain.history import (
     build_player_history_summary,
 )
 from src.metrics.match_story import MatchStoryEvent
+from src.metrics.round_state import (
+    RoundAdvantageSummary,
+    RoundStateTransition,
+)
 
 from src.domain.insights import (
     FINDINGS_VERSION,
@@ -151,6 +157,12 @@ class AnalysisRepository:
                     else {}
                 ),
             )
+
+            player_position_by_steam_id = {
+                str(player.steam_id): position
+                for position, player
+                in enumerate(analysis.players)
+            }
 
             for player_position, player in enumerate(
                 analysis.players
@@ -287,6 +299,141 @@ class AnalysisRepository:
 
                 match_model.players.append(
                     player_model
+                )
+
+            # Persist only anonymous player positions.
+            # Raw demo Steam IDs never enter round-state tables.
+
+            transition_positions: dict[int, int] = {}
+
+            for transition in (
+                analysis.round_state_transitions
+            ):
+                round_num = int(
+                    transition.round_num
+                )
+
+                position = (
+                    transition_positions.get(
+                        round_num,
+                        0,
+                    )
+                )
+
+                transition_positions[
+                    round_num
+                ] = position + 1
+
+                attacker_position = None
+
+                if transition.attacker is not None:
+                    attacker_position = (
+                        player_position_by_steam_id.get(
+                            str(
+                                transition.attacker
+                            )
+                        )
+                    )
+
+                victim_position = None
+
+                if transition.victim is not None:
+                    victim_position = (
+                        player_position_by_steam_id.get(
+                            str(
+                                transition.victim
+                            )
+                        )
+                    )
+
+                match_model.round_state_transitions.append(
+                    RoundStateTransitionModel(
+                        round_num=round_num,
+                        position=position,
+                        tick=int(
+                            transition.tick
+                        ),
+                        attacker_position=(
+                            attacker_position
+                        ),
+                        victim_position=(
+                            victim_position
+                        ),
+                        attacker_team=(
+                            transition.attacker_team
+                        ),
+                        victim_team=int(
+                            transition.victim_team
+                        ),
+                        cause=transition.cause,
+                        t_alive_before=int(
+                            transition.t_alive_before
+                        ),
+                        ct_alive_before=int(
+                            transition.ct_alive_before
+                        ),
+                        t_alive_after=int(
+                            transition.t_alive_after
+                        ),
+                        ct_alive_after=int(
+                            transition.ct_alive_after
+                        ),
+                    )
+                )
+
+            for summary in analysis.round_advantage:
+                first_advantage_player_position = (
+                    None
+                )
+
+                if (
+                    summary.first_advantage_by
+                    is not None
+                ):
+                    first_advantage_player_position = (
+                        player_position_by_steam_id.get(
+                            str(
+                                summary.first_advantage_by
+                            )
+                        )
+                    )
+
+                match_model.round_advantages.append(
+                    RoundAdvantageModel(
+                        round_num=int(
+                            summary.round_num
+                        ),
+                        winner_team=int(
+                            summary.winner_team
+                        ),
+                        first_advantage_team=(
+                            summary.first_advantage_team
+                        ),
+                        first_advantage_tick=(
+                            summary.first_advantage_tick
+                        ),
+                        first_advantage_player_position=(
+                            first_advantage_player_position
+                        ),
+                        converted_first_advantage=(
+                            summary.converted_first_advantage
+                        ),
+                        advantage_lost=bool(
+                            summary.advantage_lost
+                        ),
+                        advantage_restored=bool(
+                            summary.advantage_restored
+                        ),
+                        comeback_team=(
+                            summary.comeback_team
+                        ),
+                        max_t_advantage=int(
+                            summary.max_t_advantage
+                        ),
+                        max_ct_advantage=int(
+                            summary.max_ct_advantage
+                        ),
+                    )
                 )
 
             self.session.add(match_model)
@@ -439,6 +586,12 @@ class AnalysisRepository:
                     MatchModel.players
                 ).selectinload(
                     MatchPlayerModel.match_story
+                ),
+                selectinload(
+                    MatchModel.round_advantages
+                ),
+                selectinload(
+                    MatchModel.round_state_transitions
                 ),
             )
             .where(
@@ -614,6 +767,96 @@ class AnalysisRepository:
                 )
             )
 
+        round_state_transitions = [
+            RoundStateTransition(
+                round_num=item.round_num,
+                tick=item.tick,
+                attacker=(
+                    _anonymous_player_steam_id(
+                        item.attacker_position
+                    )
+                    if item.attacker_position
+                    is not None
+                    else None
+                ),
+                victim=(
+                    _anonymous_player_steam_id(
+                        item.victim_position
+                    )
+                    if item.victim_position
+                    is not None
+                    else None
+                ),
+                attacker_team=(
+                    item.attacker_team
+                ),
+                victim_team=(
+                    item.victim_team
+                ),
+                cause=item.cause,
+                t_alive_before=(
+                    item.t_alive_before
+                ),
+                ct_alive_before=(
+                    item.ct_alive_before
+                ),
+                t_alive_after=(
+                    item.t_alive_after
+                ),
+                ct_alive_after=(
+                    item.ct_alive_after
+                ),
+            )
+            for item in (
+                match_model
+                .round_state_transitions
+            )
+        ]
+
+        round_advantage = [
+            RoundAdvantageSummary(
+                round_num=item.round_num,
+                winner_team=item.winner_team,
+                first_advantage_team=(
+                    item.first_advantage_team
+                ),
+                first_advantage_tick=(
+                    item.first_advantage_tick
+                ),
+                first_advantage_by=(
+                    _anonymous_player_steam_id(
+                        item.first_advantage_player_position
+                    )
+                    if (
+                        item.first_advantage_player_position
+                        is not None
+                    )
+                    else None
+                ),
+                converted_first_advantage=(
+                    item.converted_first_advantage
+                ),
+                advantage_lost=(
+                    item.advantage_lost
+                ),
+                advantage_restored=(
+                    item.advantage_restored
+                ),
+                comeback_team=(
+                    item.comeback_team
+                ),
+                max_t_advantage=(
+                    item.max_t_advantage
+                ),
+                max_ct_advantage=(
+                    item.max_ct_advantage
+                ),
+            )
+            for item in (
+                match_model.round_advantages
+            )
+        ]
+
         return MatchAnalysis(
             match_id=match_model.match_id,
             map_name=match_model.map_name,
@@ -637,6 +880,12 @@ class AnalysisRepository:
                 for player_model
                 in match_model.players
             },
+            round_state_transitions=(
+                round_state_transitions
+            ),
+            round_advantage=(
+                round_advantage
+            ),
         )
 
     def get_player_match_history(

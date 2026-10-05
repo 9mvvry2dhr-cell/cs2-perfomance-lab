@@ -24,6 +24,12 @@ from src.domain.insights import (
     FINDINGS_VERSION,
     Finding,
 )
+from src.metrics.round_state import (
+    RoundAdvantageSummary,
+    RoundStateTransition,
+    TEAM_CT,
+    TEAM_T,
+)
 
 
 def make_analysis(
@@ -284,6 +290,120 @@ class AnalysisRepositoryTest(unittest.TestCase):
         self.assertNotEqual(
             stored.name,
             "real-demo-nickname",
+        )
+
+
+    def test_round_state_round_trip_is_anonymized(self):
+        base = make_analysis()
+
+        first = base.players[0]
+
+        second = replace(
+            first,
+            steam_id="76561198055629470",
+            name="enemy-player",
+        )
+
+        analysis = replace(
+            base,
+            players=[
+                first,
+                second,
+            ],
+            round_state_transitions=[
+                RoundStateTransition(
+                    round_num=1,
+                    tick=300,
+                    attacker=first.steam_id,
+                    victim=second.steam_id,
+                    attacker_team=TEAM_CT,
+                    victim_team=TEAM_T,
+                    cause="enemy",
+                    t_alive_before=5,
+                    ct_alive_before=5,
+                    t_alive_after=4,
+                    ct_alive_after=5,
+                )
+            ],
+            round_advantage=[
+                RoundAdvantageSummary(
+                    round_num=1,
+                    winner_team=TEAM_CT,
+                    first_advantage_team=TEAM_CT,
+                    first_advantage_tick=300,
+                    first_advantage_by=(
+                        first.steam_id
+                    ),
+                    converted_first_advantage=True,
+                    advantage_lost=False,
+                    advantage_restored=False,
+                    comeback_team=None,
+                    max_t_advantage=0,
+                    max_ct_advantage=1,
+                )
+            ],
+        )
+
+        self.repository.save_analysis(
+            analysis
+        )
+
+        loaded = self.repository.get_analysis(
+            analysis.match_id
+        )
+
+        self.assertIsNotNone(loaded)
+
+        self.assertEqual(
+            len(
+                loaded.round_state_transitions
+            ),
+            1,
+        )
+
+        transition = (
+            loaded.round_state_transitions[0]
+        )
+
+        self.assertEqual(
+            transition.attacker,
+            "anon:0",
+        )
+
+        self.assertEqual(
+            transition.victim,
+            "anon:1",
+        )
+
+        self.assertEqual(
+            transition.state_before,
+            "T5-CT5",
+        )
+
+        self.assertEqual(
+            transition.state_after,
+            "T4-CT5",
+        )
+
+        self.assertEqual(
+            len(loaded.round_advantage),
+            1,
+        )
+
+        summary = loaded.round_advantage[0]
+
+        self.assertEqual(
+            summary.first_advantage_by,
+            "anon:0",
+        )
+
+        self.assertEqual(
+            summary.first_advantage_team,
+            TEAM_CT,
+        )
+
+        self.assertTrue(
+            summary.converted_first_advantage
         )
 
 

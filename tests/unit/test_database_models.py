@@ -79,6 +79,8 @@ class DatabaseModelsTest(unittest.TestCase):
                 "site_visitors",
                 "founding_testers",
                 "match_story_events",
+                "round_advantages",
+                "round_state_transitions",
             },
         )
 

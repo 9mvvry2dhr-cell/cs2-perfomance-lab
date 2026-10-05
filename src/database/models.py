@@ -279,6 +279,25 @@ class MatchModel(Base):
         order_by="MatchPlayerModel.position",
     )
 
+    round_advantages: Mapped[
+        list["RoundAdvantageModel"]
+    ] = relationship(
+        back_populates="match",
+        cascade="all, delete-orphan",
+        order_by="RoundAdvantageModel.round_num",
+    )
+
+    round_state_transitions: Mapped[
+        list["RoundStateTransitionModel"]
+    ] = relationship(
+        back_populates="match",
+        cascade="all, delete-orphan",
+        order_by=(
+            "RoundStateTransitionModel.round_num, "
+            "RoundStateTransitionModel.position"
+        ),
+    )
+
 
 
 class UserMatchModel(Base):
@@ -862,3 +881,229 @@ class AnalysisJobModel(Base):
         DateTime(timezone=True),
         nullable=True,
     )
+
+
+class RoundAdvantageModel(Base):
+    __tablename__ = "round_advantages"
+
+    __table_args__ = (
+        CheckConstraint(
+            "round_num >= 1",
+            name="ck_round_advantages_round_num",
+        ),
+        CheckConstraint(
+            "winner_team IN (2, 3)",
+            name="ck_round_advantages_winner_team",
+        ),
+        CheckConstraint(
+            "first_advantage_team IS NULL "
+            "OR first_advantage_team IN (2, 3)",
+            name="ck_round_advantages_first_team",
+        ),
+        CheckConstraint(
+            "comeback_team IS NULL "
+            "OR comeback_team IN (2, 3)",
+            name="ck_round_advantages_comeback_team",
+        ),
+        CheckConstraint(
+            "first_advantage_player_position IS NULL "
+            "OR first_advantage_player_position >= 0",
+            name="ck_round_advantages_player_position",
+        ),
+    )
+
+    match_id: Mapped[str] = mapped_column(
+        String(128),
+        ForeignKey(
+            "matches.match_id",
+            ondelete="CASCADE",
+        ),
+        primary_key=True,
+    )
+
+    round_num: Mapped[int] = mapped_column(
+        Integer,
+        primary_key=True,
+    )
+
+    winner_team: Mapped[int] = mapped_column(
+        Integer,
+        nullable=False,
+    )
+
+    first_advantage_team: Mapped[
+        int | None
+    ] = mapped_column(
+        Integer,
+        nullable=True,
+    )
+
+    first_advantage_tick: Mapped[
+        int | None
+    ] = mapped_column(
+        Integer,
+        nullable=True,
+    )
+
+    first_advantage_player_position: Mapped[
+        int | None
+    ] = mapped_column(
+        Integer,
+        nullable=True,
+    )
+
+    converted_first_advantage: Mapped[
+        bool | None
+    ] = mapped_column(
+        Boolean,
+        nullable=True,
+    )
+
+    advantage_lost: Mapped[bool] = mapped_column(
+        Boolean,
+        nullable=False,
+    )
+
+    advantage_restored: Mapped[bool] = mapped_column(
+        Boolean,
+        nullable=False,
+    )
+
+    comeback_team: Mapped[
+        int | None
+    ] = mapped_column(
+        Integer,
+        nullable=True,
+    )
+
+    max_t_advantage: Mapped[int] = mapped_column(
+        Integer,
+        nullable=False,
+    )
+
+    max_ct_advantage: Mapped[int] = mapped_column(
+        Integer,
+        nullable=False,
+    )
+
+    match: Mapped["MatchModel"] = relationship(
+        back_populates="round_advantages",
+    )
+
+
+class RoundStateTransitionModel(Base):
+    __tablename__ = "round_state_transitions"
+
+    __table_args__ = (
+        UniqueConstraint(
+            "match_id",
+            "round_num",
+            "position",
+            name="uq_round_state_match_round_position",
+        ),
+        CheckConstraint(
+            "round_num >= 1",
+            name="ck_round_state_round_num",
+        ),
+        CheckConstraint(
+            "position >= 0",
+            name="ck_round_state_position",
+        ),
+        CheckConstraint(
+            "tick >= 0",
+            name="ck_round_state_tick",
+        ),
+        CheckConstraint(
+            "cause IN "
+            "('enemy', 'world', 'suicide', "
+            "'teamkill', 'unknown')",
+            name="ck_round_state_cause",
+        ),
+    )
+
+    id: Mapped[int] = mapped_column(
+        Integer,
+        primary_key=True,
+        autoincrement=True,
+    )
+
+    match_id: Mapped[str] = mapped_column(
+        String(128),
+        ForeignKey(
+            "matches.match_id",
+            ondelete="CASCADE",
+        ),
+        nullable=False,
+        index=True,
+    )
+
+    round_num: Mapped[int] = mapped_column(
+        Integer,
+        nullable=False,
+    )
+
+    position: Mapped[int] = mapped_column(
+        Integer,
+        nullable=False,
+    )
+
+    tick: Mapped[int] = mapped_column(
+        Integer,
+        nullable=False,
+    )
+
+    attacker_position: Mapped[
+        int | None
+    ] = mapped_column(
+        Integer,
+        nullable=True,
+    )
+
+    victim_position: Mapped[
+        int | None
+    ] = mapped_column(
+        Integer,
+        nullable=True,
+    )
+
+    attacker_team: Mapped[
+        int | None
+    ] = mapped_column(
+        Integer,
+        nullable=True,
+    )
+
+    victim_team: Mapped[int] = mapped_column(
+        Integer,
+        nullable=False,
+    )
+
+    cause: Mapped[str] = mapped_column(
+        String(16),
+        nullable=False,
+    )
+
+    t_alive_before: Mapped[int] = mapped_column(
+        Integer,
+        nullable=False,
+    )
+
+    ct_alive_before: Mapped[int] = mapped_column(
+        Integer,
+        nullable=False,
+    )
+
+    t_alive_after: Mapped[int] = mapped_column(
+        Integer,
+        nullable=False,
+    )
+
+    ct_alive_after: Mapped[int] = mapped_column(
+        Integer,
+        nullable=False,
+    )
+
+    match: Mapped["MatchModel"] = relationship(
+        back_populates="round_state_transitions",
+    )
+
