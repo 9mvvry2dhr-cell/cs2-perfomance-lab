@@ -10,8 +10,9 @@ from src.metrics.round_state import (
 RoundSwingType = Literal[
     "no_advantage",
     "clean_conversion",
+    "regained",
+    "comeback",
     "stolen",
-    "recovered",
     "swing",
 ]
 
@@ -22,24 +23,26 @@ def classify_round_swing(
     """
     Classify the numerical-advantage story of one round.
 
-    no_advantage
-        No meaningful first numerical advantage was detected.
-
     clean_conversion
-        The team that gained the first advantage kept control
-        and converted the round.
+        First advantage was converted without losing it.
+
+    regained
+        First advantage disappeared to equal numbers,
+        was regained, and the team still won.
+        The opponent never gained a numerical lead.
+
+    comeback
+        The first-advantage team later fell numerically
+        behind but still won the round.
 
     stolen
-        The team that gained the first advantage lost it and
-        ultimately lost the round without restoring it.
-
-    recovered
-        The first-advantage team lost control, restored it,
-        and still converted the round.
+        The first-advantage team failed to convert and
+        did not regain control after a real reversal.
 
     swing
-        The first-advantage team lost control, restored it,
-        but ultimately lost the round anyway.
+        The advantage genuinely changed sides and the
+        first-advantage team later regained a lead,
+        but still lost the round.
     """
 
     if (
@@ -50,15 +53,21 @@ def classify_round_swing(
         return "no_advantage"
 
     if summary.converted_first_advantage:
+        if summary.advantage_reversed:
+            return "comeback"
+
         if (
             summary.advantage_lost
             and summary.advantage_restored
         ):
-            return "recovered"
+            return "regained"
 
         return "clean_conversion"
 
-    if summary.advantage_restored:
+    if (
+        summary.advantage_reversed
+        and summary.advantage_restored
+    ):
         return "swing"
 
     return "stolen"

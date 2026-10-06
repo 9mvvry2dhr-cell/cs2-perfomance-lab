@@ -108,6 +108,22 @@ class RoundAdvantageSummary:
     max_t_advantage: int
     max_ct_advantage: int
 
+    @property
+    def advantage_reversed(self) -> bool:
+        """
+        Whether the opponent of the first advantaged team
+        later gained a real numerical lead.
+
+        A return to equal numbers alone is not a reversal.
+        """
+        if self.first_advantage_team == TEAM_T:
+            return self.max_ct_advantage > 0
+
+        if self.first_advantage_team == TEAM_CT:
+            return self.max_t_advantage > 0
+
+        return False
+
 
 def _team_from_value(
     value,
@@ -669,8 +685,12 @@ def summarize_round_advantage(
 
         first_team_has_lost = False
 
+        # Prefer confirmed transition states when deaths exist.
+        # Freeze-end roster snapshots can occasionally disagree
+        # with the first confirmed state in unusual demos.
         winner_was_behind = (
-            round_context.winner_team
+            not round_transitions
+            and round_context.winner_team
             in VALID_TEAMS
             and initial_leader
             in VALID_TEAMS
@@ -750,10 +770,20 @@ def summarize_round_advantage(
             if (
                 round_context.winner_team
                 in VALID_TEAMS
-                and after_leader
-                in VALID_TEAMS
-                and after_leader
-                != round_context.winner_team
+                and (
+                    (
+                        before_leader
+                        in VALID_TEAMS
+                        and before_leader
+                        != round_context.winner_team
+                    )
+                    or (
+                        after_leader
+                        in VALID_TEAMS
+                        and after_leader
+                        != round_context.winner_team
+                    )
+                )
             ):
                 winner_was_behind = (
                     True
