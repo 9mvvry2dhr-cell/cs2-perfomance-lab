@@ -32,6 +32,21 @@ from src.metrics.round_state import (
 )
 
 
+from src.metrics.match_flow import (
+    RoundScoreState,
+)
+from src.metrics.round_state import (
+    TEAM_CT,
+    TEAM_T,
+)
+from src.metrics.turning_round import (
+    TurningRound,
+)
+from src.metrics.turning_story import (
+    TurningControlEvent,
+    TurningRoundStory,
+)
+
 def make_analysis(
     *,
     player_name: str = "kbn_san",
@@ -406,6 +421,178 @@ class AnalysisRepositoryTest(unittest.TestCase):
             summary.converted_first_advantage
         )
 
+
+    def test_turning_analysis_round_trip_is_anonymous(self):
+        base = make_analysis()
+
+        first = base.players[0]
+
+        second = replace(
+            first,
+            steam_id="76561198000000002",
+            name="enemy-real-name",
+        )
+
+        source = RoundStateTransition(
+            round_num=1,
+            tick=100,
+            attacker=first.steam_id,
+            victim=second.steam_id,
+            attacker_team=TEAM_CT,
+            victim_team=TEAM_T,
+            cause="enemy",
+            t_alive_before=5,
+            ct_alive_before=5,
+            t_alive_after=4,
+            ct_alive_after=5,
+        )
+
+        flow = RoundScoreState(
+            round_num=1,
+            winner_team="team_a",
+            winner_side="CT",
+            score_a_before=0,
+            score_b_before=0,
+            score_a_after=1,
+            score_b_after=0,
+        )
+
+        turning = TurningRound(
+            round_num=1,
+            winner_team="team_a",
+            swing_type="clean_conversion",
+            score_a_before=0,
+            score_b_before=0,
+            score_a_after=1,
+            score_b_after=0,
+            opponent_streak_before=0,
+            winner_run_length=3,
+            reasons=(
+                "took_lead",
+            ),
+        )
+
+        event = TurningControlEvent(
+            round_num=1,
+            tick=100,
+            round_state_position=0,
+            event_type="control_gain",
+            decisive=True,
+            attacker=first.steam_id,
+            victim=second.steam_id,
+            attacker_team=TEAM_CT,
+            victim_team=TEAM_T,
+            cause="enemy",
+            state_before="T5-CT5",
+            state_after="T4-CT5",
+            winner_advantage_before=0,
+            winner_advantage_after=1,
+        )
+
+        story = TurningRoundStory(
+            round_num=1,
+            winner_team_num=TEAM_CT,
+            events=(event,),
+            decisive_tick=100,
+            resolution="sustained_control",
+        )
+
+        analysis = replace(
+            base,
+            players=[
+                first,
+                second,
+            ],
+            round_state_transitions=[
+                source,
+            ],
+            match_flow=[
+                flow,
+            ],
+            turning_rounds=[
+                turning,
+            ],
+            turning_stories=[
+                story,
+            ],
+        )
+
+        self.repository.save_analysis(
+            analysis
+        )
+
+        loaded = self.repository.get_analysis(
+            analysis.match_id
+        )
+
+        self.assertIsNotNone(loaded)
+
+        self.assertEqual(
+            loaded.match_flow,
+            [flow],
+        )
+
+        self.assertEqual(
+            loaded.turning_rounds,
+            [turning],
+        )
+
+        self.assertEqual(
+            len(loaded.turning_stories),
+            1,
+        )
+
+        loaded_story = (
+            loaded.turning_stories[0]
+        )
+
+        self.assertEqual(
+            loaded_story.resolution,
+            "sustained_control",
+        )
+
+        self.assertEqual(
+            loaded_story.decisive_tick,
+            100,
+        )
+
+        self.assertEqual(
+            len(loaded_story.events),
+            1,
+        )
+
+        loaded_event = (
+            loaded_story.events[0]
+        )
+
+        self.assertEqual(
+            loaded_event.round_state_position,
+            0,
+        )
+
+        self.assertEqual(
+            loaded_event.attacker,
+            "anon:0",
+        )
+
+        self.assertEqual(
+            loaded_event.victim,
+            "anon:1",
+        )
+
+        self.assertEqual(
+            loaded_event.state_before,
+            "T5-CT5",
+        )
+
+        self.assertEqual(
+            loaded_event.state_after,
+            "T4-CT5",
+        )
+
+        self.assertTrue(
+            loaded_event.decisive
+        )
 
     def test_get_analysis_returns_none_for_missing_match(self):
         actual = self.repository.get_analysis(

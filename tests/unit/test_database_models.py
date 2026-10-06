@@ -81,6 +81,9 @@ class DatabaseModelsTest(unittest.TestCase):
                 "match_story_events",
                 "round_advantages",
                 "round_state_transitions",
+            "match_flow",
+            "turning_rounds",
+            "turning_control_events",
             },
         )
 

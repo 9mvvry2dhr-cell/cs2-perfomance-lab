@@ -305,3 +305,65 @@ def test_final_duel_is_not_fake_decisive_control():
     )
 
     assert not story.events[0].decisive
+
+def test_control_events_keep_source_transition_position():
+    transitions = [
+        # index 0: 0 -> +1, control event
+        tr(
+            100,
+            t_before=5,
+            ct_before=5,
+            t_after=4,
+            ct_after=5,
+        ),
+        # index 1: +1 -> +2, not a control event
+        tr(
+            200,
+            t_before=4,
+            ct_before=5,
+            t_after=3,
+            ct_after=5,
+        ),
+        # index 2: +2 -> +1, not a control event
+        tr(
+            300,
+            t_before=3,
+            ct_before=5,
+            t_after=3,
+            ct_after=4,
+            attacker_team=TEAM_T,
+            victim_team=TEAM_CT,
+        ),
+        # index 3: +1 -> 0, control loss
+        tr(
+            400,
+            t_before=3,
+            ct_before=4,
+            t_after=3,
+            ct_after=3,
+            attacker_team=TEAM_T,
+            victim_team=TEAM_CT,
+        ),
+    ]
+
+    story = build_turning_round_stories(
+        [turn()],
+        [score()],
+        transitions,
+    )[0]
+
+    assert [
+        event.event_type
+        for event in story.events
+    ] == [
+        "control_gain",
+        "control_loss",
+    ]
+
+    assert [
+        event.round_state_position
+        for event in story.events
+    ] == [
+        0,
+        3,
+    ]

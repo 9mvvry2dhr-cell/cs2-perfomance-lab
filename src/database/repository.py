@@ -6,12 +6,15 @@ from sqlalchemy.orm import Session, selectinload
 from src.database.models import (
     AnalysisJobModel,
     FindingModel,
+    MatchFlowModel,
     MatchModel,
     MatchPlayerModel,
     MatchStoryEventModel,
     PlayerSideStatsModel,
     RoundAdvantageModel,
     RoundStateTransitionModel,
+    TurningControlEventModel,
+    TurningRoundModel,
     UserMatchModel,
 )
 from src.domain.analysis import (
@@ -26,9 +29,21 @@ from src.domain.history import (
     build_player_history_summary,
 )
 from src.metrics.match_story import MatchStoryEvent
+from src.metrics.match_flow import (
+    RoundScoreState,
+)
 from src.metrics.round_state import (
     RoundAdvantageSummary,
     RoundStateTransition,
+    TEAM_CT,
+    TEAM_T,
+)
+from src.metrics.turning_round import (
+    TurningRound,
+)
+from src.metrics.turning_story import (
+    TurningControlEvent,
+    TurningRoundStory,
 )
 
 from src.domain.insights import (
@@ -436,6 +451,115 @@ class AnalysisRepository:
                     )
                 )
 
+            # Match Flow is identity-free by design.
+            for flow in analysis.match_flow:
+                match_model.match_flow.append(
+                    MatchFlowModel(
+                        round_num=int(
+                            flow.round_num
+                        ),
+                        winner_team=(
+                            flow.winner_team
+                        ),
+                        winner_side=(
+                            flow.winner_side
+                        ),
+                        score_a_before=int(
+                            flow.score_a_before
+                        ),
+                        score_b_before=int(
+                            flow.score_b_before
+                        ),
+                        score_a_after=int(
+                            flow.score_a_after
+                        ),
+                        score_b_after=int(
+                            flow.score_b_after
+                        ),
+                    )
+                )
+
+            story_by_round = {
+                story.round_num: story
+                for story
+                in analysis.turning_stories
+            }
+
+            for turning in analysis.turning_rounds:
+                story = story_by_round.get(
+                    turning.round_num
+                )
+
+                match_model.turning_rounds.append(
+                    TurningRoundModel(
+                        round_num=int(
+                            turning.round_num
+                        ),
+                        winner_team=(
+                            turning.winner_team
+                        ),
+                        swing_type=(
+                            turning.swing_type
+                        ),
+                        score_a_before=int(
+                            turning.score_a_before
+                        ),
+                        score_b_before=int(
+                            turning.score_b_before
+                        ),
+                        score_a_after=int(
+                            turning.score_a_after
+                        ),
+                        score_b_after=int(
+                            turning.score_b_after
+                        ),
+                        opponent_streak_before=int(
+                            turning.opponent_streak_before
+                        ),
+                        winner_run_length=int(
+                            turning.winner_run_length
+                        ),
+                        reasons=list(
+                            turning.reasons
+                        ),
+                        resolution=(
+                            story.resolution
+                            if story is not None
+                            else "unresolved"
+                        ),
+                        decisive_tick=(
+                            story.decisive_tick
+                            if story is not None
+                            else None
+                        ),
+                    )
+                )
+
+            # Control events deliberately do not persist
+            # attacker/victim identity. They point back to
+            # the already anonymized Round State transition.
+            for story in analysis.turning_stories:
+                for position, event in enumerate(
+                    story.events
+                ):
+                    match_model.turning_control_events.append(
+                        TurningControlEventModel(
+                            round_num=int(
+                                story.round_num
+                            ),
+                            position=position,
+                            round_state_position=int(
+                                event.round_state_position
+                            ),
+                            event_type=(
+                                event.event_type
+                            ),
+                            decisive=bool(
+                                event.decisive
+                            ),
+                        )
+                    )
+
             self.session.add(match_model)
             self.session.flush()
 
@@ -592,6 +716,15 @@ class AnalysisRepository:
                 ),
                 selectinload(
                     MatchModel.round_state_transitions
+                ),
+                selectinload(
+                    MatchModel.match_flow
+                ),
+                selectinload(
+                    MatchModel.turning_rounds
+                ),
+                selectinload(
+                    MatchModel.turning_control_events
                 ),
             )
             .where(
@@ -857,6 +990,207 @@ class AnalysisRepository:
             )
         ]
 
+        round_state_by_key = {
+            (
+                model.round_num,
+                model.position,
+            ): transition
+            for model, transition
+            in zip(
+                match_model.round_state_transitions,
+                round_state_transitions,
+            )
+        }
+
+        match_flow = [
+            RoundScoreState(
+                round_num=item.round_num,
+                winner_team=item.winner_team,
+                winner_side=item.winner_side,
+                score_a_before=(
+                    item.score_a_before
+                ),
+                score_b_before=(
+                    item.score_b_before
+                ),
+                score_a_after=(
+                    item.score_a_after
+                ),
+                score_b_after=(
+                    item.score_b_after
+                ),
+            )
+            for item in match_model.match_flow
+        ]
+
+        flow_by_round = {
+            item.round_num: item
+            for item in match_flow
+        }
+
+        turning_rounds = [
+            TurningRound(
+                round_num=item.round_num,
+                winner_team=item.winner_team,
+                swing_type=item.swing_type,
+                score_a_before=(
+                    item.score_a_before
+                ),
+                score_b_before=(
+                    item.score_b_before
+                ),
+                score_a_after=(
+                    item.score_a_after
+                ),
+                score_b_after=(
+                    item.score_b_after
+                ),
+                opponent_streak_before=(
+                    item.opponent_streak_before
+                ),
+                winner_run_length=(
+                    item.winner_run_length
+                ),
+                reasons=tuple(
+                    item.reasons or []
+                ),
+            )
+            for item in match_model.turning_rounds
+        ]
+
+        control_events_by_round: dict[
+            int,
+            list[TurningControlEventModel],
+        ] = {}
+
+        for item in (
+            match_model.turning_control_events
+        ):
+            control_events_by_round.setdefault(
+                item.round_num,
+                [],
+            ).append(item)
+
+        turning_stories: list[
+            TurningRoundStory
+        ] = []
+
+        for turning_model in (
+            match_model.turning_rounds
+        ):
+            flow = flow_by_round.get(
+                turning_model.round_num
+            )
+
+            if flow is None:
+                continue
+
+            if flow.winner_side == "T":
+                winner_team_num = TEAM_T
+            elif flow.winner_side == "CT":
+                winner_team_num = TEAM_CT
+            else:
+                continue
+
+            events: list[
+                TurningControlEvent
+            ] = []
+
+            control_models = sorted(
+                control_events_by_round.get(
+                    turning_model.round_num,
+                    [],
+                ),
+                key=lambda item: item.position,
+            )
+
+            for item in control_models:
+                source = round_state_by_key.get(
+                    (
+                        item.round_num,
+                        item.round_state_position,
+                    )
+                )
+
+                if source is None:
+                    continue
+
+                if winner_team_num == TEAM_T:
+                    advantage_before = (
+                        source.t_alive_before
+                        - source.ct_alive_before
+                    )
+                    advantage_after = (
+                        source.t_alive_after
+                        - source.ct_alive_after
+                    )
+                else:
+                    advantage_before = (
+                        source.ct_alive_before
+                        - source.t_alive_before
+                    )
+                    advantage_after = (
+                        source.ct_alive_after
+                        - source.t_alive_after
+                    )
+
+                events.append(
+                    TurningControlEvent(
+                        round_num=(
+                            item.round_num
+                        ),
+                        tick=source.tick,
+                        round_state_position=(
+                            item.round_state_position
+                        ),
+                        event_type=(
+                            item.event_type
+                        ),
+                        decisive=bool(
+                            item.decisive
+                        ),
+                        attacker=source.attacker,
+                        victim=source.victim,
+                        attacker_team=(
+                            source.attacker_team
+                        ),
+                        victim_team=(
+                            source.victim_team
+                        ),
+                        cause=source.cause,
+                        state_before=(
+                            source.state_before
+                        ),
+                        state_after=(
+                            source.state_after
+                        ),
+                        winner_advantage_before=(
+                            advantage_before
+                        ),
+                        winner_advantage_after=(
+                            advantage_after
+                        ),
+                    )
+                )
+
+            turning_stories.append(
+                TurningRoundStory(
+                    round_num=(
+                        turning_model.round_num
+                    ),
+                    winner_team_num=(
+                        winner_team_num
+                    ),
+                    events=tuple(events),
+                    decisive_tick=(
+                        turning_model.decisive_tick
+                    ),
+                    resolution=(
+                        turning_model.resolution
+                    ),
+                )
+            )
+
         return MatchAnalysis(
             match_id=match_model.match_id,
             map_name=match_model.map_name,
@@ -885,6 +1219,13 @@ class AnalysisRepository:
             ),
             round_advantage=(
                 round_advantage
+            ),
+            match_flow=match_flow,
+            turning_rounds=(
+                turning_rounds
+            ),
+            turning_stories=(
+                turning_stories
             ),
         )
 

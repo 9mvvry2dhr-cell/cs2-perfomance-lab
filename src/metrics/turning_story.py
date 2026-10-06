@@ -39,6 +39,7 @@ class TurningControlEvent:
 
     round_num: int
     tick: int
+    round_state_position: int
 
     event_type: ControlEventType
     decisive: bool
@@ -271,6 +272,7 @@ def build_turning_round_stories(
                         transition.round_num
                     ),
                     tick=transition.tick,
+                    round_state_position=index,
                     event_type=event_type,
                     decisive=(
                         index

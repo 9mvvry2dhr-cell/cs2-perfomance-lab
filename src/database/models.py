@@ -10,6 +10,7 @@ from sqlalchemy import (
     DateTime,
     Float,
     ForeignKey,
+    ForeignKeyConstraint,
     Index,
     Integer,
     JSON,
@@ -295,6 +296,33 @@ class MatchModel(Base):
         order_by=(
             "RoundStateTransitionModel.round_num, "
             "RoundStateTransitionModel.position"
+        ),
+    )
+
+    match_flow: Mapped[
+        list["MatchFlowModel"]
+    ] = relationship(
+        back_populates="match",
+        cascade="all, delete-orphan",
+        order_by="MatchFlowModel.round_num",
+    )
+
+    turning_rounds: Mapped[
+        list["TurningRoundModel"]
+    ] = relationship(
+        back_populates="match",
+        cascade="all, delete-orphan",
+        order_by="TurningRoundModel.round_num",
+    )
+
+    turning_control_events: Mapped[
+        list["TurningControlEventModel"]
+    ] = relationship(
+        back_populates="match",
+        cascade="all, delete-orphan",
+        order_by=(
+            "TurningControlEventModel.round_num, "
+            "TurningControlEventModel.position"
         ),
     )
 
@@ -1105,5 +1133,309 @@ class RoundStateTransitionModel(Base):
 
     match: Mapped["MatchModel"] = relationship(
         back_populates="round_state_transitions",
+    )
+
+
+class MatchFlowModel(Base):
+    __tablename__ = "match_flow"
+
+    __table_args__ = (
+        CheckConstraint(
+            "round_num >= 1",
+            name="ck_match_flow_round_num",
+        ),
+        CheckConstraint(
+            "winner_team IN ('team_a', 'team_b')",
+            name="ck_match_flow_winner_team",
+        ),
+        CheckConstraint(
+            "winner_side IN ('T', 'CT')",
+            name="ck_match_flow_winner_side",
+        ),
+        CheckConstraint(
+            "score_a_before >= 0 "
+            "AND score_b_before >= 0 "
+            "AND score_a_after >= 0 "
+            "AND score_b_after >= 0",
+            name="ck_match_flow_scores",
+        ),
+    )
+
+    match_id: Mapped[str] = mapped_column(
+        String(128),
+        ForeignKey(
+            "matches.match_id",
+            ondelete="CASCADE",
+        ),
+        primary_key=True,
+    )
+
+    round_num: Mapped[int] = mapped_column(
+        Integer,
+        primary_key=True,
+    )
+
+    winner_team: Mapped[str] = mapped_column(
+        String(16),
+        nullable=False,
+    )
+
+    winner_side: Mapped[str] = mapped_column(
+        String(4),
+        nullable=False,
+    )
+
+    score_a_before: Mapped[int] = mapped_column(
+        Integer,
+        nullable=False,
+    )
+
+    score_b_before: Mapped[int] = mapped_column(
+        Integer,
+        nullable=False,
+    )
+
+    score_a_after: Mapped[int] = mapped_column(
+        Integer,
+        nullable=False,
+    )
+
+    score_b_after: Mapped[int] = mapped_column(
+        Integer,
+        nullable=False,
+    )
+
+    match: Mapped["MatchModel"] = relationship(
+        back_populates="match_flow",
+    )
+
+
+class TurningRoundModel(Base):
+    __tablename__ = "turning_rounds"
+
+    __table_args__ = (
+        CheckConstraint(
+            "round_num >= 1",
+            name="ck_turning_rounds_round_num",
+        ),
+        CheckConstraint(
+            "winner_team IN ('team_a', 'team_b')",
+            name="ck_turning_rounds_winner_team",
+        ),
+        CheckConstraint(
+            "swing_type IN ("
+            "'no_advantage', "
+            "'clean_conversion', "
+            "'regained', "
+            "'comeback', "
+            "'stolen', "
+            "'swing'"
+            ")",
+            name="ck_turning_rounds_swing_type",
+        ),
+        CheckConstraint(
+            "score_a_before >= 0 "
+            "AND score_b_before >= 0 "
+            "AND score_a_after >= 0 "
+            "AND score_b_after >= 0",
+            name="ck_turning_rounds_scores",
+        ),
+        CheckConstraint(
+            "opponent_streak_before >= 0",
+            name="ck_turning_rounds_opponent_streak",
+        ),
+        CheckConstraint(
+            "winner_run_length >= 1",
+            name="ck_turning_rounds_run_length",
+        ),
+        CheckConstraint(
+            "resolution IN ("
+            "'sustained_control', "
+            "'final_elimination', "
+            "'unresolved'"
+            ")",
+            name="ck_turning_rounds_resolution",
+        ),
+        CheckConstraint(
+            "decisive_tick IS NULL "
+            "OR decisive_tick >= 0",
+            name="ck_turning_rounds_decisive_tick",
+        ),
+    )
+
+    match_id: Mapped[str] = mapped_column(
+        String(128),
+        ForeignKey(
+            "matches.match_id",
+            ondelete="CASCADE",
+        ),
+        primary_key=True,
+    )
+
+    round_num: Mapped[int] = mapped_column(
+        Integer,
+        primary_key=True,
+    )
+
+    winner_team: Mapped[str] = mapped_column(
+        String(16),
+        nullable=False,
+    )
+
+    swing_type: Mapped[str] = mapped_column(
+        String(32),
+        nullable=False,
+    )
+
+    score_a_before: Mapped[int] = mapped_column(
+        Integer,
+        nullable=False,
+    )
+
+    score_b_before: Mapped[int] = mapped_column(
+        Integer,
+        nullable=False,
+    )
+
+    score_a_after: Mapped[int] = mapped_column(
+        Integer,
+        nullable=False,
+    )
+
+    score_b_after: Mapped[int] = mapped_column(
+        Integer,
+        nullable=False,
+    )
+
+    opponent_streak_before: Mapped[int] = mapped_column(
+        Integer,
+        nullable=False,
+    )
+
+    winner_run_length: Mapped[int] = mapped_column(
+        Integer,
+        nullable=False,
+    )
+
+    reasons: Mapped[list[str]] = mapped_column(
+        JSON,
+        nullable=False,
+    )
+
+    resolution: Mapped[str] = mapped_column(
+        String(32),
+        nullable=False,
+    )
+
+    decisive_tick: Mapped[int | None] = mapped_column(
+        Integer,
+        nullable=True,
+    )
+
+    match: Mapped["MatchModel"] = relationship(
+        back_populates="turning_rounds",
+    )
+
+
+class TurningControlEventModel(Base):
+    __tablename__ = "turning_control_events"
+
+    __table_args__ = (
+        ForeignKeyConstraint(
+            [
+                "match_id",
+                "round_num",
+                "round_state_position",
+            ],
+            [
+                "round_state_transitions.match_id",
+                "round_state_transitions.round_num",
+                "round_state_transitions.position",
+            ],
+            deferrable=True,
+            initially="DEFERRED",
+            name=(
+                "fk_turning_control_"
+                "round_state_transition"
+            ),
+        ),
+        UniqueConstraint(
+            "match_id",
+            "round_num",
+            "position",
+            name=(
+                "uq_turning_control_"
+                "match_round_position"
+            ),
+        ),
+        CheckConstraint(
+            "round_num >= 1",
+            name="ck_turning_control_round_num",
+        ),
+        CheckConstraint(
+            "position >= 0",
+            name="ck_turning_control_position",
+        ),
+        CheckConstraint(
+            "round_state_position >= 0",
+            name=(
+                "ck_turning_control_"
+                "round_state_position"
+            ),
+        ),
+        CheckConstraint(
+            "event_type IN ("
+            "'control_gain', "
+            "'control_loss', "
+            "'reversal', "
+            "'equalizer'"
+            ")",
+            name="ck_turning_control_event_type",
+        ),
+    )
+
+    id: Mapped[int] = mapped_column(
+        Integer,
+        primary_key=True,
+        autoincrement=True,
+    )
+
+    match_id: Mapped[str] = mapped_column(
+        String(128),
+        ForeignKey(
+            "matches.match_id",
+            ondelete="CASCADE",
+        ),
+        nullable=False,
+        index=True,
+    )
+
+    round_num: Mapped[int] = mapped_column(
+        Integer,
+        nullable=False,
+    )
+
+    position: Mapped[int] = mapped_column(
+        Integer,
+        nullable=False,
+    )
+
+    round_state_position: Mapped[int] = mapped_column(
+        Integer,
+        nullable=False,
+    )
+
+    event_type: Mapped[str] = mapped_column(
+        String(32),
+        nullable=False,
+    )
+
+    decisive: Mapped[bool] = mapped_column(
+        Boolean,
+        nullable=False,
+    )
+
+    match: Mapped["MatchModel"] = relationship(
+        back_populates="turning_control_events",
     )
 
