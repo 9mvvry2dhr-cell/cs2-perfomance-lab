@@ -886,8 +886,23 @@ def get_analysis_job(
             detail="Analysis job not found",
         )
 
-    return AnalysisJobResponse.model_validate(
-        job
+    response = (
+        AnalysisJobResponse.model_validate(
+            job
+        )
+    )
+
+    if job.status != "queued":
+        return response
+
+    return response.model_copy(
+        update={
+            "jobs_ahead": (
+                repository.count_jobs_ahead(
+                    job_id
+                )
+            ),
+        }
     )
 
 
@@ -960,8 +975,16 @@ def get_match_analysis(
         ],
     )
 
-    return MatchAnalysisResponse.model_validate(
+    response = MatchAnalysisResponse.model_validate(
         owned_analysis
+    )
+
+    return response.model_copy(
+        update={
+            "focus_player_ref": (
+                f"anon:{player_position}"
+            ),
+        }
     )
 
 
@@ -1017,8 +1040,16 @@ def get_demo_analysis(
         ],
     )
 
-    return MatchAnalysisResponse.model_validate(
+    response = MatchAnalysisResponse.model_validate(
         demo_analysis
+    )
+
+    return response.model_copy(
+        update={
+            "focus_player_ref": (
+                f"anon:{_DEMO_ANALYSIS_PLAYER_POSITION}"
+            ),
+        }
     )
 
 

@@ -19,6 +19,20 @@ from src.api.schemas import (
     PlayerMatchHistoryResponse,
 )
 from src.domain.identity import CurrentUser
+from src.metrics.match_flow import (
+    RoundScoreState,
+)
+from src.metrics.round_state import (
+    TEAM_CT,
+    TEAM_T,
+)
+from src.metrics.turning_round import (
+    TurningRound,
+)
+from src.metrics.turning_story import (
+    TurningControlEvent,
+    TurningRoundStory,
+)
 from src.domain.history import (
     PlayerMatchHistoryItem,
     build_player_history_summary,
@@ -193,6 +207,11 @@ class ApiTest(unittest.TestCase):
         expected_json = (
             MatchAnalysisResponse
             .model_validate(expected)
+            .model_copy(
+                update={
+                    "focus_player_ref": "anon:0",
+                }
+            )
             .model_dump(mode="json")
         )
 
@@ -200,6 +219,193 @@ class ApiTest(unittest.TestCase):
             response.json(),
             expected_json,
         )
+
+    def test_get_match_exposes_turning_analysis_contract(self):
+        base = make_analysis()
+
+        flow = RoundScoreState(
+            round_num=9,
+            winner_team="team_a",
+            winner_side="CT",
+            score_a_before=3,
+            score_b_before=5,
+            score_a_after=4,
+            score_b_after=5,
+        )
+
+        turning = TurningRound(
+            round_num=9,
+            winner_team="team_a",
+            swing_type="clean_conversion",
+            score_a_before=3,
+            score_b_before=5,
+            score_a_after=4,
+            score_b_after=5,
+            opponent_streak_before=2,
+            winner_run_length=3,
+            reasons=(
+                "broke_opponent_streak",
+            ),
+        )
+
+        event = TurningControlEvent(
+            round_num=9,
+            tick=61637,
+            round_state_position=0,
+            event_type="control_gain",
+            decisive=True,
+            attacker="anon:0",
+            victim="anon:6",
+            attacker_team=TEAM_CT,
+            victim_team=TEAM_T,
+            cause="enemy",
+            state_before="T5-CT5",
+            state_after="T5-CT4",
+            winner_advantage_before=0,
+            winner_advantage_after=1,
+        )
+
+        story = TurningRoundStory(
+            round_num=9,
+            winner_team_num=TEAM_CT,
+            events=(event,),
+            decisive_tick=61637,
+            resolution="sustained_control",
+        )
+
+        analysis = replace(
+            base,
+            match_flow=[
+                flow,
+            ],
+            turning_rounds=[
+                turning,
+            ],
+            turning_stories=[
+                story,
+            ],
+        )
+
+        repository = StubAnalysisRepository(
+            analysis=analysis,
+            user_match_position=0,
+        )
+
+        app.dependency_overrides[
+            get_analysis_repository
+        ] = lambda: repository
+
+        client = TestClient(app)
+
+        response = client.get(
+            f"/matches/{analysis.match_id}"
+        )
+
+        self.assertEqual(
+            response.status_code,
+            200,
+        )
+
+        payload = response.json()
+
+        self.assertEqual(
+            payload["focus_player_ref"],
+            "anon:0",
+        )
+
+        self.assertEqual(
+            payload["players"][0]["steam_id"],
+            "76561198055629469",
+        )
+
+        self.assertEqual(
+            payload["match_flow"],
+            [
+                {
+                    "round_num": 9,
+                    "winner_team": "team_a",
+                    "winner_side": "CT",
+                    "score_a_before": 3,
+                    "score_b_before": 5,
+                    "score_a_after": 4,
+                    "score_b_after": 5,
+                }
+            ],
+        )
+
+        self.assertEqual(
+            payload["turning_rounds"][0][
+                "round_num"
+            ],
+            9,
+        )
+
+        self.assertEqual(
+            payload["turning_rounds"][0][
+                "swing_type"
+            ],
+            "clean_conversion",
+        )
+
+        self.assertEqual(
+            payload["turning_rounds"][0][
+                "winner_run_length"
+            ],
+            3,
+        )
+
+        story_payload = (
+            payload["turning_stories"][0]
+        )
+
+        self.assertEqual(
+            story_payload["resolution"],
+            "sustained_control",
+        )
+
+        self.assertEqual(
+            story_payload["decisive_tick"],
+            61637,
+        )
+
+        event_payload = (
+            story_payload["events"][0]
+        )
+
+        self.assertEqual(
+            event_payload["event_type"],
+            "control_gain",
+        )
+
+        self.assertTrue(
+            event_payload["decisive"]
+        )
+
+        self.assertEqual(
+            event_payload["attacker"],
+            "anon:0",
+        )
+
+        self.assertEqual(
+            event_payload["victim"],
+            "anon:6",
+        )
+
+        self.assertNotEqual(
+            event_payload["attacker"],
+            "76561198055629469",
+        )
+
+        self.assertEqual(
+            event_payload["state_before"],
+            "T5-CT5",
+        )
+
+        self.assertEqual(
+            event_payload["state_after"],
+            "T5-CT4",
+        )
+
 
     def test_get_match_returns_404_when_missing(self):
         repository = StubAnalysisRepository()

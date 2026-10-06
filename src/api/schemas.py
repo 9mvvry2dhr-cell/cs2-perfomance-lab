@@ -87,6 +87,7 @@ class AnalysisJobResponse(ApiModel):
     created_at: datetime
     started_at: datetime | None
     finished_at: datetime | None
+    jobs_ahead: int | None = None
 
 
 class BugReportCreateRequest(ApiModel):
@@ -269,6 +270,100 @@ class PlayerHistorySummaryResponse(ApiModel):
     ]
 
 
+class MatchFlowResponse(ApiModel):
+    round_num: int
+
+    winner_team: Literal[
+        "team_a",
+        "team_b",
+    ]
+
+    winner_side: Literal[
+        "T",
+        "CT",
+    ]
+
+    score_a_before: int
+    score_b_before: int
+    score_a_after: int
+    score_b_after: int
+
+
+class TurningRoundResponse(ApiModel):
+    round_num: int
+
+    winner_team: Literal[
+        "team_a",
+        "team_b",
+    ]
+
+    swing_type: Literal[
+        "no_advantage",
+        "clean_conversion",
+        "regained",
+        "comeback",
+        "stolen",
+        "swing",
+    ]
+
+    score_a_before: int
+    score_b_before: int
+    score_a_after: int
+    score_b_after: int
+
+    opponent_streak_before: int
+    winner_run_length: int
+
+    reasons: list[str]
+
+
+class TurningControlEventResponse(ApiModel):
+    round_num: int
+    tick: int
+
+    round_state_position: int
+
+    event_type: Literal[
+        "control_gain",
+        "control_loss",
+        "reversal",
+        "equalizer",
+    ]
+
+    decisive: bool
+
+    attacker: str | None
+    victim: str | None
+
+    attacker_team: int | None
+    victim_team: int
+
+    cause: str
+
+    state_before: str
+    state_after: str
+
+    winner_advantage_before: int
+    winner_advantage_after: int
+
+
+class TurningRoundStoryResponse(ApiModel):
+    round_num: int
+    winner_team_num: int
+
+    events: list[
+        TurningControlEventResponse
+    ]
+
+    decisive_tick: int | None
+
+    resolution: Literal[
+        "sustained_control",
+        "final_elimination",
+        "unresolved",
+    ]
+
+
 class MatchAnalysisResponse(ApiModel):
     match_id: str
     map_name: str
@@ -283,3 +378,27 @@ class MatchAnalysisResponse(ApiModel):
     validation_error: str | None
 
     players: list[PlayerAnalysisResponse]
+
+    # Anonymous reference of the player this response
+    # is focused on, for example "anon:3".
+    # Used by the frontend to render "you" without
+    # exposing demo Steam IDs inside match events.
+    focus_player_ref: str | None = None
+
+    match_flow: list[
+        MatchFlowResponse
+    ] = Field(
+        default_factory=list
+    )
+
+    turning_rounds: list[
+        TurningRoundResponse
+    ] = Field(
+        default_factory=list
+    )
+
+    turning_stories: list[
+        TurningRoundStoryResponse
+    ] = Field(
+        default_factory=list
+    )

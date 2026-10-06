@@ -173,6 +173,66 @@ class AnalysisJobRepository:
             or 0
         )
 
+    def count_jobs_ahead(
+        self,
+        job_id: str,
+    ) -> int:
+        model = self.session.get(
+            AnalysisJobModel,
+            job_id,
+        )
+
+        if model is None:
+            raise AnalysisJobNotFoundError(
+                job_id
+            )
+
+        if model.status != "queued":
+            return 0
+
+        processing_stmt = (
+            select(func.count())
+            .select_from(
+                AnalysisJobModel
+            )
+            .where(
+                AnalysisJobModel.status
+                == "processing"
+            )
+        )
+
+        queued_before_stmt = (
+            select(func.count())
+            .select_from(
+                AnalysisJobModel
+            )
+            .where(
+                AnalysisJobModel.status
+                == "queued",
+                AnalysisJobModel.created_at
+                < model.created_at,
+            )
+        )
+
+        processing = int(
+            self.session.scalar(
+                processing_stmt
+            )
+            or 0
+        )
+
+        queued_before = int(
+            self.session.scalar(
+                queued_before_stmt
+            )
+            or 0
+        )
+
+        return (
+            processing
+            + queued_before
+        )
+
     def count_active_jobs_for_owner(
         self,
         owner_steam_id: str,
