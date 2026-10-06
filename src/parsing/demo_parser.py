@@ -35,6 +35,17 @@ from src.metrics.round_state import (
 )
 
 
+from src.metrics.match_flow import (
+    build_round_score_timeline,
+)
+from src.metrics.turning_round import (
+    detect_turning_rounds,
+)
+from src.metrics.turning_story import (
+    build_turning_round_stories,
+)
+
+
 logger = logging.getLogger(__name__)
 
 
@@ -247,6 +258,54 @@ class DemoParser:
         )
 
         # --------------------------------------------------------------
+        # Match Flow / Turning Rounds / Control Stories
+        # --------------------------------------------------------------
+
+        stage_started = time.perf_counter()
+
+        try:
+            match_flow = (
+                build_round_score_timeline(
+                    rounds,
+                    self.side_events or [],
+                )
+            )
+
+            advantage_by_round = {
+                item.round_num: item
+                for item in round_advantage
+            }
+
+            turning_rounds = (
+                detect_turning_rounds(
+                    match_flow,
+                    advantage_by_round,
+                )
+            )
+
+            turning_stories = (
+                build_turning_round_stories(
+                    turning_rounds,
+                    match_flow,
+                    round_state_transitions,
+                )
+            )
+
+        except Exception:
+            logger.exception(
+                "Turning analysis calculation failed"
+            )
+
+            match_flow = []
+            turning_rounds = []
+            turning_stories = []
+
+        logger.info(
+            "PARSER_STAGE turning=%.2fs",
+            time.perf_counter() - stage_started,
+        )
+
+        # --------------------------------------------------------------
         # Final DTO
         # --------------------------------------------------------------
 
@@ -268,6 +327,15 @@ class DemoParser:
             ),
             round_advantage=(
                 round_advantage
+            ),
+            match_flow=(
+                match_flow
+            ),
+            turning_rounds=(
+                turning_rounds
+            ),
+            turning_stories=(
+                turning_stories
             ),
         )
 

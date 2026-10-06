@@ -11,6 +11,17 @@ from src.metrics.round_state import (
 )
 
 
+from src.metrics.match_flow import (
+    RoundScoreState,
+)
+from src.metrics.turning_round import (
+    TurningRound,
+)
+from src.metrics.turning_story import (
+    TurningRoundStory,
+)
+
+
 @dataclass(frozen=True)
 class PlayerStats:
     rounds_played: int
@@ -113,6 +124,24 @@ class MatchAnalysis:
 
     round_advantage: List[
         RoundAdvantageSummary
+    ] = field(
+        default_factory=list
+    )
+
+    match_flow: List[
+        RoundScoreState
+    ] = field(
+        default_factory=list
+    )
+
+    turning_rounds: List[
+        TurningRound
+    ] = field(
+        default_factory=list
+    )
+
+    turning_stories: List[
+        TurningRoundStory
     ] = field(
         default_factory=list
     )
@@ -419,5 +448,14 @@ def build_match_analysis(
         ),
         round_advantage=list(
             match.round_advantage
+        ),
+        match_flow=list(
+            match.match_flow
+        ),
+        turning_rounds=list(
+            match.turning_rounds
+        ),
+        turning_stories=list(
+            match.turning_stories
         ),
     )

@@ -85,3 +85,15 @@ class ParsedMatch:
         default_factory=list
     )
 
+    match_flow: List[object] = field(
+        default_factory=list
+    )
+
+    turning_rounds: List[object] = field(
+        default_factory=list
+    )
+
+    turning_stories: List[object] = field(
+        default_factory=list
+    )
+
