@@ -204,12 +204,41 @@ class MatchStoryEventResponse(ApiModel):
     ]
 
 
+class GrowthSignalResponse(ApiModel):
+    code: str
+
+    kind: Literal[
+        "growth",
+        "strength",
+        "neutral",
+        "insufficient",
+    ]
+
+    confidence: Literal[
+        "none",
+        "low",
+        "medium",
+        "high",
+    ]
+
+    evidence: dict[
+        str,
+        int | float | None,
+    ]
+
+
 class PlayerAnalysisResponse(ApiModel):
     steam_id: str
     name: str
     stats: PlayerStatsResponse
     sides: dict[str, SideStatsResponse]
     findings: list[FindingResponse]
+
+    growth_signals: list[
+        GrowthSignalResponse
+    ] = Field(
+        default_factory=list
+    )
     match_story: list[
         MatchStoryEventResponse
     ] = Field(
