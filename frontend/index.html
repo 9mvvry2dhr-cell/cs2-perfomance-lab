@@ -19659,6 +19659,7 @@ function renderFinding(
 
 
     const weaknessPriority = {
+        LOW_OVERALL_IMPACT: 110,
         FREQUENT_OPENING_DEATHS: 100,
         SIDE_PERFORMANCE_GAP: 90,
         LOW_FLASH_IMPACT: 70,
@@ -19761,6 +19762,13 @@ function renderFinding(
         switch (
             finding.code
         ) {
+            case "LOW_OVERALL_IMPACT":
+                return (
+                    "\u043d\u0438\u0437\u043a\u0438\u0439 "
+                    + "\u043e\u0431\u0449\u0438\u0439 "
+                    + "\u0438\u043c\u043f\u0430\u043a\u0442"
+                );
+
             case "FREQUENT_OPENING_DEATHS":
                 return (
                     "\u043f\u0435\u0440\u0432\u044b\u0435 "
@@ -19839,6 +19847,23 @@ function renderFinding(
         switch (
             finding.code
         ) {
+            case "LOW_OVERALL_IMPACT":
+                return (
+                    "\u0412 \u044d\u0442\u043e\u043c "
+                    + "\u043c\u0430\u0442\u0447\u0435 "
+                    + "\u043e\u0434\u043d\u043e\u0432\u0440\u0435\u043c\u0435\u043d\u043d\u043e "
+                    + "\u043f\u0440\u043e\u0441\u0435\u043b\u0438 "
+                    + "\u043d\u0435\u0441\u043a\u043e\u043b\u044c\u043a\u043e "
+                    + "\u0431\u0430\u0437\u043e\u0432\u044b\u0445 "
+                    + "\u043f\u043e\u043a\u0430\u0437\u0430\u0442\u0435\u043b\u0435\u0439: "
+                    + `KD ${formatNumber(e.kd, 2)}, `
+                    + `ADR ${formatNumber(e.adr)}, `
+                    + `KAST ${formatNumber(e.kast_pct)}% `
+                    + "\u0438 "
+                    + `\u0432\u044b\u0436\u0438\u0432\u0430\u0435\u043c\u043e\u0441\u0442\u044c `
+                    + `${formatNumber(e.survival_pct)}%.`
+                );
+
             case "FREQUENT_OPENING_DEATHS":
                 return (
                     `\u041d\u0430 ${finding.side} `
@@ -19946,6 +19971,37 @@ function renderFinding(
         switch (
             finding.code
         ) {
+            case "LOW_OVERALL_IMPACT":
+                return (
+                    "\u041f\u0435\u0440\u0435\u0441\u043c\u043e\u0442\u0440\u0438 "
+                    + "\u0440\u0430\u0443\u043d\u0434\u044b, "
+                    + "\u0433\u0434\u0435 "
+                    + "\u0442\u0432\u043e\u0451 "
+                    + "\u0432\u043b\u0438\u044f\u043d\u0438\u0435 "
+                    + "\u0431\u044b\u0441\u0442\u0440\u043e "
+                    + "\u0437\u0430\u043a\u0430\u043d\u0447\u0438\u0432\u0430\u043b\u043e\u0441\u044c: "
+                    + "\u043f\u043e\u0437\u0438\u0446\u0438\u044f "
+                    + "\u0434\u043e "
+                    + "\u043a\u043e\u043d\u0442\u0430\u043a\u0442\u0430, "
+                    + "\u043a\u0430\u0447\u0435\u0441\u0442\u0432\u043e "
+                    + "\u043f\u0435\u0440\u0432\u043e\u0439 "
+                    + "\u0434\u0443\u044d\u043b\u0438 "
+                    + "\u0438 "
+                    + "\u0432\u043e\u0437\u043c\u043e\u0436\u043d\u043e\u0441\u0442\u044c "
+                    + "\u043e\u0441\u0442\u0430\u0442\u044c\u0441\u044f "
+                    + "\u0432 "
+                    + "\u0440\u0430\u0443\u043d\u0434\u0435. "
+                    + "\u0426\u0435\u043b\u044c \u2014 "
+                    + "\u043f\u043e\u0434\u043d\u044f\u0442\u044c "
+                    + "\u043e\u0431\u0449\u0438\u0439 "
+                    + "\u0438\u043c\u043f\u0430\u043a\u0442, "
+                    + "\u0430 \u043d\u0435 "
+                    + "\u043f\u0440\u043e\u0441\u0442\u043e "
+                    + "\u0438\u0441\u043a\u0430\u0442\u044c "
+                    + "\u0431\u043e\u043b\u044c\u0448\u0435 "
+                    + "\u0434\u0443\u044d\u043b\u0435\u0439."
+                );
+
             case "FREQUENT_OPENING_DEATHS":
                 return (
                     "\u0421\u043e\u043a\u0440\u0430\u0442\u0438 "
@@ -20134,6 +20190,43 @@ function renderFinding(
         switch (
             finding.code
         ) {
+            case "LOW_OVERALL_IMPACT":
+                setChip(
+                    chips,
+                    "KD",
+                    formatNumber(
+                        e.kd,
+                        2
+                    )
+                );
+
+                setChip(
+                    chips,
+                    "ADR",
+                    formatNumber(
+                        e.adr
+                    )
+                );
+
+                setChip(
+                    chips,
+                    "KAST",
+                    `${formatNumber(
+                        e.kast_pct
+                    )}%`
+                );
+
+                setChip(
+                    chips,
+                    "\u0412\u044b\u0436\u0438\u0432\u0430\u0435\u043c\u043e\u0441\u0442\u044c",
+                    `${formatNumber(
+                        e.survival_pct
+                    )}%`
+                );
+
+                break;
+
+
             case "FREQUENT_OPENING_DEATHS":
                 setChip(
                     chips,
@@ -27592,6 +27685,8 @@ document
         code
     ) {
         const names = {
+            LOW_OVERALL_IMPACT:
+                "\u041d\u0438\u0437\u043a\u0438\u0439 \u043e\u0431\u0449\u0438\u0439 \u0438\u043c\u043f\u0430\u043a\u0442",
             FREQUENT_OPENING_DEATHS:
                 "Частые первые смерти",
             SIDE_PERFORMANCE_GAP:

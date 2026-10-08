@@ -1591,6 +1591,21 @@ class AnalysisRepository:
                         "rounds_played": float(
                             player_model.rounds_played
                         ),
+                        "kills": float(
+                            player_model.kills
+                        ),
+                        "deaths": float(
+                            player_model.deaths
+                        ),
+                        "damage": float(
+                            player_model.damage
+                        ),
+                        "kast_rounds": float(
+                            player_model.kast_rounds
+                        ),
+                        "survived_rounds": float(
+                            player_model.survived_rounds
+                        ),
                         "he_damage": float(
                             player_model.he_damage
                         ),

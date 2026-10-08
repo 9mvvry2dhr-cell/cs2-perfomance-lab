@@ -347,6 +347,21 @@ def build_player_analysis(
                     "rounds_played": float(
                         stats.rounds_played
                     ),
+                    "kills": float(
+                        stats.kills
+                    ),
+                    "deaths": float(
+                        stats.deaths
+                    ),
+                    "damage": float(
+                        stats.damage
+                    ),
+                    "kast_rounds": float(
+                        stats.kast_rounds
+                    ),
+                    "survived_rounds": float(
+                        stats.survived_rounds
+                    ),
                     "he_damage": stats.he_damage,
                     "inferno_damage": (
                         stats.inferno_damage

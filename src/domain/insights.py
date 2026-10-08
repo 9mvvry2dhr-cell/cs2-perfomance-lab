@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from typing import Dict, List, Literal, Mapping
 
 
-FINDINGS_VERSION = "v3"
+FINDINGS_VERSION = "v4"
 
 
 MIN_SIDE_ROUNDS = 6
@@ -41,6 +41,15 @@ STRONG_MULTIKILL_MIN_ROUNDS = 6
 STRONG_MULTIKILL_ROUND_RATE = 0.33
 
 MULTIPLE_CLUTCH_MIN_WINS = 2
+
+MIN_OVERALL_IMPACT_ROUNDS = 10
+
+LOW_OVERALL_IMPACT_MAX_KD = 0.60
+LOW_OVERALL_IMPACT_MAX_ADR = 55.0
+LOW_OVERALL_IMPACT_MAX_KAST_PCT = 55.0
+LOW_OVERALL_IMPACT_MAX_SURVIVAL_PCT = 15.0
+
+LOW_OVERALL_IMPACT_MIN_SIGNALS = 3
 
 
 @dataclass(frozen=True)
@@ -328,6 +337,164 @@ def generate_entry_findings(
             )
 
     return findings
+
+
+def generate_overall_impact_findings(
+    overall_stats: Mapping[str, float],
+) -> List[Finding]:
+    """
+    Detect clearly low overall match impact.
+
+    A single weak metric is deliberately not enough.
+    The finding requires:
+    - at least ten verified rounds;
+    - at least three independent weak signals among
+      KD, ADR, KAST and survival.
+
+    This catches matches where the player had very
+    little overall influence even when no specific
+    opening/utility pattern was triggered.
+    """
+
+    required = {
+        "rounds_played",
+        "kills",
+        "deaths",
+        "damage",
+        "kast_rounds",
+        "survived_rounds",
+    }
+
+    if not required.issubset(
+        overall_stats
+    ):
+        return []
+
+    rounds = int(
+        overall_stats["rounds_played"]
+    )
+
+    if (
+        rounds
+        < MIN_OVERALL_IMPACT_ROUNDS
+    ):
+        return []
+
+    kills = int(
+        overall_stats["kills"]
+    )
+
+    deaths = int(
+        overall_stats["deaths"]
+    )
+
+    damage = float(
+        overall_stats["damage"]
+    )
+
+    kast_rounds = int(
+        overall_stats["kast_rounds"]
+    )
+
+    survived_rounds = int(
+        overall_stats["survived_rounds"]
+    )
+
+    kd = round(
+        kills / deaths,
+        2,
+    ) if deaths > 0 else float(kills)
+
+    adr = round(
+        damage / rounds,
+        1,
+    )
+
+    kast_pct = round(
+        (
+            kast_rounds
+            / rounds
+        )
+        * 100,
+        1,
+    )
+
+    survival_pct = round(
+        (
+            survived_rounds
+            / rounds
+        )
+        * 100,
+        1,
+    )
+
+    low_kd = (
+        deaths > 0
+        and kd
+        <= LOW_OVERALL_IMPACT_MAX_KD
+    )
+
+    low_adr = (
+        adr
+        <= LOW_OVERALL_IMPACT_MAX_ADR
+    )
+
+    low_kast = (
+        kast_pct
+        <= LOW_OVERALL_IMPACT_MAX_KAST_PCT
+    )
+
+    low_survival = (
+        survival_pct
+        <= LOW_OVERALL_IMPACT_MAX_SURVIVAL_PCT
+    )
+
+    signal_count = sum(
+        (
+            low_kd,
+            low_adr,
+            low_kast,
+            low_survival,
+        )
+    )
+
+    if (
+        signal_count
+        < LOW_OVERALL_IMPACT_MIN_SIGNALS
+    ):
+        return []
+
+    severity = (
+        "high"
+        if signal_count == 4
+        else "medium"
+    )
+
+    return [
+        Finding(
+            code="LOW_OVERALL_IMPACT",
+            category="combat",
+            kind="weakness",
+            severity=severity,
+            side="MATCH",
+            evidence={
+                "rounds_played": float(rounds),
+                "kills": float(kills),
+                "deaths": float(deaths),
+                "kd": float(kd),
+                "adr": float(adr),
+                "kast_pct": float(
+                    kast_pct
+                ),
+                "survival_pct": float(
+                    survival_pct
+                ),
+                "weak_signal_count": float(
+                    signal_count
+                ),
+            },
+        )
+    ]
 
 
 def generate_grenade_findings(
@@ -773,6 +940,12 @@ def generate_player_findings(
     )
 
     if overall_stats is not None:
+        findings.extend(
+            generate_overall_impact_findings(
+                overall_stats
+            )
+        )
+
         findings.extend(
             generate_grenade_findings(
                 overall_stats
