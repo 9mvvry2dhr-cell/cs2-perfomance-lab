@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session, selectinload
 from src.database.models import (
     AnalysisJobModel,
     FindingModel,
+    GrowthSignalModel,
     MatchFlowModel,
     MatchModel,
     MatchPlayerModel,
@@ -23,6 +24,7 @@ from src.domain.analysis import (
     PlayerStats,
     SideStats,
 )
+from src.domain.growth import GrowthSignal
 from src.domain.history import (
     PlayerHistorySummary,
     PlayerMatchHistoryItem,
@@ -287,6 +289,28 @@ class AnalysisRepository:
                             side=finding.side,
                             evidence=dict(
                                 finding.evidence
+                            ),
+                        )
+                    )
+
+                for (
+                    growth_position,
+                    signal,
+                ) in enumerate(
+                    player.growth_signals
+                ):
+                    player_model.growth_signals.append(
+                        GrowthSignalModel(
+                            position=(
+                                growth_position
+                            ),
+                            code=signal.code,
+                            kind=signal.kind,
+                            confidence=(
+                                signal.confidence
+                            ),
+                            evidence=dict(
+                                signal.evidence
                             ),
                         )
                     )
@@ -709,6 +733,11 @@ class AnalysisRepository:
                 selectinload(
                     MatchModel.players
                 ).selectinload(
+                    MatchPlayerModel.growth_signals
+                ),
+                selectinload(
+                    MatchModel.players
+                ).selectinload(
                     MatchPlayerModel.match_story
                 ),
                 selectinload(
@@ -876,6 +905,21 @@ class AnalysisRepository:
                 in player_model.findings
             ]
 
+            growth_signals = [
+                GrowthSignal(
+                    code=signal.code,
+                    kind=signal.kind,
+                    confidence=(
+                        signal.confidence
+                    ),
+                    evidence=dict(
+                        signal.evidence
+                    ),
+                )
+                for signal
+                in player_model.growth_signals
+            ]
+
             match_story = [
                 MatchStoryEvent(
                     steam_id=player_model.steam_id,
@@ -896,6 +940,9 @@ class AnalysisRepository:
                     stats=stats,
                     sides=sides,
                     findings=findings,
+                    growth_signals=(
+                        growth_signals
+                    ),
                     match_story=match_story,
                 )
             )

@@ -531,6 +531,14 @@ class MatchPlayerModel(Base):
         order_by="FindingModel.position",
     )
 
+    growth_signals: Mapped[
+        list["GrowthSignalModel"]
+    ] = relationship(
+        back_populates="player",
+        cascade="all, delete-orphan",
+        order_by="GrowthSignalModel.position",
+    )
+
     match_story: Mapped[
         list["MatchStoryEventModel"]
     ] = relationship(
@@ -662,6 +670,100 @@ class PlayerSideStatsModel(Base):
 
     player: Mapped["MatchPlayerModel"] = relationship(
         back_populates="sides",
+    )
+
+
+class GrowthSignalModel(Base):
+    __tablename__ = "growth_signals"
+
+    __table_args__ = (
+        UniqueConstraint(
+            "match_player_id",
+            "position",
+            name=(
+                "uq_growth_signals_"
+                "player_position"
+            ),
+        ),
+        CheckConstraint(
+            "position >= 0",
+            name=(
+                "ck_growth_signals_"
+                "position"
+            ),
+        ),
+        CheckConstraint(
+            "kind IN "
+            "('growth', 'strength', "
+            "'neutral', 'insufficient')",
+            name=(
+                "ck_growth_signals_kind"
+            ),
+        ),
+        CheckConstraint(
+            "confidence IN "
+            "('none', 'low', "
+            "'medium', 'high')",
+            name=(
+                "ck_growth_signals_"
+                "confidence"
+            ),
+        ),
+    )
+
+    id: Mapped[int] = mapped_column(
+        Integer,
+        primary_key=True,
+        autoincrement=True,
+    )
+
+    match_player_id: Mapped[int] = (
+        mapped_column(
+            Integer,
+            ForeignKey(
+                "match_players.id",
+                ondelete="CASCADE",
+            ),
+            nullable=False,
+            index=True,
+        )
+    )
+
+    position: Mapped[int] = mapped_column(
+        Integer,
+        nullable=False,
+    )
+
+    code: Mapped[str] = mapped_column(
+        String(64),
+        nullable=False,
+    )
+
+    kind: Mapped[str] = mapped_column(
+        String(16),
+        nullable=False,
+    )
+
+    confidence: Mapped[str] = (
+        mapped_column(
+            String(16),
+            nullable=False,
+        )
+    )
+
+    evidence: Mapped[
+        dict[str, Any]
+    ] = mapped_column(
+        JSON,
+        nullable=False,
+    )
+
+    player: Mapped[
+        "MatchPlayerModel"
+    ] = relationship(
+        back_populates=(
+            "growth_signals"
+        ),
     )
 
 

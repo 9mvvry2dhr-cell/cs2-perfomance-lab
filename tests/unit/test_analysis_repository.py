@@ -20,6 +20,7 @@ from src.domain.analysis import (
     PlayerStats,
     SideStats,
 )
+from src.domain.growth import GrowthSignal
 from src.domain.insights import (
     FINDINGS_VERSION,
     Finding,
@@ -231,6 +232,92 @@ class AnalysisRepositoryTest(unittest.TestCase):
             anonymized_persisted_analysis(
                 expected
             ),
+        )
+
+    def test_growth_signal_round_trip_is_persisted(
+        self,
+    ):
+        base = make_analysis()
+
+        signal = GrowthSignal(
+            code="DUEL_REALIZATION",
+            kind="growth",
+            confidence="high",
+            evidence={
+                "contested_duels": 9,
+                "contested_wins": 1,
+                "contested_losses": 8,
+                "contested_win_rate": 11.1,
+                "lost_after_first_damage": 3,
+                "close_losses": 3,
+                "no_return_losses": 6,
+                "non_instant_no_return_losses": 3,
+                "instant_losses": 3,
+            },
+        )
+
+        player = replace(
+            base.players[0],
+            growth_signals=[
+                signal
+            ],
+        )
+
+        expected = replace(
+            base,
+            players=[
+                player,
+                *base.players[1:],
+            ],
+        )
+
+        self.repository.save_analysis(
+            expected
+        )
+
+        actual = (
+            self.repository.get_analysis(
+                expected.match_id
+            )
+        )
+
+        self.assertIsNotNone(
+            actual
+        )
+
+        self.assertEqual(
+            actual.players[
+                0
+            ].growth_signals,
+            [
+                signal
+            ],
+        )
+
+    def test_missing_growth_signal_stays_unavailable(
+        self,
+    ):
+        expected = make_analysis()
+
+        self.repository.save_analysis(
+            expected
+        )
+
+        actual = (
+            self.repository.get_analysis(
+                expected.match_id
+            )
+        )
+
+        self.assertIsNotNone(
+            actual
+        )
+
+        self.assertEqual(
+            actual.players[
+                0
+            ].growth_signals,
+            [],
         )
 
     def test_player_result_round_trip_is_persisted(self):
