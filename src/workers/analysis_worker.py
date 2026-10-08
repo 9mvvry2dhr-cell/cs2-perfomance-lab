@@ -22,6 +22,7 @@ from src.domain.jobs import AnalysisJob
 from src.ingestion.storage import (
     LocalDemoStorage,
 )
+from src.metrics.duel import calculate_duel_metrics
 from src.metrics.splits import (
     calculate_split_metrics,
 )
@@ -79,11 +80,20 @@ def analyze_demo_file(
         - splits_started
     )
 
+    duels = calculate_duel_metrics(
+        parser.raw_parser,
+        [
+            player.steam_id
+            for player in match.players
+        ],
+    )
+
     build_started = time.perf_counter()
 
     analysis = build_match_analysis(
         match,
         splits,
+        duels,
     )
 
     build_seconds = (

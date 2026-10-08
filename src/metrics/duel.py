@@ -629,7 +629,7 @@ def calculate_duel_metrics(
     )
 
     if not rounds:
-        return empty
+        return {}
 
     try:
         hurt = extract_dataframe(
@@ -644,7 +644,7 @@ def calculate_duel_metrics(
             )
         )
     except Exception:
-        return empty
+        return {}
 
     team_by_round_player = (
         _build_team_map(
@@ -654,7 +654,7 @@ def calculate_duel_metrics(
     )
 
     if not team_by_round_player:
-        return empty
+        return {}
 
     return calculate_duel_metrics_from_events(
         hurt=hurt,

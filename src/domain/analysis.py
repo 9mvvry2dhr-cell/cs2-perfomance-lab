@@ -1,6 +1,7 @@
 from dataclasses import dataclass, field
 from typing import Dict, List, Mapping
 
+from src.domain.growth import GrowthSignal, evaluate_duel_growth
 from src.domain.insights import Finding, generate_player_findings
 from src.domain.metrics import calculate_hs_percent, calculate_kd
 from src.parsing.dto import ParsedMatch, ParsedPlayer
@@ -88,6 +89,10 @@ class PlayerAnalysis:
     findings: List[Finding]
     match_story: List[MatchStoryEvent] = field(
         default_factory=list
+    )
+
+    growth_signals: List[GrowthSignal] = field(
+        default_factory=list,
     )
 
 
@@ -230,6 +235,7 @@ def build_player_analysis(
         str,
         Mapping[str, float],
     ],
+    growth_signals: List[GrowthSignal] | None = None,
 ) -> PlayerAnalysis:
     rounds = int(
         player.rounds_played
@@ -395,6 +401,9 @@ def build_player_analysis(
                 else None
             ),
         ),
+        growth_signals=list(
+            growth_signals or []
+        ),
     )
 
 def build_match_analysis(
@@ -406,6 +415,13 @@ def build_match_analysis(
             Mapping[str, float],
         ],
     ],
+    duel_metrics_by_player: Mapping[
+        str,
+        Mapping[
+            str,
+            int | float | None,
+        ],
+    ] | None = None,
 ) -> MatchAnalysis:
     """
     Build the stable analysis contract for one parsed match.
@@ -425,10 +441,30 @@ def build_match_analysis(
             )
         )
 
+        duel_metrics = (
+            duel_metrics_by_player.get(
+                steam_id
+            )
+            if duel_metrics_by_player
+            is not None
+            else None
+        )
+
+        growth_signals = (
+            [
+                evaluate_duel_growth(
+                    duel_metrics
+                )
+            ]
+            if duel_metrics is not None
+            else []
+        )
+
         players.append(
             build_player_analysis(
                 player,
                 split_stats,
+                growth_signals,
             )
         )
 
