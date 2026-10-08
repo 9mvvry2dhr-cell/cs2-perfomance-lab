@@ -24892,7 +24892,7 @@ function renderMatchStory(
         highlight:
             "Сильный момент",
         growth:
-            "Зона роста",
+            "Эпизод для разбора",
         key:
             "Ключевой эпизод",
     };
@@ -25055,6 +25055,733 @@ function renderMatchStory(
 }
 
 
+
+function ensureGrowthSignalStyles() {
+    if (
+        document.getElementById(
+            "growthSignalStyles"
+        )
+    ) {
+        return;
+    }
+
+    const style =
+        document.createElement(
+            "style"
+        );
+
+    style.id =
+        "growthSignalStyles";
+
+    style.textContent = `
+        .growth-signal-card {
+            margin-top: 16px;
+            padding: 0 !important;
+            overflow: hidden;
+        }
+
+        .growth-signal-card[hidden] {
+            display: none !important;
+        }
+
+        .growth-signal-details > summary {
+            display: grid;
+            grid-template-columns:
+                auto minmax(0, 1fr) auto auto;
+            align-items: center;
+            gap: 10px 14px;
+            padding: 17px 20px;
+            cursor: pointer;
+            list-style: none;
+        }
+
+        .growth-signal-details
+        > summary::-webkit-details-marker {
+            display: none;
+        }
+
+        .growth-signal-kind {
+            font-size: 11px;
+            font-weight: 800;
+            letter-spacing: .08em;
+            text-transform: uppercase;
+            opacity: .68;
+            white-space: nowrap;
+        }
+
+        .growth-signal-title {
+            min-width: 0;
+            font-size: 15px;
+            font-weight: 750;
+        }
+
+        .growth-signal-confidence {
+            font-size: 12px;
+            font-weight: 650;
+            opacity: .68;
+            white-space: nowrap;
+        }
+
+        .growth-signal-chevron {
+            font-size: 15px;
+            opacity: .55;
+            transition: transform .18s ease;
+        }
+
+        .growth-signal-details[open]
+        .growth-signal-chevron {
+            transform: rotate(180deg);
+        }
+
+        .growth-signal-body {
+            padding: 0 20px 20px;
+        }
+
+        .growth-signal-summary {
+            margin: 0 0 15px;
+            line-height: 1.55;
+            opacity: .82;
+        }
+
+        .growth-signal-evidence {
+            display: grid;
+            gap: 8px;
+            margin-bottom: 15px;
+        }
+
+        .growth-signal-evidence-item {
+            line-height: 1.45;
+        }
+
+        .growth-signal-evidence-item::before {
+            content: "\\2022";
+            display: inline-block;
+            width: 16px;
+            opacity: .55;
+        }
+
+        .growth-signal-focus {
+            padding-top: 13px;
+            border-top:
+                1px solid rgba(
+                    128,
+                    128,
+                    128,
+                    .20
+                );
+            line-height: 1.5;
+        }
+
+        .growth-signal-focus strong {
+            font-weight: 750;
+        }
+
+        @media (max-width: 720px) {
+            .growth-signal-details > summary {
+                grid-template-columns:
+                    minmax(0, 1fr) auto;
+            }
+
+            .growth-signal-kind {
+                grid-column: 1 / -1;
+            }
+
+            .growth-signal-title {
+                grid-column: 1;
+            }
+
+            .growth-signal-confidence {
+                grid-column: 1;
+            }
+
+            .growth-signal-chevron {
+                grid-column: 2;
+                grid-row: 2 / 4;
+            }
+        }
+    `;
+
+    document.head.appendChild(
+        style
+    );
+}
+
+
+function growthKindText(
+    kind
+) {
+    switch (kind) {
+        case "growth":
+            return "\u0417\u043e\u043d\u0430 \u0440\u043e\u0441\u0442\u0430";
+
+        case "strength":
+            return "\u0421\u0438\u043b\u044c\u043d\u0430\u044f \u0441\u0442\u043e\u0440\u043e\u043d\u0430";
+
+        case "neutral":
+            return "\u0411\u0435\u0437 \u044f\u0432\u043d\u043e\u0433\u043e \u043f\u0435\u0440\u0435\u043a\u043e\u0441\u0430";
+
+        default:
+            return "\u041d\u0435\u0434\u043e\u0441\u0442\u0430\u0442\u043e\u0447\u043d\u043e \u0434\u0430\u043d\u043d\u044b\u0445";
+    }
+}
+
+
+function growthConfidenceText(
+    confidence
+) {
+    switch (confidence) {
+        case "high":
+            return "\u0432\u044b\u0441\u043e\u043a\u0430\u044f \u0443\u0432\u0435\u0440\u0435\u043d\u043d\u043e\u0441\u0442\u044c";
+
+        case "medium":
+            return "\u0441\u0440\u0435\u0434\u043d\u044f\u044f \u0443\u0432\u0435\u0440\u0435\u043d\u043d\u043e\u0441\u0442\u044c";
+
+        case "low":
+            return "\u043d\u0438\u0437\u043a\u0430\u044f \u0443\u0432\u0435\u0440\u0435\u043d\u043d\u043e\u0441\u0442\u044c";
+
+        default:
+            return "\u0432\u044b\u0431\u043e\u0440\u043a\u0438 \u043d\u0435\u0434\u043e\u0441\u0442\u0430\u0442\u043e\u0447\u043d\u043e";
+    }
+}
+
+
+function growthSignalTitle(
+    signal
+) {
+    if (
+        signal.code
+        === "DUEL_REALIZATION"
+    ) {
+        return (
+            "\u0420\u0435\u0430\u043b\u0438\u0437\u0430\u0446\u0438\u044f "
+            + "\u043f\u0435\u0440\u0435\u0441\u0442\u0440\u0435\u043b\u043e\u043a"
+        );
+    }
+
+    return (
+        signal.code
+        || "\u0418\u0433\u0440\u043e\u0432\u043e\u0439 \u0441\u0438\u0433\u043d\u0430\u043b"
+    );
+}
+
+
+function growthSignalRank(
+    signal
+) {
+    const kindRank = {
+        growth: 4,
+        strength: 3,
+        neutral: 2,
+        insufficient: 1,
+    };
+
+    const confidenceRank = {
+        high: 4,
+        medium: 3,
+        low: 2,
+        none: 1,
+    };
+
+    return (
+        (
+            kindRank[
+                signal.kind
+            ] || 0
+        ) * 100
+        + (
+            confidenceRank[
+                signal.confidence
+            ] || 0
+        )
+    );
+}
+
+
+function growthPercent(
+    value
+) {
+    const number =
+        Number(value);
+
+    if (!Number.isFinite(number)) {
+        return null;
+    }
+
+    return number.toLocaleString(
+        "ru-RU",
+        {
+            maximumFractionDigits: 1,
+        }
+    );
+}
+
+
+function growthSignalIntro(
+    signal
+) {
+    switch (signal.kind) {
+        case "growth":
+            return (
+                "\u0412 \u044d\u0442\u043e\u043c \u043c\u0430\u0442\u0447\u0435 "
+                + "\u0440\u0435\u0430\u043b\u0438\u0437\u0430\u0446\u0438\u044f "
+                + "\u0432\u0437\u0430\u0438\u043c\u043d\u044b\u0445 "
+                + "\u043f\u0435\u0440\u0435\u0441\u0442\u0440\u0435\u043b\u043e\u043a "
+                + "\u0431\u044b\u043b\u0430 "
+                + "\u043f\u043e\u0434\u0442\u0432\u0435\u0440\u0436\u0434\u0451\u043d\u043d\u043e\u0439 "
+                + "\u0437\u043e\u043d\u043e\u0439 \u0440\u043e\u0441\u0442\u0430."
+            );
+
+        case "strength":
+            return (
+                "\u0412 \u044d\u0442\u043e\u043c \u043c\u0430\u0442\u0447\u0435 "
+                + "\u0440\u0435\u0430\u043b\u0438\u0437\u0430\u0446\u0438\u044f "
+                + "\u0432\u0437\u0430\u0438\u043c\u043d\u044b\u0445 "
+                + "\u043f\u0435\u0440\u0435\u0441\u0442\u0440\u0435\u043b\u043e\u043a "
+                + "\u0431\u044b\u043b\u0430 \u0441\u0438\u043b\u044c\u043d\u043e\u0439 "
+                + "\u0441\u0442\u043e\u0440\u043e\u043d\u043e\u0439. "
+                + "\u0417\u043e\u043d\u0443 \u0440\u043e\u0441\u0442\u0430 "
+                + "\u0437\u0434\u0435\u0441\u044c \u043d\u0435 \u0432\u044b\u0434\u0443\u043c\u044b\u0432\u0430\u0435\u043c."
+            );
+
+        case "neutral":
+            return (
+                "\u041f\u043e \u0432\u0437\u0430\u0438\u043c\u043d\u044b\u043c "
+                + "\u043f\u0435\u0440\u0435\u0441\u0442\u0440\u0435\u043b\u043a\u0430\u043c "
+                + "\u043d\u0435\u0442 \u044f\u0432\u043d\u043e\u0433\u043e "
+                + "\u043f\u0435\u0440\u0435\u043a\u043e\u0441\u0430 "
+                + "\u043d\u0438 \u0432 \u043f\u043b\u044e\u0441, "
+                + "\u043d\u0438 \u0432 \u043c\u0438\u043d\u0443\u0441."
+            );
+
+        default:
+            return (
+                "\u0412 \u044d\u0442\u043e\u043c \u043c\u0430\u0442\u0447\u0435 "
+                + "\u0441\u043b\u0438\u0448\u043a\u043e\u043c \u043c\u0430\u043b\u043e "
+                + "\u043f\u043e\u0434\u0445\u043e\u0434\u044f\u0449\u0438\u0445 "
+                + "\u043f\u0435\u0440\u0435\u0441\u0442\u0440\u0435\u043b\u043e\u043a "
+                + "\u0434\u043b\u044f \u043d\u0430\u0434\u0451\u0436\u043d\u043e\u0433\u043e "
+                + "\u0432\u044b\u0432\u043e\u0434\u0430."
+            );
+    }
+}
+
+
+function growthEvidence(
+    signal
+) {
+    const evidence =
+        signal.evidence || {};
+
+    const result = [];
+
+    const contested =
+        Number(
+            evidence.contested_duels
+            || 0
+        );
+
+    const wins =
+        Number(
+            evidence.contested_wins
+            || 0
+        );
+
+    if (contested > 0) {
+        const rate =
+            growthPercent(
+                evidence.contested_win_rate
+            );
+
+        let value =
+            "\u0412\u044b\u0438\u0433\u0440\u0430\u043d\u043e "
+            + `${wins} \u0438\u0437 ${contested} `
+            + "\u043f\u0435\u0440\u0435\u0441\u0442\u0440\u0435\u043b\u043e\u043a, "
+            + "\u0433\u0434\u0435 \u043e\u0431\u0435 "
+            + "\u0441\u0442\u043e\u0440\u043e\u043d\u044b "
+            + "\u043d\u0430\u043d\u0435\u0441\u043b\u0438 \u0443\u0440\u043e\u043d";
+
+        if (rate !== null) {
+            value += ` (${rate}%)`;
+        }
+
+        value += ".";
+
+        result.push(value);
+    }
+
+    if (signal.kind !== "growth") {
+        return result;
+    }
+
+    const lostAfterFirst =
+        Number(
+            evidence.lost_after_first_damage
+            || 0
+        );
+
+    if (lostAfterFirst > 0) {
+        result.push(
+            `${lostAfterFirst} `
+            + "\u0440\u0430\u0437(\u0430) "
+            + "\u043f\u0435\u0440\u0432\u044b\u0439 "
+            + "\u0443\u0440\u043e\u043d \u0431\u044b\u043b "
+            + "\u0442\u0432\u043e\u0438\u043c, "
+            + "\u043d\u043e \u043a\u043e\u043d\u0442\u0430\u043a\u0442 "
+            + "\u0437\u0430\u043a\u043e\u043d\u0447\u0438\u043b\u0441\u044f "
+            + "\u043f\u043e\u0440\u0430\u0436\u0435\u043d\u0438\u0435\u043c."
+        );
+    }
+
+    const closeLosses =
+        Number(
+            evidence.close_losses
+            || 0
+        );
+
+    if (closeLosses > 0) {
+        result.push(
+            `\u0412 ${closeLosses} `
+            + "\u043f\u0440\u043e\u0438\u0433\u0440\u0430\u043d\u043d\u044b\u0445 "
+            + "\u043f\u0435\u0440\u0435\u0441\u0442\u0440\u0435\u043b\u043a\u0430\u0445 "
+            + "\u0443 \u0441\u043e\u043f\u0435\u0440\u043d\u0438\u043a\u0430 "
+            + "\u043e\u0441\u0442\u0430\u0432\u0430\u043b\u043e\u0441\u044c "
+            + "\u043d\u0435 \u0431\u043e\u043b\u0435\u0435 30 HP."
+        );
+    }
+
+    return result.slice(
+        0,
+        3
+    );
+}
+
+
+function growthFocus(
+    signal
+) {
+    const evidence =
+        signal.evidence || {};
+
+    if (signal.kind === "growth") {
+        const firstDamage =
+            Number(
+                evidence.lost_after_first_damage
+                || 0
+            );
+
+        const closeLosses =
+            Number(
+                evidence.close_losses
+                || 0
+            );
+
+        if (
+            firstDamage > 0
+            || closeLosses > 0
+        ) {
+            return (
+                "\u041f\u0435\u0440\u0435\u0441\u043c\u043e\u0442\u0440\u0438 "
+                + "\u043f\u043e\u0440\u0430\u0436\u0435\u043d\u0438\u044f "
+                + "\u043f\u043e\u0441\u043b\u0435 \u043f\u0435\u0440\u0432\u043e\u0433\u043e "
+                + "\u0443\u0440\u043e\u043d\u0430 \u0438 \u0431\u043b\u0438\u0437\u043a\u0438\u0435 "
+                + "\u043f\u0440\u043e\u0438\u0433\u0440\u044b\u0448\u0438. "
+                + "\u0418\u0449\u0438 \u043f\u043e\u0432\u0442\u043e\u0440\u044f\u044e\u0449\u0438\u0439\u0441\u044f "
+                + "\u043c\u043e\u043c\u0435\u043d\u0442, \u0430 \u043d\u0435 "
+                + "\u043e\u0434\u043d\u0443 \u043e\u0442\u0434\u0435\u043b\u044c\u043d\u0443\u044e "
+                + "\u043e\u0448\u0438\u0431\u043a\u0443."
+            );
+        }
+
+        return (
+            "\u041f\u0435\u0440\u0435\u0441\u043c\u043e\u0442\u0440\u0438 "
+            + "\u043f\u0440\u043e\u0438\u0433\u0440\u0430\u043d\u043d\u044b\u0435 "
+            + "\u0432\u0437\u0430\u0438\u043c\u043d\u044b\u0435 "
+            + "\u043f\u0435\u0440\u0435\u0441\u0442\u0440\u0435\u043b\u043a\u0438 "
+            + "\u0438 \u0438\u0449\u0438 "
+            + "\u043f\u043e\u0432\u0442\u043e\u0440\u044f\u044e\u0449\u0438\u0439\u0441\u044f "
+            + "\u043f\u0430\u0442\u0442\u0435\u0440\u043d."
+        );
+    }
+
+    if (signal.kind === "strength") {
+        return (
+            "\u0421\u043e\u0445\u0440\u0430\u043d\u0438 \u044d\u0442\u043e\u0442 "
+            + "\u043f\u0430\u0442\u0442\u0435\u0440\u043d \u0438 \u043f\u0440\u043e\u0432\u0435\u0440\u044c, "
+            + "\u043f\u043e\u0432\u0442\u043e\u0440\u044f\u0435\u0442\u0441\u044f \u043b\u0438 "
+            + "\u0442\u0430\u043a\u0430\u044f \u0440\u0435\u0430\u043b\u0438\u0437\u0430\u0446\u0438\u044f "
+            + "\u0435\u0449\u0451 \u043d\u0430 3\u20135 \u043c\u0430\u0442\u0447\u0430\u0445."
+        );
+    }
+
+    if (signal.kind === "neutral") {
+        return (
+            "\u041f\u043e\u043a\u0430 \u043d\u0435 \u0434\u0435\u043b\u0430\u0439 "
+            + "\u044d\u0442\u0443 \u043c\u0435\u0442\u0440\u0438\u043a\u0443 "
+            + "\u043f\u0440\u0438\u043e\u0440\u0438\u0442\u0435\u0442\u043e\u043c."
+        );
+    }
+
+    return (
+        "\u041d\u0435 \u0434\u0435\u043b\u0430\u0439 "
+        + "\u0432\u044b\u0432\u043e\u0434\u043e\u0432 \u043f\u043e "
+        + "\u044d\u0442\u043e\u0439 \u043c\u0435\u0442\u0440\u0438\u043a\u0435 "
+        + "\u043f\u043e \u043e\u0434\u043d\u043e\u043c\u0443 \u043c\u0430\u0442\u0447\u0443."
+    );
+}
+
+
+function renderGrowthSignals(
+    player
+) {
+    ensureGrowthSignalStyles();
+
+    const insight =
+        document.getElementById(
+            "insight"
+        );
+
+    if (!insight) {
+        return;
+    }
+
+    let card =
+        document.getElementById(
+            "growthSignalCard"
+        );
+
+    if (!card) {
+        card =
+            document.createElement(
+                "section"
+            );
+
+        card.id =
+            "growthSignalCard";
+
+        card.className =
+            "card soft-hover "
+            + "growth-signal-card";
+
+        insight.insertAdjacentElement(
+            "afterend",
+            card
+        );
+    }
+
+    card.replaceChildren();
+
+    const signals =
+        Array.isArray(
+            player.growth_signals
+        )
+            ? player.growth_signals
+                .filter(Boolean)
+            : [];
+
+    if (!signals.length) {
+        card.hidden = true;
+        return;
+    }
+
+    card.hidden = false;
+
+    const signal =
+        [...signals]
+            .sort(
+                (a, b) =>
+                    growthSignalRank(b)
+                    - growthSignalRank(a)
+            )[0];
+
+    const details =
+        document.createElement(
+            "details"
+        );
+
+    details.className =
+        "growth-signal-details";
+
+    const summary =
+        document.createElement(
+            "summary"
+        );
+
+    const kind =
+        document.createElement(
+            "span"
+        );
+
+    kind.className =
+        "growth-signal-kind";
+
+    kind.textContent =
+        growthKindText(
+            signal.kind
+        );
+
+    const title =
+        document.createElement(
+            "span"
+        );
+
+    title.className =
+        "growth-signal-title";
+
+    title.textContent =
+        growthSignalTitle(
+            signal
+        );
+
+    const confidence =
+        document.createElement(
+            "span"
+        );
+
+    confidence.className =
+        "growth-signal-confidence";
+
+    confidence.textContent =
+        growthConfidenceText(
+            signal.confidence
+        );
+
+    const chevron =
+        document.createElement(
+            "span"
+        );
+
+    chevron.className =
+        "growth-signal-chevron";
+
+    chevron.textContent =
+        "\u2304";
+
+    summary.append(
+        kind,
+        title,
+        confidence,
+        chevron
+    );
+
+    details.appendChild(
+        summary
+    );
+
+    const body =
+        document.createElement(
+            "div"
+        );
+
+    body.className =
+        "growth-signal-body";
+
+    const intro =
+        document.createElement(
+            "p"
+        );
+
+    intro.className =
+        "growth-signal-summary";
+
+    intro.textContent =
+        growthSignalIntro(
+            signal
+        );
+
+    body.appendChild(
+        intro
+    );
+
+    const items =
+        growthEvidence(
+            signal
+        );
+
+    if (items.length) {
+        const evidence =
+            document.createElement(
+                "div"
+            );
+
+        evidence.className =
+            "growth-signal-evidence";
+
+        items.forEach(
+            value => {
+                const item =
+                    document.createElement(
+                        "div"
+                    );
+
+                item.className =
+                    "growth-signal-evidence-item";
+
+                item.textContent =
+                    value;
+
+                evidence.appendChild(
+                    item
+                );
+            }
+        );
+
+        body.appendChild(
+            evidence
+        );
+    }
+
+    const focus =
+        document.createElement(
+            "div"
+        );
+
+    focus.className =
+        "growth-signal-focus";
+
+    const strong =
+        document.createElement(
+            "strong"
+        );
+
+    strong.textContent =
+        signal.kind === "growth"
+            ? (
+                "\u0424\u043e\u043a\u0443\u0441 "
+                + "\u0434\u043b\u044f "
+                + "\u0440\u0435\u0432\u044c\u044e: "
+            )
+            : (
+                "\u0427\u0442\u043e "
+                + "\u0434\u0435\u043b\u0430\u0442\u044c "
+                + "\u0434\u0430\u043b\u044c\u0448\u0435: "
+            );
+
+    focus.appendChild(
+        strong
+    );
+
+    focus.append(
+        document.createTextNode(
+            growthFocus(
+                signal
+            )
+        )
+    );
+
+    body.appendChild(
+        focus
+    );
+
+    details.appendChild(
+        body
+    );
+
+    card.appendChild(
+        details
+    );
+}
+
+
 function renderPlayer(
     player,
     analysis
@@ -25078,11 +25805,29 @@ function renderPlayer(
     const currentUser =
         window.CS2_CURRENT_USER || {};
 
+    const playerSteamId =
+        String(
+            player.steam_id || ""
+        );
+
+    const isAnonymousStoredPlayer =
+        playerSteamId.startsWith(
+            "anon:"
+        );
+
+    const isOnlyReturnedPlayer =
+        Array.isArray(
+            analysis.players
+        )
+        && analysis.players.length === 1;
+
     const isCurrentUser =
         String(
             currentUser.steamId || ""
-        ) === String(
-            player.steam_id || ""
+        ) === playerSteamId
+        || (
+            isAnonymousStoredPlayer
+            && isOnlyReturnedPlayer
         );
 
     const steamDisplayName =
@@ -25184,7 +25929,7 @@ function renderPlayer(
         === "function"
     ) {
         window.cs2SyncCurrentUserCard(
-            player.name,
+            displayName,
             player.steam_id
         );
     }
@@ -25305,9 +26050,13 @@ function renderPlayer(
         `\u2302  \u203a  `
         + `\u0410\u043d\u0430\u043b\u0438\u0437 \u043c\u0430\u0442\u0447\u0430`
         + `  \u203a  ${analysis.map_name}`
-        + `  \u203a  ${player.name}`;
+        + `  \u203a  ${displayName}`;
 
     renderFinding(
+        player
+    );
+
+    renderGrowthSignals(
         player
     );
 
