@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Literal, Mapping
+from typing import Any, Literal, Mapping
 
 
 GrowthKind = Literal[
@@ -31,7 +31,7 @@ class GrowthSignal:
     confidence: Confidence
     evidence: dict[
         str,
-        int | float | None,
+        Any,
     ]
 
 

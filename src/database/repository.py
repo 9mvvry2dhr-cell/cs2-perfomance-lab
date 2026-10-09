@@ -8,6 +8,7 @@ from src.database.models import (
     FindingModel,
     GrowthSignalModel,
     MatchFlowModel,
+    MatchFactsModel,
     MatchModel,
     MatchPlayerModel,
     MatchStoryEventModel,
@@ -97,6 +98,10 @@ class AnalysisRepository:
     def save_analysis(
         self,
         analysis: MatchAnalysis,
+        *,
+        match_facts_payload: bytes | None = None,
+        match_facts_version: int | None = None,
+        match_facts_capabilities: list[str] | None = None,
     ) -> None:
         """
         Persist one complete MatchAnalysis v1.
@@ -104,6 +109,29 @@ class AnalysisRepository:
         Saving the same match_id replaces the previous analysis
         in one transaction.
         """
+        facts_values = (
+            match_facts_payload,
+            match_facts_version,
+            match_facts_capabilities,
+        )
+
+        facts_supplied = any(
+            value is not None
+            for value in facts_values
+        )
+
+        if (
+            facts_supplied
+            and not all(
+                value is not None
+                for value in facts_values
+            )
+        ):
+            raise ValueError(
+                "Match Facts payload, version and "
+                "capabilities must be supplied together"
+            )
+
         try:
             existing = self.session.get(
                 MatchModel,
@@ -117,8 +145,35 @@ class AnalysisRepository:
             )
 
             existing_user_matches = []
+            existing_match_facts = None
 
             if existing is not None:
+                facts_model = self.session.get(
+                    MatchFactsModel,
+                    analysis.match_id,
+                )
+
+                if facts_model is not None:
+                    existing_match_facts = (
+                        int(
+                            facts_model.facts_version
+                        ),
+                        list(
+                            facts_model.capabilities
+                        ),
+                        bytes(
+                            facts_model.payload
+                        ),
+                        facts_model.created_at,
+                    )
+
+                    # Remove explicitly before replacing the
+                    # parent match. This keeps behaviour identical
+                    # across PostgreSQL and SQLite tests.
+                    self.session.delete(
+                        facts_model
+                    )
+
                 user_match_models = list(
                     self.session.scalars(
                         select(
@@ -228,6 +283,11 @@ class AnalysisRepository:
                     inferno_damage=stats.inferno_damage,
                     enemies_flashed=stats.enemies_flashed,
                     flash_duration=stats.flash_duration,
+                    utility_rounds=[
+                        dict(item)
+                        for item
+                        in player.utility_rounds
+                    ],
                     clutch_attempts=stats.clutch_attempts,
                     clutches_won=stats.clutches_won,
                     trade_opportunities=stats.trade_opportunities,
@@ -587,6 +647,44 @@ class AnalysisRepository:
             self.session.add(match_model)
             self.session.flush()
 
+            if facts_supplied:
+                self.session.add(
+                    MatchFactsModel(
+                        match_id=analysis.match_id,
+                        facts_version=int(
+                            match_facts_version
+                        ),
+                        capabilities=list(
+                            match_facts_capabilities
+                        ),
+                        payload=bytes(
+                            match_facts_payload
+                        ),
+                    )
+                )
+
+            elif existing_match_facts is not None:
+                (
+                    saved_facts_version,
+                    saved_capabilities,
+                    saved_payload,
+                    saved_created_at,
+                ) = existing_match_facts
+
+                self.session.add(
+                    MatchFactsModel(
+                        match_id=analysis.match_id,
+                        facts_version=(
+                            saved_facts_version
+                        ),
+                        capabilities=(
+                            saved_capabilities
+                        ),
+                        payload=saved_payload,
+                        created_at=saved_created_at,
+                    )
+                )
+
             for (
                 owner_steam_id,
                 player_position,
@@ -944,6 +1042,13 @@ class AnalysisRepository:
                         growth_signals
                     ),
                     match_story=match_story,
+                    utility_rounds=[
+                        dict(item)
+                        for item in (
+                            player_model.utility_rounds
+                            or []
+                        )
+                    ],
                 )
             )
 

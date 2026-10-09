@@ -95,7 +95,11 @@ class PlayerAnalysis:
         default_factory=list,
     )
 
-
+    utility_rounds: List[
+        dict[str, object]
+    ] = field(
+        default_factory=list
+    )
 @dataclass(frozen=True)
 class MatchAnalysis:
     match_id: str
@@ -236,6 +240,9 @@ def build_player_analysis(
         Mapping[str, float],
     ],
     growth_signals: List[GrowthSignal] | None = None,
+    utility_rounds: List[
+        dict[str, object]
+    ] | None = None,
 ) -> PlayerAnalysis:
     rounds = int(
         player.rounds_played
@@ -404,7 +411,15 @@ def build_player_analysis(
         growth_signals=list(
             growth_signals or []
         ),
-    )
+            utility_rounds=[
+            dict(item)
+            for item
+            in (
+                utility_rounds
+                or []
+            )
+        ],
+)
 
 def build_match_analysis(
     match: ParsedMatch,
@@ -420,6 +435,18 @@ def build_match_analysis(
         Mapping[
             str,
             int | float | None,
+        ],
+    ] | None = None,
+    duel_episodes_by_player: Mapping[
+        str,
+        list[
+            dict[str, object]
+        ],
+    ] | None = None,
+    utility_rounds_by_player: Mapping[
+        str,
+        list[
+            dict[str, object]
         ],
     ] | None = None,
 ) -> MatchAnalysis:
@@ -450,21 +477,77 @@ def build_match_analysis(
             else None
         )
 
-        growth_signals = (
-            [
+        growth_signals = []
+
+        if duel_metrics is not None:
+            growth_signal = (
                 evaluate_duel_growth(
                     duel_metrics
                 )
+            )
+
+            if (
+                duel_episodes_by_player
+                is not None
+            ):
+                raw_episodes = (
+                    duel_episodes_by_player.get(
+                        steam_id,
+                        [],
+                    )
+                )
+
+                # DUEL_REALIZATION is based specifically
+                # on reciprocal / contested contacts.
+                # Keep its drill-down evidence aligned
+                # with the aggregate denominator.
+                contested_episodes = [
+                    dict(episode)
+                    for episode
+                    in raw_episodes
+                    if bool(
+                        episode.get(
+                            "contested"
+                        )
+                    )
+                ]
+
+                growth_signal = GrowthSignal(
+                    code=growth_signal.code,
+                    kind=growth_signal.kind,
+                    confidence=(
+                        growth_signal.confidence
+                    ),
+                    evidence={
+                        **growth_signal.evidence,
+                        "episodes":
+                            contested_episodes,
+                    },
+                )
+
+            growth_signals = [
+                growth_signal
             ]
-            if duel_metrics is not None
-            else []
-        )
+
+        utility_rounds = [
+            dict(item)
+            for item in (
+                utility_rounds_by_player.get(
+                    steam_id,
+                    [],
+                )
+                if utility_rounds_by_player
+                is not None
+                else []
+            )
+        ]
 
         players.append(
             build_player_analysis(
                 player,
                 split_stats,
                 growth_signals,
+                utility_rounds,
             )
         )
 

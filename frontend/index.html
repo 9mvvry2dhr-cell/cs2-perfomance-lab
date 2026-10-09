@@ -22975,6 +22975,21 @@ async function loadPlayerHistory() {
         const matches =
             await matchesResponse.json();
 
+        window.cs2MatchV2History =
+            Array.isArray(matches)
+                ? matches
+                : [];
+
+        if (
+            window.cs2MatchV2Current
+            && window.cs2MatchV2Current.player
+        ) {
+            renderMatchV2(
+                window.cs2MatchV2Current.player,
+                window.cs2MatchV2Current.analysis
+            );
+        }
+
         if (
             typeof window
                 .cs2SyncCurrentUserCard
@@ -25530,6 +25545,2734 @@ function growthFocus(
 }
 
 
+
+function ensureMatchV2Styles() {
+    if (
+        document.getElementById(
+            "cs2-match-v2-styles"
+        )
+    ) {
+        return;
+    }
+
+    const style =
+        document.createElement(
+            "style"
+        );
+
+    style.id =
+        "cs2-match-v2-styles";
+
+    style.textContent = `
+        .match-v2 {
+            margin-top: 18px;
+        }
+
+        .match-v2-tabs {
+            display: flex;
+            gap: 4px;
+            padding: 0 2px;
+            border-bottom: 1px solid
+                rgba(126, 166, 194, .12);
+            overflow-x: auto;
+        }
+
+        .match-v2-tab {
+            appearance: none;
+            border: 0;
+            background: transparent;
+            padding: 14px 17px 13px;
+            color: inherit;
+            font: inherit;
+            font-size: 13px;
+            font-weight: 650;
+            opacity: .55;
+            cursor: pointer;
+            white-space: nowrap;
+            border-bottom: 2px solid transparent;
+        }
+
+        .match-v2-tab:hover {
+            opacity: .84;
+        }
+
+        .match-v2-tab.active {
+            opacity: 1;
+            color: #79d8ff;
+            border-bottom-color: #45c3ff;
+        }
+
+        .match-v2-panel {
+            padding-top: 16px;
+        }
+
+        .match-v2-panel[hidden] {
+            display: none !important;
+        }
+
+        .match-v2-grid {
+            display: grid;
+            grid-template-columns:
+                minmax(0, 1.05fr)
+                minmax(0, 1.05fr)
+                minmax(280px, .9fr);
+            gap: 13px;
+        }
+
+        .match-v2-box {
+            min-width: 0;
+            border: 1px solid
+                rgba(126, 166, 194, .13);
+            border-radius: 14px;
+            background:
+                rgba(5, 16, 25, .52);
+            overflow: hidden;
+        }
+
+        .match-v2-box-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            padding: 15px 17px;
+            border-bottom: 1px solid
+                rgba(126, 166, 194, .10);
+        }
+
+        .match-v2-box-title {
+            font-size: 13px;
+            font-weight: 750;
+        }
+
+        .match-v2-box-meta {
+            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: .06em;
+            text-transform: uppercase;
+            opacity: .45;
+        }
+
+        .match-v2-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-variant-numeric:
+                tabular-nums;
+        }
+
+        .match-v2-table tr + tr {
+            border-top: 1px solid
+                rgba(126, 166, 194, .075);
+        }
+
+        .match-v2-table td {
+            padding: 11px 17px;
+            font-size: 12px;
+        }
+
+        .match-v2-table td:first-child {
+            opacity: .58;
+        }
+
+        .match-v2-table td:last-child {
+            text-align: right;
+            font-size: 14px;
+            font-weight: 750;
+        }
+
+        .match-v2-signal {
+            padding: 18px;
+        }
+
+        .match-v2-signal-kind {
+            margin-bottom: 7px;
+            font-size: 10px;
+            font-weight: 800;
+            letter-spacing: .08em;
+            text-transform: uppercase;
+            color: #f0a82e;
+        }
+
+        .match-v2-signal-title {
+            font-size: 19px;
+            font-weight: 760;
+            letter-spacing: -.025em;
+        }
+
+        .match-v2-signal-main {
+            margin-top: 15px;
+            font-size: 31px;
+            line-height: 1;
+            font-weight: 800;
+            letter-spacing: -.045em;
+            font-variant-numeric:
+                tabular-nums;
+        }
+
+        .match-v2-signal-sub {
+            margin-top: 7px;
+            font-size: 12px;
+            line-height: 1.55;
+            opacity: .62;
+        }
+
+        .match-v2-stat-grid {
+            display: grid;
+            grid-template-columns:
+                repeat(4, minmax(0, 1fr));
+            gap: 10px;
+        }
+
+        .match-v2-stat {
+            min-width: 0;
+            padding: 16px;
+            border: 1px solid
+                rgba(126, 166, 194, .12);
+            border-radius: 12px;
+            background:
+                rgba(5, 16, 25, .48);
+        }
+
+        .match-v2-stat-label {
+            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: .055em;
+            text-transform: uppercase;
+            opacity: .45;
+        }
+
+        .match-v2-stat-value {
+            margin-top: 7px;
+            font-size: 22px;
+            font-weight: 780;
+            font-variant-numeric:
+                tabular-nums;
+        }
+
+        .match-v2-section-title {
+            margin-bottom: 12px;
+            font-size: 15px;
+            font-weight: 750;
+        }
+
+        .match-v2-side-grid {
+            display: grid;
+            grid-template-columns:
+                repeat(2, minmax(0, 1fr));
+            gap: 12px;
+        }
+
+        .match-v2-side-name {
+            padding: 14px 17px;
+            font-size: 14px;
+            font-weight: 780;
+            border-bottom: 1px solid
+                rgba(126, 166, 194, .10);
+        }
+
+        .match-v2-round-link {
+            width: 100%;
+            margin-top: 12px;
+            padding: 13px 16px;
+            border: 1px solid
+                rgba(69, 195, 255, .28);
+            border-radius: 10px;
+            background:
+                rgba(69, 195, 255, .06);
+            color: #79d8ff;
+            font: inherit;
+            font-size: 12px;
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+
+        .match-v2-grid {
+            grid-template-columns:
+                minmax(235px, .82fr)
+                minmax(370px, 1.38fr)
+                minmax(285px, 1fr);
+        }
+
+        .match-v2-compare {
+            padding: 4px 0;
+        }
+
+        .match-v2-compare-row {
+            padding: 13px 17px 15px;
+        }
+
+        .match-v2-compare-row
+        + .match-v2-compare-row {
+            border-top: 1px solid
+                rgba(126, 166, 194, .075);
+        }
+
+        .match-v2-compare-head {
+            display: grid;
+            grid-template-columns:
+                minmax(0, 1fr)
+                auto
+                auto;
+            align-items: baseline;
+            gap: 14px;
+            margin-bottom: 10px;
+        }
+
+        .match-v2-compare-name {
+            font-size: 12px;
+            font-weight: 700;
+        }
+
+        .match-v2-compare-now,
+        .match-v2-compare-avg {
+            font-variant-numeric:
+                tabular-nums;
+        }
+
+        .match-v2-compare-now {
+            font-size: 15px;
+            font-weight: 780;
+            color: #f5fbff;
+        }
+
+        .match-v2-compare-avg {
+            min-width: 46px;
+            text-align: right;
+            font-size: 11px;
+            opacity: .46;
+        }
+
+        .match-v2-spark {
+            position: relative;
+            height: 42px;
+            display: flex;
+            align-items: flex-end;
+            gap: 3px;
+            padding-top: 4px;
+            border-bottom: 1px solid
+                rgba(126, 166, 194, .12);
+        }
+
+        .match-v2-spark-bar {
+            flex: 1 1 0;
+            min-width: 3px;
+            max-width: 24px;
+            border-radius: 2px 2px 0 0;
+            background:
+                rgba(69, 195, 255, .42);
+        }
+
+        .match-v2-spark-bar.current {
+            background:
+                rgba(69, 195, 255, .95);
+        }
+
+        .match-v2-spark-average {
+            position: absolute;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background:
+                rgba(240, 248, 255, .30);
+            pointer-events: none;
+            z-index: 2;
+        }
+
+        .match-v2-history-empty {
+            padding: 22px 17px;
+            font-size: 12px;
+            line-height: 1.55;
+            opacity: .55;
+        }
+
+        .match-v2-signal-facts {
+            margin-top: 16px;
+            border-top: 1px solid
+                rgba(126, 166, 194, .10);
+        }
+
+        .match-v2-signal-fact {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 14px;
+            padding: 10px 0;
+            font-size: 11px;
+        }
+
+        .match-v2-signal-fact
+        + .match-v2-signal-fact {
+            border-top: 1px solid
+                rgba(126, 166, 194, .07);
+        }
+
+        .match-v2-signal-fact span:first-child {
+            opacity: .55;
+        }
+
+        .match-v2-signal-fact strong {
+            font-size: 13px;
+            font-variant-numeric:
+                tabular-nums;
+        }
+
+        @media (max-width: 1050px) {
+            .match-v2-grid {
+                grid-template-columns:
+                    1fr 1fr;
+            }
+
+            .match-v2-grid
+            .match-v2-box:last-child {
+                grid-column:
+                    1 / -1;
+            }
+        }
+
+        @media (max-width: 760px) {
+            .match-v2-grid,
+            .match-v2-side-grid {
+                grid-template-columns:
+                    1fr;
+            }
+
+            .match-v2-stat-grid {
+                grid-template-columns:
+                    1fr 1fr;
+            }
+        }
+    `;
+
+    document.head.appendChild(
+        style
+    );
+}
+
+
+function ensureMatchV2DuelEpisodeStyles() {
+    const styleId =
+        "cs2-match-v2-duel-episodes-v1";
+
+    if (
+        document.getElementById(
+            styleId
+        )
+    ) {
+        return;
+    }
+
+    const style =
+        document.createElement(
+            "style"
+        );
+
+    style.id =
+        styleId;
+
+    style.textContent = `
+.match-v2-duel-summary {
+    display: grid;
+    grid-template-columns:
+        repeat(4, minmax(0, 1fr));
+    gap: 10px;
+    margin-bottom: 14px;
+}
+
+.match-v2-duel-layout {
+    display: grid;
+    grid-template-columns:
+        minmax(250px, .72fr)
+        minmax(0, 1.6fr);
+    gap: 14px;
+    align-items: start;
+}
+
+.match-v2-duel-episodes {
+    display: grid;
+    gap: 8px;
+}
+
+.match-v2-duel-episode {
+    display: grid;
+    grid-template-columns:
+        78px
+        44px
+        92px
+        minmax(0, 1fr);
+    gap: 10px;
+    align-items: center;
+
+    padding: 11px 12px;
+
+    border: 1px solid
+        rgba(112, 154, 184, .13);
+
+    border-radius: 12px;
+
+    background:
+        rgba(6, 18, 29, .46);
+}
+
+.match-v2-duel-round {
+    font-size: 13px;
+    font-weight: 750;
+    color: rgba(222, 239, 249, .92);
+    font-variant-numeric: tabular-nums;
+}
+
+.match-v2-duel-side {
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+
+    min-height: 24px;
+    padding: 0 7px;
+
+    border-radius: 7px;
+
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: .05em;
+
+    color: rgba(183, 221, 241, .78);
+
+    background:
+        rgba(75, 139, 177, .10);
+}
+
+.match-v2-duel-result {
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: .045em;
+}
+
+.match-v2-duel-result.win {
+    color: rgba(71, 221, 178, .92);
+}
+
+.match-v2-duel-result.loss {
+    color: rgba(255, 144, 91, .96);
+}
+
+.match-v2-duel-copy {
+    min-width: 0;
+}
+
+.match-v2-duel-main {
+    color: rgba(219, 236, 246, .88);
+    font-size: 13px;
+    line-height: 1.35;
+}
+
+.match-v2-duel-extra {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+
+    margin-top: 5px;
+}
+
+.match-v2-duel-tag {
+    display: inline-flex;
+    align-items: center;
+
+    min-height: 21px;
+    padding: 0 7px;
+
+    border-radius: 999px;
+
+    font-size: 10px;
+    font-weight: 700;
+
+    color: rgba(166, 198, 217, .76);
+
+    background:
+        rgba(91, 135, 161, .09);
+}
+
+.match-v2-duel-tag.warning {
+    color: rgba(255, 171, 114, .94);
+
+    background:
+        rgba(255, 134, 67, .09);
+}
+
+.match-v2-duel-empty {
+    padding: 18px 4px;
+
+    color: rgba(154, 184, 202, .68);
+
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+@media (max-width: 900px) {
+    .match-v2-duel-layout {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 680px) {
+    .match-v2-duel-summary {
+        grid-template-columns:
+            repeat(2, minmax(0, 1fr));
+    }
+
+    .match-v2-duel-episode {
+        grid-template-columns:
+            48px
+            40px
+            78px
+            minmax(0, 1fr);
+
+        gap: 7px;
+        padding: 10px;
+    }
+}
+`;
+
+    document.head.appendChild(
+        style
+    );
+}
+
+
+function renderMatchV2(
+    player,
+    analysis
+) {
+    ensureMatchV2Styles();
+    ensureMatchV2DuelEpisodeStyles();
+
+    window.cs2MatchV2Current = {
+        player,
+        analysis,
+    };
+
+    const insight =
+        document.getElementById(
+            "insight"
+        );
+
+    if (!insight) {
+        return;
+    }
+
+    let root =
+        document.getElementById(
+            "matchV2"
+        );
+
+    if (!root) {
+        root =
+            document.createElement(
+                "section"
+            );
+
+        root.id =
+            "matchV2";
+
+        root.className =
+            "match-v2";
+
+        insight.insertAdjacentElement(
+            "beforebegin",
+            root
+        );
+    }
+
+    root.replaceChildren();
+
+    const stats =
+        player.stats || {};
+
+    const sides =
+        player.sides || {};
+
+    const signals =
+        Array.isArray(
+            player.growth_signals
+        )
+            ? player.growth_signals
+                .filter(Boolean)
+            : [];
+
+    const signal =
+        signals.length
+            ? [...signals]
+                .sort(
+                    (a, b) =>
+                        growthSignalRank(b)
+                        - growthSignalRank(a)
+                )[0]
+            : null;
+
+    const duelSignal =
+        signals.find(
+            item =>
+                item
+                && item.code
+                    === "DUEL_REALIZATION"
+        ) || null;
+
+    const duel =
+        duelSignal
+        && duelSignal.evidence
+            ? duelSignal.evidence
+            : null;
+
+
+    const n = value => {
+        const parsed =
+            Number(value);
+
+        return Number.isFinite(parsed)
+            ? parsed
+            : 0;
+    };
+
+
+    const i = value =>
+        Math.round(
+            n(value)
+        );
+
+
+    function makeTable(
+        rows
+    ) {
+        const table =
+            document.createElement(
+                "table"
+            );
+
+        table.className =
+            "match-v2-table";
+
+        rows.forEach(
+            ([labelText, valueText]) => {
+                const tr =
+                    document.createElement(
+                        "tr"
+                    );
+
+                const label =
+                    document.createElement(
+                        "td"
+                    );
+
+                const value =
+                    document.createElement(
+                        "td"
+                    );
+
+                label.textContent =
+                    labelText;
+
+                value.textContent =
+                    valueText;
+
+                tr.append(
+                    label,
+                    value
+                );
+
+                table.appendChild(
+                    tr
+                );
+            }
+        );
+
+        return table;
+    }
+
+
+    function makeBox(
+        titleText,
+        metaText,
+        body
+    ) {
+        const box =
+            document.createElement(
+                "div"
+            );
+
+        box.className =
+            "match-v2-box";
+
+        const head =
+            document.createElement(
+                "div"
+            );
+
+        head.className =
+            "match-v2-box-head";
+
+        const title =
+            document.createElement(
+                "div"
+            );
+
+        title.className =
+            "match-v2-box-title";
+
+        title.textContent =
+            titleText;
+
+        const meta =
+            document.createElement(
+                "div"
+            );
+
+        meta.className =
+            "match-v2-box-meta";
+
+        meta.textContent =
+            metaText || "";
+
+        head.append(
+            title,
+            meta
+        );
+
+        box.append(
+            head,
+            body
+        );
+
+        return box;
+    }
+
+
+    function makeStat(
+        labelText,
+        valueText
+    ) {
+        const box =
+            document.createElement(
+                "div"
+            );
+
+        box.className =
+            "match-v2-stat";
+
+        const label =
+            document.createElement(
+                "div"
+            );
+
+        label.className =
+            "match-v2-stat-label";
+
+        label.textContent =
+            labelText;
+
+        const value =
+            document.createElement(
+                "div"
+            );
+
+        value.className =
+            "match-v2-stat-value";
+
+        value.textContent =
+            valueText;
+
+        box.append(
+            label,
+            value
+        );
+
+        return box;
+    }
+
+
+    const tabs =
+        document.createElement(
+            "div"
+        );
+
+    tabs.className =
+        "match-v2-tabs";
+
+    const tabDefinitions = [
+        ["overview", "\u041e\u0431\u0437\u043e\u0440"],
+        ["duels", "\u041f\u0435\u0440\u0435\u0441\u0442\u0440\u0435\u043b\u043a\u0438"],
+        ["utility", "Utility"],
+        ["sides", "CT / T"],
+        ["rounds", "\u0420\u0430\u0443\u043d\u0434\u044b"],
+    ];
+
+    const panels = {};
+
+
+    function activate(
+        key
+    ) {
+        Object.entries(
+            panels
+        ).forEach(
+            ([panelKey, panel]) => {
+                panel.hidden =
+                    panelKey !== key;
+            }
+        );
+
+        tabs.querySelectorAll(
+            ".match-v2-tab"
+        ).forEach(
+            button => {
+                button.classList.toggle(
+                    "active",
+                    button.dataset.tab === key
+                );
+            }
+        );
+    }
+
+
+    tabDefinitions.forEach(
+        ([key, labelText]) => {
+            const button =
+                document.createElement(
+                    "button"
+                );
+
+            button.type =
+                "button";
+
+            button.className =
+                "match-v2-tab";
+
+            button.dataset.tab =
+                key;
+
+            button.textContent =
+                labelText;
+
+            button.addEventListener(
+                "click",
+                () => activate(key)
+            );
+
+            tabs.appendChild(
+                button
+            );
+        }
+    );
+
+    root.appendChild(
+        tabs
+    );
+
+
+    /* OVERVIEW */
+
+    const overview =
+        document.createElement(
+            "div"
+        );
+
+    overview.className =
+        "match-v2-panel";
+
+    const overviewGrid =
+        document.createElement(
+            "div"
+        );
+
+    overviewGrid.className =
+        "match-v2-grid";
+
+
+    const currentKd =
+        Number.isFinite(
+            Number(stats.kd)
+        )
+            ? Number(stats.kd)
+            : (
+                n(stats.deaths) > 0
+                    ? n(stats.kills)
+                        / n(stats.deaths)
+                    : n(stats.kills)
+            );
+
+    const utilityDamage =
+        Math.round(
+            n(stats.he_damage)
+            + n(stats.inferno_damage)
+        );
+
+    const matchTable =
+        makeTable([
+            [
+                "Kills / deaths",
+                `${i(
+                    stats.kills
+                )} / ${i(
+                    stats.deaths
+                )}`,
+            ],
+            [
+                "HS",
+                `${n(
+                    stats.headshot_pct
+                ).toFixed(1)}%`,
+            ],
+            [
+                "Entry K / D",
+                `${i(
+                    stats.entry_kills
+                )} / ${i(
+                    stats.entry_deaths
+                )}`,
+            ],
+            [
+                "\u0422\u0440\u0435\u0439\u0434-\u0443\u0431\u0438\u0439\u0441\u0442\u0432\u0430",
+                String(
+                    i(stats.trade_kills)
+                ),
+            ],
+            [
+                "Utility damage",
+                String(
+                    utilityDamage
+                ),
+            ],
+            [
+                "\u041a\u043b\u0430\u0442\u0447\u0438",
+                String(
+                    i(stats.clutches_won)
+                ),
+            ],
+        ]);
+
+
+    const currentMatchId =
+        String(
+            analysis?.match_id || ""
+        );
+
+    const history =
+        Array.isArray(
+            window.cs2MatchV2History
+        )
+            ? window.cs2MatchV2History
+                .filter(
+                    item =>
+                        item
+                        && item.stats
+                        && (
+                            !currentMatchId
+                            || String(
+                                item.match_id || ""
+                            ) !== currentMatchId
+                        )
+                )
+                .slice(0, 10)
+            : [];
+
+
+    function matchMetric(
+        item,
+        key
+    ) {
+        const s =
+            item && item.stats
+                ? item.stats
+                : {};
+
+        if (key === "kd") {
+            const kills =
+                n(s.kills);
+
+            const deaths =
+                n(s.deaths);
+
+            return deaths > 0
+                ? kills / deaths
+                : kills;
+        }
+
+        if (key === "entry") {
+            const wins =
+                n(s.entry_kills);
+
+            const losses =
+                n(s.entry_deaths);
+
+            const total =
+                wins + losses;
+
+            return total > 0
+                ? wins / total * 100
+                : 0;
+        }
+
+        return n(
+            s[key]
+        );
+    }
+
+
+    function currentMetric(
+        key
+    ) {
+        if (key === "kd") {
+            return currentKd;
+        }
+
+        if (key === "entry") {
+            const wins =
+                n(stats.entry_kills);
+
+            const losses =
+                n(stats.entry_deaths);
+
+            const total =
+                wins + losses;
+
+            return total > 0
+                ? wins / total * 100
+                : 0;
+        }
+
+        return n(
+            stats[key]
+        );
+    }
+
+
+    function average(
+        values
+    ) {
+        if (!values.length) {
+            return null;
+        }
+
+        return values.reduce(
+            (sum, value) =>
+                sum + value,
+            0
+        ) / values.length;
+    }
+
+
+    function formatMetric(
+        key,
+        value
+    ) {
+        if (
+            value === null
+            || value === undefined
+        ) {
+            return "\u2014";
+        }
+
+        if (
+            key === "kast_pct"
+            || key === "entry"
+        ) {
+            return `${Number(
+                value
+            ).toFixed(1)}%`;
+        }
+
+        if (key === "kd") {
+            return Number(
+                value
+            ).toFixed(2);
+        }
+
+        return Number(
+            value
+        ).toFixed(1);
+    }
+
+
+    function makeSpark(
+        values,
+        currentValue,
+        averageValue
+    ) {
+        const spark =
+            document.createElement(
+                "div"
+            );
+
+        spark.className =
+            "match-v2-spark";
+
+        const chronological =
+            [...values].reverse();
+
+        const allValues = [
+            ...chronological,
+            currentValue,
+        ].filter(
+            value =>
+                Number.isFinite(
+                    Number(value)
+                )
+        );
+
+        const max =
+            Math.max(
+                1,
+                ...allValues.map(
+                    Number
+                )
+            );
+
+        chronological.forEach(
+            value => {
+                const bar =
+                    document.createElement(
+                        "div"
+                    );
+
+                bar.className =
+                    "match-v2-spark-bar";
+
+                const height =
+                    Math.max(
+                        5,
+                        Number(value)
+                        / max
+                        * 100
+                    );
+
+                bar.style.height =
+                    `${Math.min(
+                        100,
+                        height
+                    )}%`;
+
+                spark.appendChild(
+                    bar
+                );
+            }
+        );
+
+        if (
+            Number.isFinite(
+                Number(averageValue)
+            )
+        ) {
+            const averageLine =
+                document.createElement(
+                    "div"
+                );
+
+            averageLine.className =
+                "match-v2-spark-average";
+
+            const averageHeight =
+                Math.min(
+                    100,
+                    Math.max(
+                        0,
+                        Number(averageValue)
+                        / max
+                        * 100
+                    )
+                );
+
+            averageLine.style.bottom =
+                `${averageHeight}%`;
+
+            averageLine.title =
+                "\u0421\u0440\u0435\u0434\u043d\u0435\u0435";
+
+            spark.appendChild(
+                averageLine
+            );
+        }
+
+
+        const currentBar =
+            document.createElement(
+                "div"
+            );
+
+        currentBar.className =
+            "match-v2-spark-bar current";
+
+        currentBar.style.height =
+            `${Math.min(
+                100,
+                Math.max(
+                    5,
+                    Number(currentValue)
+                    / max
+                    * 100
+                )
+            )}%`;
+
+        spark.appendChild(
+            currentBar
+        );
+
+        return spark;
+    }
+
+
+    function makeComparison(
+        labelText,
+        key
+    ) {
+        const row =
+            document.createElement(
+                "div"
+            );
+
+        row.className =
+            "match-v2-compare-row";
+
+        const values =
+            history.map(
+                item =>
+                    matchMetric(
+                        item,
+                        key
+                    )
+            );
+
+        const current =
+            currentMetric(
+                key
+            );
+
+        const avg =
+            average(
+                values
+            );
+
+        const head =
+            document.createElement(
+                "div"
+            );
+
+        head.className =
+            "match-v2-compare-head";
+
+        const name =
+            document.createElement(
+                "div"
+            );
+
+        name.className =
+            "match-v2-compare-name";
+
+        name.textContent =
+            labelText;
+
+        const now =
+            document.createElement(
+                "div"
+            );
+
+        now.className =
+            "match-v2-compare-now";
+
+        now.textContent =
+            formatMetric(
+                key,
+                current
+            );
+
+        const previous =
+            document.createElement(
+                "div"
+            );
+
+        previous.className =
+            "match-v2-compare-avg";
+
+        previous.textContent =
+            avg === null
+                ? "\u2014"
+                : formatMetric(
+                    key,
+                    avg
+                );
+
+        head.append(
+            name,
+            now,
+            previous
+        );
+
+        row.appendChild(
+            head
+        );
+
+        if (history.length) {
+            row.appendChild(
+                makeSpark(
+                    values,
+                    current,
+                    avg
+                )
+            );
+        }
+
+        return row;
+    }
+
+
+    const compareBody =
+        document.createElement(
+            "div"
+        );
+
+    compareBody.className =
+        "match-v2-compare";
+
+    if (history.length) {
+        compareBody.append(
+            makeComparison(
+                "K / D",
+                "kd"
+            ),
+            makeComparison(
+                "ADR",
+                "adr"
+            ),
+            makeComparison(
+                "KAST",
+                "kast_pct"
+            ),
+            makeComparison(
+                "Entry win",
+                "entry"
+            )
+        );
+    } else {
+        const empty =
+            document.createElement(
+                "div"
+            );
+
+        empty.className =
+            "match-v2-history-empty";
+
+        empty.textContent =
+            "\u0417\u0430\u0433\u0440\u0443\u0436\u0430\u0435\u043c "
+            + "\u0438\u0441\u0442\u043e\u0440\u0438\u044e "
+            + "\u043c\u0430\u0442\u0447\u0435\u0439\u2026";
+
+        compareBody.appendChild(
+            empty
+        );
+    }
+
+
+    const signalBody =
+        document.createElement(
+            "div"
+        );
+
+    signalBody.className =
+        "match-v2-signal";
+
+    const signalKind =
+        document.createElement(
+            "div"
+        );
+
+    signalKind.className =
+        "match-v2-signal-kind";
+
+    if (!signal) {
+        signalKind.textContent =
+            "\u0421\u0438\u0433\u043d\u0430\u043b";
+    } else if (
+        signal.kind === "growth"
+    ) {
+        signalKind.textContent =
+            "\u0417\u043e\u043d\u0430 \u0440\u043e\u0441\u0442\u0430";
+    } else if (
+        signal.kind === "strength"
+    ) {
+        signalKind.textContent =
+            "\u0421\u0438\u043b\u044c\u043d\u0430\u044f \u0441\u0442\u043e\u0440\u043e\u043d\u0430";
+    } else if (
+        signal.kind === "neutral"
+    ) {
+        signalKind.textContent =
+            "\u041d\u0430\u0438\u0431\u043e\u043b\u0435\u0435 \u0437\u0430\u043c\u0435\u0442\u043d\u044b\u0439 \u043f\u043e\u043a\u0430\u0437\u0430\u0442\u0435\u043b\u044c";
+    } else {
+        signalKind.textContent =
+            "\u0414\u0430\u043d\u043d\u044b\u0445 \u043f\u043e\u043a\u0430 \u043c\u0430\u043b\u043e";
+    }
+
+    const signalTitle =
+        document.createElement(
+            "div"
+        );
+
+    signalTitle.className =
+        "match-v2-signal-title";
+
+    signalTitle.textContent =
+        signal
+            ? growthSignalTitle(
+                signal
+            )
+            : "\u0411\u0435\u0437 \u044f\u0432\u043d\u043e\u0433\u043e \u0441\u0438\u0433\u043d\u0430\u043b\u0430";
+
+    signalBody.append(
+        signalKind,
+        signalTitle
+    );
+
+    if (duel) {
+        const main =
+            document.createElement(
+                "div"
+            );
+
+        main.className =
+            "match-v2-signal-main";
+
+        main.textContent =
+            `${i(
+                duel.contested_wins
+            )} / ${i(
+                duel.contested_duels
+            )}`;
+
+        const sub =
+            document.createElement(
+                "div"
+            );
+
+        sub.className =
+            "match-v2-signal-sub";
+
+        sub.textContent =
+            `${n(
+                duel.contested_win_rate
+            ).toFixed(1)}% `
+            + "\u043f\u043e\u0431\u0435\u0434 "
+            + "\u0432\u043e \u0432\u0437\u0430\u0438\u043c\u043d\u044b\u0445 "
+            + "\u043f\u0435\u0440\u0435\u0441\u0442\u0440\u0435\u043b\u043a\u0430\u0445.";
+
+        const facts =
+            document.createElement(
+                "div"
+            );
+
+        facts.className =
+            "match-v2-signal-facts";
+
+        [
+            [
+                "\u041f\u0440\u043e\u0438\u0433\u0440\u0430\u043d\u043e "
+                + "\u043f\u043e\u0441\u043b\u0435 "
+                + "\u043f\u0435\u0440\u0432\u043e\u0433\u043e \u0443\u0440\u043e\u043d\u0430",
+                i(
+                    duel.lost_after_first_damage
+                ),
+            ],
+            [
+                "Close losses \u226430 HP",
+                i(
+                    duel.close_losses
+                ),
+            ],
+        ].forEach(
+            ([labelText, valueText]) => {
+                const row =
+                    document.createElement(
+                        "div"
+                    );
+
+                row.className =
+                    "match-v2-signal-fact";
+
+                const label =
+                    document.createElement(
+                        "span"
+                    );
+
+                const value =
+                    document.createElement(
+                        "strong"
+                    );
+
+                label.textContent =
+                    labelText;
+
+                value.textContent =
+                    String(
+                        valueText
+                    );
+
+                row.append(
+                    label,
+                    value
+                );
+
+                facts.appendChild(
+                    row
+                );
+            }
+        );
+
+        const details =
+            document.createElement(
+                "button"
+            );
+
+        details.type =
+            "button";
+
+        details.className =
+            "match-v2-round-link";
+
+        details.textContent =
+            "\u041e\u0442\u043a\u0440\u044b\u0442\u044c "
+            + "\u043f\u0435\u0440\u0435\u0441\u0442\u0440\u0435\u043b\u043a\u0438";
+
+        details.addEventListener(
+            "click",
+            () =>
+                activate(
+                    "duels"
+                )
+        );
+
+        signalBody.append(
+            main,
+            sub,
+            facts,
+            details
+        );
+    }
+
+
+    overviewGrid.append(
+        makeBox(
+            "\u0424\u0430\u043a\u0442\u044b \u043c\u0430\u0442\u0447\u0430",
+            `${i(
+                stats.rounds_played
+            )} \u0440\u0430\u0443\u043d\u0434\u043e\u0432`,
+            matchTable
+        ),
+        makeBox(
+            history.length
+                ? "\u042d\u0442\u043e\u0442 \u043c\u0430\u0442\u0447 / \u043f\u043e\u0441\u043b\u0435\u0434\u043d\u0438\u0435 "
+                    + history.length
+                : "\u042d\u0442\u043e\u0442 \u043c\u0430\u0442\u0447 / \u0438\u0441\u0442\u043e\u0440\u0438\u044f",
+            history.length
+                ? "\u042d\u0442\u043e\u0442 / \u0441\u0440\u0435\u0434\u043d\u0435\u0435"
+                : "",
+            compareBody
+        ),
+        makeBox(
+            signal
+                && signal.kind === "growth"
+                ? "\u0413\u043b\u0430\u0432\u043d\u0430\u044f \u0437\u043e\u043d\u0430 \u0440\u043e\u0441\u0442\u0430"
+                : "\u0421\u0438\u0433\u043d\u0430\u043b \u043c\u0430\u0442\u0447\u0430",
+            duel
+                ? String(
+                    i(
+                        duel.contested_duels
+                    )
+                )
+                    + " \u0432\u0437\u0430\u0438\u043c\u043d\u044b\u0445 \u043a\u043e\u043d\u0442\u0430\u043a\u0442\u043e\u0432"
+                : "",
+            signalBody
+        )
+    );
+
+    overview.appendChild(
+        overviewGrid
+    );
+
+    /* DUELS */
+
+    const duels =
+        document.createElement(
+            "div"
+        );
+
+    duels.className =
+        "match-v2-panel";
+
+
+    if (!duel) {
+        const empty =
+            document.createElement(
+                "div"
+            );
+
+        empty.className =
+            "match-v2-duel-empty";
+
+        empty.textContent =
+            "\u0414\u043b\u044f \u044d\u0442\u043e\u0433\u043e \u0430\u043d\u0430\u043b\u0438\u0437\u0430 \u0434\u0430\u043d\u043d\u044b\u0445 \u043f\u043e \u0432\u0437\u0430\u0438\u043c\u043d\u044b\u043c \u043a\u043e\u043d\u0442\u0430\u043a\u0442\u0430\u043c \u043f\u043e\u043a\u0430 \u043d\u0435\u0442.";
+
+        duels.appendChild(
+            empty
+        );
+    } else {
+        const contested =
+            i(
+                duel.contested_duels
+            );
+
+        const wins =
+            i(
+                duel.contested_wins
+            );
+
+        const losses =
+            Number.isFinite(
+                Number(
+                    duel.contested_losses
+                )
+            )
+                ? i(
+                    duel.contested_losses
+                )
+                : Math.max(
+                    0,
+                    contested - wins
+                );
+
+        const rate =
+            duel.contested_win_rate
+                !== null
+            && duel.contested_win_rate
+                !== undefined
+                ? n(
+                    duel.contested_win_rate
+                )
+                : (
+                    contested > 0
+                        ? wins
+                            / contested
+                            * 100
+                        : 0
+                );
+
+
+        const summary =
+            document.createElement(
+                "div"
+            );
+
+        summary.className =
+            "match-v2-duel-summary";
+
+        summary.append(
+            makeStat(
+                "\u0412\u0437\u0430\u0438\u043c\u043d\u044b\u0435 \u043a\u043e\u043d\u0442\u0430\u043a\u0442\u044b",
+                String(
+                    contested
+                )
+            ),
+            makeStat(
+                "\u041f\u043e\u0431\u0435\u0434\u044b",
+                String(
+                    wins
+                )
+            ),
+            makeStat(
+                "\u041f\u043e\u0440\u0430\u0436\u0435\u043d\u0438\u044f",
+                String(
+                    losses
+                )
+            ),
+            makeStat(
+                "\u0420\u0415\u0410\u041b\u0418\u0417\u0410\u0426\u0418\u042f",
+                contested > 0
+                    ? `${rate.toFixed(
+                        1
+                    )}%`
+                    : "\u2014"
+            )
+        );
+
+        duels.appendChild(
+            summary
+        );
+
+
+        const layout =
+            document.createElement(
+                "div"
+            );
+
+        layout.className =
+            "match-v2-duel-layout";
+
+        const duelEpisodes =
+            Array.isArray(
+                duel.episodes
+            )
+                ? duel.episodes
+                    .filter(
+                        episode =>
+                            episode
+                            && episode.contested
+                                !== false
+                    )
+                    .slice()
+                    .sort(
+                        (a, b) => {
+                            const roundGap =
+                                i(a.round_num)
+                                - i(b.round_num);
+
+                            if (roundGap) {
+                                return roundGap;
+                            }
+
+                            return (
+                                n(a.death_tick)
+                                - n(b.death_tick)
+                            );
+                        }
+                    )
+                : [];
+
+
+        const youFirst =
+            duelEpisodes.filter(
+                episode =>
+                    episode.first_damage
+                        === "YOU"
+            );
+
+        const enemyFirst =
+            duelEpisodes.filter(
+                episode =>
+                    episode.first_damage
+                        === "ENEMY"
+            );
+
+        const youFirstWins =
+            youFirst.filter(
+                episode =>
+                    episode.outcome
+                        === "WIN"
+            ).length;
+
+        const enemyFirstWins =
+            enemyFirst.filter(
+                episode =>
+                    episode.outcome
+                        === "WIN"
+            ).length;
+
+
+        function firstDamageResult(
+            wins,
+            total
+        ) {
+            if (!total) {
+                return "\u2014";
+            }
+
+            const pct =
+                wins / total * 100;
+
+            return (
+                `${wins} / ${total}`
+                + ` \u00b7 ${pct.toFixed(1)}%`
+            );
+        }
+
+
+        const details =
+            makeTable([
+                [
+                    "\u041f\u043e\u0441\u043b\u0435 \u0442\u0432\u043e\u0435\u0433\u043e \u043f\u0435\u0440\u0432\u043e\u0433\u043e \u0443\u0440\u043e\u043d\u0430",
+                    firstDamageResult(
+                        youFirstWins,
+                        youFirst.length
+                    ),
+                ],
+                [
+                    "\u041f\u043e\u0441\u043b\u0435 \u043f\u0435\u0440\u0432\u043e\u0433\u043e \u0443\u0440\u043e\u043d\u0430 \u0441\u043e\u043f\u0435\u0440\u043d\u0438\u043a\u0430",
+                    firstDamageResult(
+                        enemyFirstWins,
+                        enemyFirst.length
+                    ),
+                ],
+                [
+                    "\u0421\u043e\u043f\u0435\u0440\u043d\u0438\u043a \u0432\u044b\u0436\u0438\u043b \u0441 \u226430 HP",
+                    String(
+                        i(
+                            duel.close_losses
+                        )
+                    ),
+                ],
+            ]);
+
+        layout.appendChild(
+            makeBox(
+                "\u0420\u0435\u0430\u043b\u0438\u0437\u0430\u0446\u0438\u044f \u043f\u0435\u0440\u0432\u043e\u0433\u043e \u0443\u0440\u043e\u043d\u0430",
+                "\u043f\u043e \u0432\u0437\u0430\u0438\u043c\u043d\u044b\u043c \u043f\u0435\u0440\u0435\u0441\u0442\u0440\u0435\u043b\u043a\u0430\u043c",
+                details
+            )
+        );
+
+
+        const episodesBody =
+            document.createElement(
+                "div"
+            );
+
+        episodesBody.className =
+            "match-v2-duel-episodes";
+
+
+        const episodes =
+            duelEpisodes;
+
+
+        if (episodes.length) {
+            const roundTotals =
+                episodes.reduce(
+                    (totals, episode) => {
+                        const roundNum =
+                            i(
+                                episode.round_num
+                            );
+
+                        totals[roundNum] =
+                            (
+                                totals[roundNum]
+                                || 0
+                            ) + 1;
+
+                        return totals;
+                    },
+                    {}
+                );
+
+            const roundSeen = {};
+
+            episodes.forEach(
+                episode => {
+                    const row =
+                        document.createElement(
+                            "div"
+                        );
+
+                    row.className =
+                        "match-v2-duel-episode";
+
+
+                    const round =
+                        document.createElement(
+                            "div"
+                        );
+
+                    round.className =
+                        "match-v2-duel-round";
+
+                    const roundNum =
+                        i(
+                            episode.round_num
+                        );
+
+                    roundSeen[roundNum] =
+                        (
+                            roundSeen[roundNum]
+                            || 0
+                        ) + 1;
+
+                    round.textContent =
+                        roundTotals[roundNum] > 1
+                            ? `R${roundNum} \u00b7 #${roundSeen[roundNum]}`
+                            : `R${roundNum}`;
+
+
+                    const side =
+                        document.createElement(
+                            "div"
+                        );
+
+                    side.className =
+                        "match-v2-duel-side";
+
+                    side.textContent =
+                        episode.side
+                            === "T"
+                        || episode.side
+                            === "CT"
+                            ? episode.side
+                            : "\u2014";
+
+
+                    const result =
+                        document.createElement(
+                            "div"
+                        );
+
+                    const isWin =
+                        episode.outcome
+                            === "WIN";
+
+                    result.className =
+                        "match-v2-duel-result "
+                        + (
+                            isWin
+                                ? "win"
+                                : "loss"
+                        );
+
+                    result.textContent =
+                        isWin
+                            ? "\u041f\u041e\u0411\u0415\u0414\u0410"
+                            : "\u041f\u041e\u0420\u0410\u0416\u0415\u041d\u0418\u0415";
+
+
+                    const copy =
+                        document.createElement(
+                            "div"
+                        );
+
+                    copy.className =
+                        "match-v2-duel-copy";
+
+
+                    const main =
+                        document.createElement(
+                            "div"
+                        );
+
+                    main.className =
+                        "match-v2-duel-main";
+
+                    if (
+                        episode.first_damage
+                        === "YOU"
+                    ) {
+                        main.textContent =
+                            "\u041f\u0435\u0440\u0432\u044b\u0439 \u0443\u0440\u043e\u043d \u043d\u0430\u043d\u0451\u0441 \u0442\u044b";
+                    } else if (
+                        episode.first_damage
+                        === "ENEMY"
+                    ) {
+                        main.textContent =
+                            "\u041f\u0435\u0440\u0432\u044b\u0439 \u0443\u0440\u043e\u043d \u043d\u0430\u043d\u0451\u0441 \u0441\u043e\u043f\u0435\u0440\u043d\u0438\u043a";
+                    } else {
+                        main.textContent =
+                            "\u0412\u0437\u0430\u0438\u043c\u043d\u044b\u0439 \u043a\u043e\u043d\u0442\u0430\u043a\u0442";
+                    }
+
+                    copy.appendChild(
+                        main
+                    );
+
+
+                    const extra =
+                        document.createElement(
+                            "div"
+                        );
+
+                    extra.className =
+                        "match-v2-duel-extra";
+
+
+                    if (
+                        !isWin
+                        && episode
+                            .opponent_hp_after_contact
+                            !== null
+                        && episode
+                            .opponent_hp_after_contact
+                            !== undefined
+                    ) {
+                        const hp =
+                            document.createElement(
+                                "span"
+                            );
+
+                        hp.className =
+                            "match-v2-duel-tag"
+                            + (
+                                episode.close_loss
+                                    ? " warning"
+                                    : ""
+                            );
+
+                        hp.textContent =
+                            `\u0421\u043e\u043f\u0435\u0440\u043d\u0438\u043a \u043e\u0441\u0442\u0430\u043b\u0441\u044f: ${i(
+                                episode
+                                    .opponent_hp_after_contact
+                            )} HP`;
+
+                        extra.appendChild(
+                            hp
+                        );
+                    }
+
+
+                    if (
+                        extra.childNodes.length
+                    ) {
+                        copy.appendChild(
+                            extra
+                        );
+                    }
+
+
+                    row.append(
+                        round,
+                        side,
+                        result,
+                        copy
+                    );
+
+                    episodesBody.appendChild(
+                        row
+                    );
+                }
+            );
+        } else {
+            const empty =
+                document.createElement(
+                    "div"
+                );
+
+            empty.className =
+                "match-v2-duel-empty";
+
+            empty.textContent =
+                "\u0410\u0433\u0440\u0435\u0433\u0430\u0442\u044b \u0434\u043e\u0441\u0442\u0443\u043f\u043d\u044b, \u043d\u043e \u0434\u0435\u0442\u0430\u043b\u044c\u043d\u044b\u0435 \u044d\u043f\u0438\u0437\u043e\u0434\u044b \u043d\u0435 \u0431\u044b\u043b\u0438 \u0441\u043e\u0445\u0440\u0430\u043d\u0435\u043d\u044b \u0434\u043b\u044f \u044d\u0442\u043e\u0433\u043e \u0430\u043d\u0430\u043b\u0438\u0437\u0430.";
+
+            episodesBody.appendChild(
+                empty
+            );
+        }
+
+
+        layout.appendChild(
+            makeBox(
+                "\u042d\u043f\u0438\u0437\u043e\u0434\u044b",
+                episodes.length
+                    ? `${episodes.length} \u043f\u043e\u0434\u0442\u0432\u0435\u0440\u0436\u0434\u0451\u043d\u043d\u044b\u0445`
+                    : "\u0434\u0435\u0442\u0430\u043b\u0438\u0437\u0430\u0446\u0438\u044f \u043d\u0435\u0434\u043e\u0441\u0442\u0443\u043f\u043d\u0430",
+                episodesBody
+            )
+        );
+
+
+        duels.appendChild(
+            layout
+        );
+    }
+
+
+    panels.duels =
+        duels;
+
+    root.appendChild(
+        duels
+    );
+
+
+    /* UTILITY */
+
+    const utilityPanel =
+        document.createElement(
+            "div"
+        );
+
+    utilityPanel.className =
+        "match-v2-panel";
+
+
+    const utilityDamageTotal =
+        n(stats.he_damage)
+        + n(stats.inferno_damage);
+
+    const roundsPlayed =
+        Math.max(
+            0,
+            i(stats.rounds_played)
+        );
+
+    const utilityRounds =
+        Array.isArray(
+            player.utility_rounds
+        )
+            ? player.utility_rounds
+                .filter(Boolean)
+                .slice()
+                .sort(
+                    (a, b) => {
+                        const roundGap =
+                            i(a.round_num)
+                            - i(b.round_num);
+
+                        if (roundGap) {
+                            return roundGap;
+                        }
+
+                        const order = {
+                            he: 0,
+                            fire: 1,
+                            flash: 2,
+                        };
+
+                        return (
+                            (order[a.kind] ?? 99)
+                            - (order[b.kind] ?? 99)
+                        );
+                    }
+                )
+            : [];
+
+
+    const utilitySummary =
+        document.createElement(
+            "div"
+        );
+
+    utilitySummary.className =
+        "match-v2-stat-grid";
+
+    utilitySummary.append(
+        makeStat(
+            "\u0423\u0440\u043e\u043d \u0433\u0440\u0430\u043d\u0430\u0442\u0430\u043c",
+            String(
+                Math.round(
+                    utilityDamageTotal
+                )
+            )
+        ),
+        makeStat(
+            "HE",
+            String(
+                Math.round(
+                    n(stats.he_damage)
+                )
+            )
+        ),
+        makeStat(
+            "\u041e\u0433\u043e\u043d\u044c",
+            String(
+                Math.round(
+                    n(
+                        stats.inferno_damage
+                    )
+                )
+            )
+        ),
+        makeStat(
+            "\u041e\u0441\u043b\u0435\u043f\u043b\u0435\u043d\u0438\u0439 \u0441\u043e\u043f\u0435\u0440\u043d\u0438\u043a\u043e\u0432",
+            String(
+                i(
+                    stats.enemies_flashed
+                )
+            )
+        )
+    );
+
+    utilityPanel.appendChild(
+        utilitySummary
+    );
+
+
+    const utilityLayout =
+        document.createElement(
+            "div"
+        );
+
+    utilityLayout.className =
+        "match-v2-duel-layout";
+
+
+    const efficiency =
+        makeTable([
+            [
+                "\u0423\u0440\u043e\u043d \u0433\u0440\u0430\u043d\u0430\u0442\u0430\u043c / \u0440\u0430\u0443\u043d\u0434",
+                roundsPlayed > 0
+                    ? (
+                        utilityDamageTotal
+                        / roundsPlayed
+                    ).toFixed(1)
+                    : "\u2014",
+            ],
+            [
+                "\u041e\u0441\u043b\u0435\u043f\u043b\u0435\u043d\u0438\u0439 / \u0440\u0430\u0443\u043d\u0434",
+                roundsPlayed > 0
+                    ? (
+                        n(
+                            stats.enemies_flashed
+                        )
+                        / roundsPlayed
+                    ).toFixed(2)
+                    : "\u2014",
+            ],
+            [
+                "\u0412\u0440\u0435\u043c\u044f \u043e\u0441\u043b\u0435\u043f\u043b\u0435\u043d\u0438\u044f",
+                `${n(
+                    stats.flash_duration
+                ).toFixed(1)} \u0441\u0435\u043a`,
+            ],
+        ]);
+
+    utilityLayout.appendChild(
+        makeBox(
+            "\u042d\u0444\u0444\u0435\u043a\u0442\u0438\u0432\u043d\u043e\u0441\u0442\u044c",
+            roundsPlayed > 0
+                ? `${roundsPlayed} \u0440\u0430\u0443\u043d\u0434\u043e\u0432`
+                : "",
+            efficiency
+        )
+    );
+
+
+    const episodesBody =
+        document.createElement(
+            "div"
+        );
+
+    episodesBody.className =
+        "match-v2-duel-episodes";
+
+
+    function plural(
+        value,
+        one,
+        few,
+        many
+    ) {
+        const n =
+            Math.abs(
+                Math.trunc(value)
+            );
+
+        const mod10 =
+            n % 10;
+
+        const mod100 =
+            n % 100;
+
+        if (
+            mod10 === 1
+            && mod100 !== 11
+        ) {
+            return one;
+        }
+
+        if (
+            mod10 >= 2
+            && mod10 <= 4
+            && !(
+                mod100 >= 12
+                && mod100 <= 14
+            )
+        ) {
+            return few;
+        }
+
+        return many;
+    }
+
+
+    if (utilityRounds.length) {
+        utilityRounds.forEach(
+            episode => {
+                const row =
+                    document.createElement(
+                        "div"
+                    );
+
+                row.className =
+                    "match-v2-duel-episode";
+
+
+                const round =
+                    document.createElement(
+                        "div"
+                    );
+
+                round.className =
+                    "match-v2-duel-round";
+
+                round.textContent =
+                    `R${i(
+                        episode.round_num
+                    )}`;
+
+
+                const kind =
+                    document.createElement(
+                        "div"
+                    );
+
+                kind.className =
+                    "match-v2-duel-side";
+
+                kind.textContent =
+                    episode.kind === "he"
+                        ? "HE"
+                        : (
+                            episode.kind
+                                === "fire"
+                            ? "FIRE"
+                            : "FLASH"
+                        );
+
+
+                const copy =
+                    document.createElement(
+                        "div"
+                    );
+
+                copy.className =
+                    "match-v2-duel-copy";
+
+
+                const main =
+                    document.createElement(
+                        "div"
+                    );
+
+                main.className =
+                    "match-v2-duel-main";
+
+
+                if (
+                    episode.kind
+                    === "flash"
+                ) {
+                    const events =
+                        i(
+                            episode.events
+                        );
+
+                    const targets =
+                        i(
+                            episode.targets
+                        );
+
+                    main.textContent =
+                        `${events} ${
+                            plural(
+                                events,
+                                "\u043e\u0441\u043b\u0435\u043f\u043b\u0435\u043d\u0438\u0435",
+                                "\u043e\u0441\u043b\u0435\u043f\u043b\u0435\u043d\u0438\u044f",
+                                "\u043e\u0441\u043b\u0435\u043f\u043b\u0435\u043d\u0438\u0439"
+                            )
+                        } \u00b7 ${targets} ${
+                            plural(
+                                targets,
+                                "\u0441\u043e\u043f\u0435\u0440\u043d\u0438\u043a",
+                                "\u0441\u043e\u043f\u0435\u0440\u043d\u0438\u043a\u0430",
+                                "\u0441\u043e\u043f\u0435\u0440\u043d\u0438\u043a\u043e\u0432"
+                            )
+                        } \u00b7 ${n(
+                            episode.duration
+                        ).toFixed(1)} \u0441\u0435\u043a`;
+                } else {
+                    const damage =
+                        Math.round(
+                            n(
+                                episode.damage
+                            )
+                        );
+
+                    const targets =
+                        i(
+                            episode.targets
+                        );
+
+                    main.textContent =
+                        `${damage} \u0443\u0440\u043e\u043d\u0430 \u00b7 ${targets} ${
+                            plural(
+                                targets,
+                                "\u0441\u043e\u043f\u0435\u0440\u043d\u0438\u043a",
+                                "\u0441\u043e\u043f\u0435\u0440\u043d\u0438\u043a\u0430",
+                                "\u0441\u043e\u043f\u0435\u0440\u043d\u0438\u043a\u043e\u0432"
+                            )
+                        }`;
+                }
+
+
+                copy.appendChild(
+                    main
+                );
+
+                row.append(
+                    round,
+                    kind,
+                    copy
+                );
+
+                episodesBody.appendChild(
+                    row
+                );
+            }
+        );
+    } else {
+        const empty =
+            document.createElement(
+                "div"
+            );
+
+        empty.className =
+            "match-v2-duel-empty";
+
+        empty.textContent =
+            "\u0414\u043b\u044f \u044d\u0442\u043e\u0433\u043e \u043c\u0430\u0442\u0447\u0430 \u0434\u0435\u0442\u0430\u043b\u0438\u0437\u0430\u0446\u0438\u044f Utility \u043f\u043e \u0440\u0430\u0443\u043d\u0434\u0430\u043c \u043d\u0435\u0434\u043e\u0441\u0442\u0443\u043f\u043d\u0430.";
+
+        episodesBody.appendChild(
+            empty
+        );
+    }
+
+
+    utilityLayout.appendChild(
+        makeBox(
+            "\u042d\u043f\u0438\u0437\u043e\u0434\u044b",
+            utilityRounds.length
+                ? `${utilityRounds.length} \u043f\u043e\u0434\u0442\u0432\u0435\u0440\u0436\u0434\u0451\u043d\u043d\u044b\u0445`
+                : "\u041d\u0435\u0442 \u0434\u0430\u043d\u043d\u044b\u0445",
+            episodesBody
+        )
+    );
+
+
+    utilityPanel.appendChild(
+        utilityLayout
+    );
+
+
+    panels.utility =
+        utilityPanel;
+
+    root.appendChild(
+        utilityPanel
+    );
+
+
+    /* CT / T */
+
+    const sidesPanel =
+        document.createElement(
+            "div"
+        );
+
+    sidesPanel.className =
+        "match-v2-panel";
+
+    const sideGrid =
+        document.createElement(
+            "div"
+        );
+
+    sideGrid.className =
+        "match-v2-side-grid";
+
+    ["CT", "T"].forEach(
+        sideName => {
+            const side =
+                sides[
+                    sideName
+                ] || {};
+
+            const body =
+                makeTable([
+                    [
+                        "\u0420\u0430\u0443\u043d\u0434\u044b",
+                        String(
+                            i(
+                                side.rounds_played
+                            )
+                        ),
+                    ],
+                    [
+                        "K / D",
+                        `${i(
+                            side.kills
+                        )} / ${i(
+                            side.deaths
+                        )}`,
+                    ],
+                    [
+                        "ADR",
+                        n(
+                            side.adr
+                        ).toFixed(1),
+                    ],
+                    [
+                        "KAST",
+                        `${n(
+                            side.kast_pct
+                        ).toFixed(1)}%`,
+                    ],
+                    [
+                        "Entry",
+                        `${i(
+                            side.entry_kills
+                        )} / ${i(
+                            side.entry_deaths
+                        )}`,
+                    ],
+                ]);
+
+            const box =
+                makeBox(
+                    sideName === "CT"
+                        ? "\u041a\u043e\u043d\u0442\u0440-\u0442\u0435\u0440\u0440\u043e\u0440\u0438\u0441\u0442\u044b"
+                        : "\u0422\u0435\u0440\u0440\u043e\u0440\u0438\u0441\u0442\u044b",
+                    sideName,
+                    body
+                );
+
+            sideGrid.appendChild(
+                box
+            );
+        }
+    );
+
+    sidesPanel.appendChild(
+        sideGrid
+    );
+
+
+    /* ROUNDS */
+
+    const roundsPanel =
+        document.createElement(
+            "div"
+        );
+
+    roundsPanel.className =
+        "match-v2-panel";
+
+    const roundsBox =
+        document.createElement(
+            "div"
+        );
+
+    roundsBox.className =
+        "match-v2-box";
+
+    const roundsBody =
+        document.createElement(
+            "div"
+        );
+
+    roundsBody.className =
+        "match-v2-signal";
+
+    const roundsTitle =
+        document.createElement(
+            "div"
+        );
+
+    roundsTitle.className =
+        "match-v2-signal-title";
+
+    roundsTitle.textContent =
+        "\u042d\u043f\u0438\u0437\u043e\u0434\u044b \u043c\u0430\u0442\u0447\u0430";
+
+    const roundsText =
+        document.createElement(
+            "div"
+        );
+
+    roundsText.className =
+        "match-v2-signal-sub";
+
+    roundsText.textContent =
+        "\u041f\u0435\u0440\u0435\u043b\u043e\u043c\u043d\u044b\u0435 \u0440\u0430\u0443\u043d\u0434\u044b "
+        + "\u0438 \u043e\u0442\u043c\u0435\u0447\u0435\u043d\u043d\u044b\u0435 "
+        + "\u044d\u043f\u0438\u0437\u043e\u0434\u044b \u0443\u0436\u0435 "
+        + "\u0440\u0430\u0441\u0441\u0447\u0438\u0442\u0430\u043d\u044b \u043d\u0438\u0436\u0435.";
+
+    const roundLink =
+        document.createElement(
+            "button"
+        );
+
+    roundLink.type =
+        "button";
+
+    roundLink.className =
+        "match-v2-round-link";
+
+    roundLink.textContent =
+        "\u041f\u0435\u0440\u0435\u0439\u0442\u0438 \u043a \u044d\u043f\u0438\u0437\u043e\u0434\u0430\u043c";
+
+    roundLink.addEventListener(
+        "click",
+        () => {
+            const target =
+                document.getElementById(
+                    "matchStorySection"
+                );
+
+            if (target) {
+                target.scrollIntoView(
+                    {
+                        behavior:
+                            "smooth",
+                        block:
+                            "start",
+                    }
+                );
+            }
+        }
+    );
+
+    roundsBody.append(
+        roundsTitle,
+        roundsText,
+        roundLink
+    );
+
+    roundsBox.appendChild(
+        roundsBody
+    );
+
+    roundsPanel.appendChild(
+        roundsBox
+    );
+
+
+    panels.overview =
+        overview;
+
+    panels.duels =
+        duels;
+
+    panels.utility =
+        utilityPanel;
+
+    panels.sides =
+        sidesPanel;
+
+    panels.rounds =
+        roundsPanel;
+
+    root.append(
+        overview,
+        duels,
+        utilityPanel,
+        sidesPanel,
+        roundsPanel
+    );
+
+    activate(
+        "overview"
+    );
+}
+
+
 function renderGrowthSignals(
     player
 ) {
@@ -25788,6 +28531,11 @@ function renderPlayer(
 ) {
     const stats =
         player.stats;
+
+    renderMatchV2(
+        player,
+        analysis
+    );
 
     renderTurningRounds(
         analysis

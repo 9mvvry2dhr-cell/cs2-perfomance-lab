@@ -162,6 +162,10 @@ def calculate_duel_metrics_from_events(
     contact_gap_ticks: int = (
         CONTACT_GAP_TICKS
     ),
+    episodes_by_player: dict[
+        str,
+        list[dict[str, Any]],
+    ] | None = None,
 ) -> dict[
     str,
     dict[str, int | float | None],
@@ -185,6 +189,13 @@ def calculate_duel_metrics_from_events(
         steam_id: _empty_metrics()
         for steam_id in player_ids
     }
+
+    if episodes_by_player is not None:
+        for steam_id in player_ids:
+            episodes_by_player.setdefault(
+                steam_id,
+                [],
+            )
 
     if not player_ids:
         return metrics
@@ -482,6 +493,93 @@ def calculate_duel_metrics_from_events(
                 else None
             )
 
+            lost_after_first_damage = (
+                outcome == "LOSS"
+                and reciprocal
+                and first_damage == "YOU"
+            )
+
+            close_loss = (
+                outcome == "LOSS"
+                and reciprocal
+                and opponent_hp is not None
+                and opponent_hp >= 0
+                and opponent_hp
+                <= CLOSE_LOSS_HP_MAX
+            )
+
+            no_return_loss = (
+                outcome == "LOSS"
+                and not reciprocal
+            )
+
+            if episodes_by_player is not None:
+                contact_start_tick = (
+                    safe_int(
+                        contact[0].get(
+                            "tick"
+                        ),
+                        default=death_tick,
+                    )
+                    if contact
+                    else death_tick
+                )
+
+                episodes_by_player[
+                    self_sid
+                ].append(
+                    {
+                        "round_num":
+                            round_num,
+                        "side":
+                            (
+                                "T"
+                                if self_team == 2
+                                else "CT"
+                            ),
+                        "outcome":
+                            outcome,
+                        "weapon":
+                            str(
+                                weapon or ""
+                            ),
+                        "death_tick":
+                            death_tick,
+                        "contact_start_tick":
+                            contact_start_tick,
+                        "contested":
+                            reciprocal,
+                        "first_damage":
+                            first_damage,
+                        "lost_after_first_damage":
+                            lost_after_first_damage,
+                        "close_loss":
+                            close_loss,
+                        "no_return_loss":
+                            no_return_loss,
+                        "instant_loss":
+                            instant_loss,
+                        "self_hit_count":
+                            len(
+                                self_hits
+                            ),
+                        "enemy_hit_count":
+                            len(
+                                enemy_hits
+                            ),
+                        "opponent_hp_after_contact":
+                            (
+                                opponent_hp
+                                if (
+                                    outcome
+                                    == "LOSS"
+                                    and self_hits
+                                )
+                                else None
+                            ),
+                    }
+                )
+
             current = metrics[
                 self_sid
             ]
@@ -530,10 +628,7 @@ def calculate_duel_metrics_from_events(
                         "contested_losses"
                     ] += 1
 
-                    if (
-                        first_damage
-                        == "YOU"
-                    ):
+                    if lost_after_first_damage:
                         current[
                             "lost_after_first_damage"
                         ] += 1
@@ -542,13 +637,7 @@ def calculate_duel_metrics_from_events(
                             "first_damage_losses"
                         ] += 1
 
-                    if (
-                        opponent_hp
-                        is not None
-                        and opponent_hp >= 0
-                        and opponent_hp
-                        <= CLOSE_LOSS_HP_MAX
-                    ):
+                    if close_loss:
                         current[
                             "close_losses"
                         ] += 1
@@ -593,6 +682,114 @@ def calculate_duel_metrics_from_events(
         )
 
     return metrics
+
+
+def calculate_duel_analysis(
+    parser,
+    player_steam_ids: Iterable[str],
+) -> tuple[
+    dict[
+        str,
+        dict[str, int | float | None],
+    ],
+    dict[
+        str,
+        list[dict[str, Any]],
+    ],
+]:
+    """
+    Parse duel data once and return both aggregate metrics
+    and verified round-level combat episodes.
+
+    Existing calculate_duel_metrics() remains unchanged
+    for callers that only need aggregate values.
+    """
+
+    player_ids = [
+        _sid(steam_id)
+        for steam_id in player_steam_ids
+        if valid_sid(steam_id)
+    ]
+
+    empty_metrics = {
+        steam_id: _empty_metrics()
+        for steam_id in player_ids
+    }
+
+    empty_episodes = {
+        steam_id: []
+        for steam_id in player_ids
+    }
+
+    if not player_ids:
+        return (
+            empty_metrics,
+            empty_episodes,
+        )
+
+    rounds = build_round_contexts(
+        parser
+    )
+
+    if not rounds:
+        return (
+            {},
+            {},
+        )
+
+    try:
+        hurt = extract_dataframe(
+            parser.parse_events(
+                ["player_hurt"]
+            )
+        )
+
+        deaths = extract_dataframe(
+            parser.parse_events(
+                ["player_death"]
+            )
+        )
+    except Exception:
+        return (
+            {},
+            {},
+        )
+
+    team_by_round_player = (
+        _build_team_map(
+            parser,
+            rounds,
+        )
+    )
+
+    if not team_by_round_player:
+        return (
+            {},
+            {},
+        )
+
+    episodes = {
+        steam_id: []
+        for steam_id in player_ids
+    }
+
+    metrics = (
+        calculate_duel_metrics_from_events(
+            hurt=hurt,
+            deaths=deaths,
+            rounds=rounds,
+            player_steam_ids=player_ids,
+            team_by_round_player=(
+                team_by_round_player
+            ),
+            episodes_by_player=episodes,
+        )
+    )
+
+    return (
+        metrics,
+        episodes,
+    )
 
 
 def calculate_duel_metrics(

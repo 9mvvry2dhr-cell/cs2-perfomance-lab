@@ -12,6 +12,7 @@ from src.ingestion.storage import (
 )
 from src.workers.analysis_worker import (
     AnalysisWorker,
+    DemoAnalysisResult,
     DemoOwnerNotFoundError,
 )
 from tests.unit.test_analysis_repository import (
@@ -112,14 +113,30 @@ class StubJobRepository:
 class StubAnalysisRepository:
     def __init__(self):
         self.saved = None
+        self.saved_match_facts = None
         self.user_match_links = []
         self.user_match_sources = []
 
     def save_analysis(
         self,
         analysis,
+        *,
+        match_facts_payload=None,
+        match_facts_version=None,
+        match_facts_capabilities=None,
     ):
         self.saved = analysis
+
+        if match_facts_payload is not None:
+            self.saved_match_facts = (
+                bytes(
+                    match_facts_payload
+                ),
+                match_facts_version,
+                list(
+                    match_facts_capabilities
+                ),
+            )
 
     def link_user_match(
         self,
@@ -185,6 +202,128 @@ class AnalysisWorkerTest(
             finished_at=None,
             owner_steam_id=TEST_STEAM_ID,
         )
+
+    def test_process_persists_match_facts_before_deleting_demo(
+        self,
+    ):
+        expected_analysis = make_analysis()
+
+        jobs = StubJobRepository(
+            self._make_job()
+        )
+
+        analyses = StubAnalysisRepository()
+
+        demo_path = self.storage.path_for(
+            self.stored.storage_key
+        )
+
+        result_bundle = DemoAnalysisResult(
+            analysis=expected_analysis,
+            match_facts_payload=(
+                b"compressed-match-facts"
+            ),
+            match_facts_version=1,
+            match_facts_capabilities=(
+                "rounds",
+                "combat",
+                "utility",
+            ),
+        )
+
+        worker = AnalysisWorker(
+            storage=self.storage,
+            job_repository=jobs,
+            analysis_repository=analyses,
+            analyzer=lambda _: result_bundle,
+        )
+
+        result = worker.process(
+            "job-001"
+        )
+
+        self.assertEqual(
+            result.status,
+            "completed",
+        )
+
+        self.assertEqual(
+            analyses.saved_match_facts,
+            (
+                b"compressed-match-facts",
+                1,
+                [
+                    "rounds",
+                    "combat",
+                    "utility",
+                ],
+            ),
+        )
+
+        self.assertFalse(
+            demo_path.exists()
+        )
+
+
+    def test_process_keeps_demo_when_match_facts_persistence_fails(
+        self,
+    ):
+        expected_analysis = make_analysis()
+
+        jobs = StubJobRepository(
+            self._make_job()
+        )
+
+        demo_path = self.storage.path_for(
+            self.stored.storage_key
+        )
+
+        class FailingRepository(
+            StubAnalysisRepository
+        ):
+            def save_analysis(
+                self,
+                analysis,
+                **kwargs,
+            ):
+                raise RuntimeError(
+                    "database write failed"
+                )
+
+        result_bundle = DemoAnalysisResult(
+            analysis=expected_analysis,
+            match_facts_payload=b"facts",
+            match_facts_version=1,
+            match_facts_capabilities=(
+                "rounds",
+            ),
+        )
+
+        worker = AnalysisWorker(
+            storage=self.storage,
+            job_repository=jobs,
+            analysis_repository=(
+                FailingRepository()
+            ),
+            analyzer=lambda _: result_bundle,
+        )
+
+        with self.assertRaises(
+            RuntimeError
+        ):
+            worker.process(
+                "job-001"
+            )
+
+        self.assertEqual(
+            jobs.job.status,
+            "failed",
+        )
+
+        self.assertTrue(
+            demo_path.exists()
+        )
+
 
     def test_process_completes_job_saves_analysis_and_deletes_demo(
         self,

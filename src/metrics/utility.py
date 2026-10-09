@@ -26,7 +26,11 @@ UTILITY_WEAPONS = {
 
 
 def calculate_utility_metrics(
-    raw_parser: RawDemoParser
+    raw_parser: RawDemoParser,
+    utility_rounds_by_player: dict[
+        str,
+        list[dict[str, object]],
+    ] | None = None,
 ) -> dict:
     """
     Возвращает Utility-статистику по SteamID:
@@ -51,6 +55,22 @@ def calculate_utility_metrics(
     """
 
     stats = {}
+
+    # Verified utility detail grouped by player + round.
+    #
+    # One row intentionally means "utility impact in this round",
+    # not necessarily one grenade.
+    round_utility = defaultdict(
+        lambda: {
+            "he_damage": 0.0,
+            "he_targets": set(),
+            "fire_damage": 0.0,
+            "fire_targets": set(),
+            "flash_events": 0,
+            "flash_targets": set(),
+            "flash_duration": 0.0,
+        }
+    )
 
     # ------------------------------------------------------------------
     # HELPERS
@@ -336,10 +356,40 @@ def calculate_utility_metrics(
                     attacker
                 ]["he_damage"] += actual_damage
 
+                round_key = (
+                    attacker,
+                    round_num,
+                )
+
+                round_utility[
+                    round_key
+                ]["he_damage"] += actual_damage
+
+                round_utility[
+                    round_key
+                ]["he_targets"].add(
+                    victim
+                )
+
             elif utility_type == "fire":
                 stats[
                     attacker
                 ]["inferno_damage"] += actual_damage
+
+                round_key = (
+                    attacker,
+                    round_num,
+                )
+
+                round_utility[
+                    round_key
+                ]["fire_damage"] += actual_damage
+
+                round_utility[
+                    round_key
+                ]["fire_targets"].add(
+                    victim
+                )
 
     # ==================================================================
     # FLASH
@@ -361,7 +411,11 @@ def calculate_utility_metrics(
             )
 
             # Только события внутри сыгранных раундов.
-            if _assign_round(tick) is None:
+            round_num = _assign_round(
+                tick
+            )
+
+            if round_num is None:
                 continue
 
             attacker = str(
@@ -417,4 +471,128 @@ def calculate_utility_metrics(
                 attacker
             ]["flash_duration"] += duration
 
+            round_key = (
+                attacker,
+                round_num,
+            )
+
+            round_utility[
+                round_key
+            ]["flash_events"] += 1
+
+            round_utility[
+                round_key
+            ]["flash_targets"].add(
+                victim
+            )
+
+            round_utility[
+                round_key
+            ]["flash_duration"] += duration
+
+
+    # ==================================================================
+    # ROUND DETAIL OUTPUT
+    # ==================================================================
+
+    if utility_rounds_by_player is not None:
+        for (
+            steam_id,
+            round_num,
+        ), values in sorted(
+            round_utility.items(),
+            key=lambda item: (
+                item[0][0],
+                item[0][1],
+            ),
+        ):
+            player_rows = (
+                utility_rounds_by_player
+                .setdefault(
+                    steam_id,
+                    [],
+                )
+            )
+
+            he_damage = float(
+                values["he_damage"]
+            )
+
+            if he_damage > 0:
+                player_rows.append(
+                    {
+                        "round_num": round_num,
+                        "kind": "he",
+                        "damage": he_damage,
+                        "targets": len(
+                            values[
+                                "he_targets"
+                            ]
+                        ),
+                    }
+                )
+
+            fire_damage = float(
+                values["fire_damage"]
+            )
+
+            if fire_damage > 0:
+                player_rows.append(
+                    {
+                        "round_num": round_num,
+                        "kind": "fire",
+                        "damage": fire_damage,
+                        "targets": len(
+                            values[
+                                "fire_targets"
+                            ]
+                        ),
+                    }
+                )
+
+            flash_events = int(
+                values["flash_events"]
+            )
+
+            if flash_events > 0:
+                player_rows.append(
+                    {
+                        "round_num": round_num,
+                        "kind": "flash",
+                        "events": flash_events,
+                        "targets": len(
+                            values[
+                                "flash_targets"
+                            ]
+                        ),
+                        "duration": float(
+                            values[
+                                "flash_duration"
+                            ]
+                        ),
+                    }
+                )
+
     return stats
+
+
+def calculate_utility_analysis(
+    raw_parser: RawDemoParser,
+) -> tuple[
+    dict,
+    dict[str, list[dict[str, object]]],
+]:
+    utility_rounds_by_player: dict[
+        str,
+        list[dict[str, object]],
+    ] = {}
+
+    stats = calculate_utility_metrics(
+        raw_parser,
+        utility_rounds_by_player,
+    )
+
+    return (
+        stats,
+        utility_rounds_by_player,
+    )

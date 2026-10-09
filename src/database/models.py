@@ -18,6 +18,7 @@ from sqlalchemy import (
     Text,
     UniqueConstraint,
     text,
+    LargeBinary,
 )
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
@@ -414,6 +415,43 @@ class UserMatchModel(Base):
         default=lambda: datetime.now(timezone.utc),
     )
 
+class MatchFactsModel(Base):
+    __tablename__ = "match_facts"
+
+    match_id: Mapped[str] = mapped_column(
+        String(128),
+        ForeignKey(
+            "matches.match_id",
+            ondelete="CASCADE",
+        ),
+        primary_key=True,
+    )
+
+    facts_version: Mapped[int] = mapped_column(
+        Integer,
+        nullable=False,
+    )
+
+    capabilities: Mapped[list[str]] = mapped_column(
+        JSON,
+        nullable=False,
+        default=list,
+    )
+
+    payload: Mapped[bytes] = mapped_column(
+        LargeBinary,
+        nullable=False,
+    )
+
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=False,
+        default=lambda: datetime.now(
+            timezone.utc
+        ),
+    )
+
+
 class MatchPlayerModel(Base):
     __tablename__ = "match_players"
 
@@ -498,6 +536,15 @@ class MatchPlayerModel(Base):
     inferno_damage: Mapped[float] = mapped_column(Float, nullable=False)
     enemies_flashed: Mapped[int] = mapped_column(Integer, nullable=False)
     flash_duration: Mapped[float] = mapped_column(Float, nullable=False)
+
+    utility_rounds: Mapped[
+        list[dict[str, object]]
+    ] = mapped_column(
+        JSON,
+        nullable=False,
+        default=list,
+        server_default="[]",
+    )
 
     clutch_attempts: Mapped[int | None] = mapped_column(
         Integer,

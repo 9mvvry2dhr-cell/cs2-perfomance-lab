@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Literal
+from typing import Any, Literal
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field
@@ -204,6 +204,19 @@ class MatchStoryEventResponse(ApiModel):
     ]
 
 
+class UtilityRoundResponse(ApiModel):
+    round_num: int
+    kind: Literal[
+        "he",
+        "fire",
+        "flash",
+    ]
+    damage: float | None = None
+    targets: int = 0
+    events: int | None = None
+    duration: float | None = None
+
+
 class GrowthSignalResponse(ApiModel):
     code: str
 
@@ -223,7 +236,7 @@ class GrowthSignalResponse(ApiModel):
 
     evidence: dict[
         str,
-        int | float | None,
+        Any,
     ]
 
 
@@ -233,6 +246,12 @@ class PlayerAnalysisResponse(ApiModel):
     stats: PlayerStatsResponse
     sides: dict[str, SideStatsResponse]
     findings: list[FindingResponse]
+
+    utility_rounds: list[
+        UtilityRoundResponse
+    ] = Field(
+        default_factory=list
+    )
 
     growth_signals: list[
         GrowthSignalResponse

@@ -70,6 +70,7 @@ class DatabaseModelsTest(unittest.TestCase):
                 "analysis_jobs",
                 "matches",
                 "match_players",
+                "match_facts",
                 "player_side_stats",
                 "findings",
                 "growth_signals",

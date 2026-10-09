@@ -344,6 +344,171 @@ class AnalysisRepositoryTest(unittest.TestCase):
         )
 
 
+    def test_reanalysis_preserves_existing_match_facts(self):
+        from src.database.models import (
+            MatchFactsModel,
+        )
+
+        analysis = make_analysis()
+
+        original_payload = (
+            b"match-facts-original"
+        )
+
+        original_capabilities = [
+            "rounds",
+            "combat",
+        ]
+
+        self.repository.save_analysis(
+            analysis,
+            match_facts_payload=(
+                original_payload
+            ),
+            match_facts_version=1,
+            match_facts_capabilities=(
+                original_capabilities
+            ),
+        )
+
+        original = self.session.get(
+            MatchFactsModel,
+            analysis.match_id,
+        )
+
+        self.assertIsNotNone(
+            original
+        )
+
+        original_created_at = (
+            original.created_at
+        )
+
+        # Re-save the same match without supplying
+        # a new Match Facts payload.
+        updated = make_analysis(
+            player_name="updated_player",
+            score_ct=14,
+        )
+
+        self.repository.save_analysis(
+            updated
+        )
+
+        self.session.expire_all()
+
+        preserved = self.session.get(
+            MatchFactsModel,
+            analysis.match_id,
+        )
+
+        self.assertIsNotNone(
+            preserved
+        )
+
+        self.assertEqual(
+            bytes(
+                preserved.payload
+            ),
+            original_payload,
+        )
+
+        self.assertEqual(
+            preserved.facts_version,
+            1,
+        )
+
+        self.assertEqual(
+            list(
+                preserved.capabilities
+            ),
+            original_capabilities,
+        )
+
+        self.assertEqual(
+            preserved.created_at,
+            original_created_at,
+        )
+
+
+    def test_reanalysis_replaces_match_facts_when_new_facts_supplied(
+        self,
+    ):
+        from src.database.models import (
+            MatchFactsModel,
+        )
+
+        analysis = make_analysis()
+
+        self.repository.save_analysis(
+            analysis,
+            match_facts_payload=(
+                b"match-facts-old"
+            ),
+            match_facts_version=1,
+            match_facts_capabilities=[
+                "rounds",
+                "combat",
+            ],
+        )
+
+        updated = make_analysis(
+            player_name="updated_player",
+            score_ct=14,
+        )
+
+        new_payload = (
+            b"match-facts-new"
+        )
+
+        new_capabilities = [
+            "rounds",
+            "combat",
+            "utility",
+        ]
+
+        self.repository.save_analysis(
+            updated,
+            match_facts_payload=(
+                new_payload
+            ),
+            match_facts_version=2,
+            match_facts_capabilities=(
+                new_capabilities
+            ),
+        )
+
+        self.session.expire_all()
+
+        replaced = self.session.get(
+            MatchFactsModel,
+            analysis.match_id,
+        )
+
+        self.assertIsNotNone(
+            replaced
+        )
+
+        self.assertEqual(
+            bytes(
+                replaced.payload
+            ),
+            new_payload,
+        )
+
+        self.assertEqual(
+            replaced.facts_version,
+            2,
+        )
+
+        self.assertEqual(
+            list(
+                replaced.capabilities
+            ),
+            new_capabilities,
+        )
+
+
     def test_save_analysis_does_not_persist_demo_identity(self):
         analysis = replace(
             make_analysis(

@@ -4,7 +4,7 @@ import logging
 import multiprocessing
 import time
 from collections.abc import Callable
-from dataclasses import replace
+from dataclasses import dataclass, replace
 from pathlib import Path
 
 from src.audit import audit_event
@@ -22,7 +22,14 @@ from src.domain.jobs import AnalysisJob
 from src.ingestion.storage import (
     LocalDemoStorage,
 )
-from src.metrics.duel import calculate_duel_metrics
+from src.metrics.duel import calculate_duel_analysis
+from src.metrics.utility import (
+    calculate_utility_analysis,
+)
+from src.metrics.match_facts import (
+    build_match_facts,
+    encode_match_facts,
+)
 from src.metrics.splits import (
     calculate_split_metrics,
 )
@@ -43,9 +50,23 @@ class AnalysisTimeoutError(TimeoutError):
     pass
 
 
-def analyze_demo_file(
+@dataclass(frozen=True)
+class DemoAnalysisResult:
+    analysis: MatchAnalysis
+    match_facts_payload: bytes
+    match_facts_version: int
+    match_facts_capabilities: tuple[str, ...]
+
+
+class MatchFactsBuildError(RuntimeError):
+    pass
+
+
+def _analyze_demo_file(
     demo_path: Path,
-) -> MatchAnalysis:
+    *,
+    capture_match_facts: bool,
+) -> MatchAnalysis | DemoAnalysisResult:
     total_started = time.perf_counter()
 
     parser = DemoParser(
@@ -61,14 +82,16 @@ def analyze_demo_file(
         - parse_started
     )
 
+    player_steam_ids = [
+        player.steam_id
+        for player in match.players
+    ]
+
     splits_started = time.perf_counter()
 
     splits = calculate_split_metrics(
         parser.raw_parser,
-        [
-            player.steam_id
-            for player in match.players
-        ],
+        player_steam_ids,
         side_events=parser.side_events,
         survival_events=parser.survival_events,
         kast_events=parser.kast_events,
@@ -80,12 +103,18 @@ def analyze_demo_file(
         - splits_started
     )
 
-    duels = calculate_duel_metrics(
+    (
+        duels,
+        duel_episodes,
+    ) = calculate_duel_analysis(
         parser.raw_parser,
-        [
-            player.steam_id
-            for player in match.players
-        ],
+        player_steam_ids,
+    )
+
+    _utility_metrics, utility_rounds = (
+        calculate_utility_analysis(
+            parser.raw_parser
+        )
     )
 
     build_started = time.perf_counter()
@@ -94,12 +123,41 @@ def analyze_demo_file(
         match,
         splits,
         duels,
+        duel_episodes,
+        utility_rounds_by_player=utility_rounds,
     )
 
     build_seconds = (
         time.perf_counter()
         - build_started
     )
+
+    facts_seconds = 0.0
+    facts = None
+    payload = None
+
+    if capture_match_facts:
+        facts_started = time.perf_counter()
+
+        try:
+            facts = build_match_facts(
+                parser.raw_parser,
+                player_steam_ids,
+            )
+
+            payload = encode_match_facts(
+                facts
+            )
+
+        except Exception as exc:
+            raise MatchFactsBuildError(
+                "Failed to build Match Facts"
+            ) from exc
+
+        facts_seconds = (
+            time.perf_counter()
+            - facts_started
+        )
 
     total_seconds = (
         time.perf_counter()
@@ -112,16 +170,65 @@ def analyze_demo_file(
         "parse=%.2fs "
         "splits=%.2fs "
         "build=%.2fs "
+        "facts=%.2fs "
         "total=%.2fs",
         demo_path.name,
         parse_seconds,
         splits_seconds,
         build_seconds,
+        facts_seconds,
         total_seconds,
     )
 
-    return analysis
+    if not capture_match_facts:
+        return analysis
 
+    assert facts is not None
+    assert payload is not None
+
+    return DemoAnalysisResult(
+        analysis=analysis,
+        match_facts_payload=payload,
+        match_facts_version=int(
+            facts["facts_version"]
+        ),
+        match_facts_capabilities=tuple(
+            str(item)
+            for item in facts["capabilities"]
+        ),
+    )
+
+
+def analyze_demo_file(
+    demo_path: Path,
+) -> MatchAnalysis:
+    result = _analyze_demo_file(
+        demo_path,
+        capture_match_facts=False,
+    )
+
+    assert isinstance(
+        result,
+        MatchAnalysis,
+    )
+
+    return result
+
+
+def analyze_demo_file_with_facts(
+    demo_path: Path,
+) -> DemoAnalysisResult:
+    result = _analyze_demo_file(
+        demo_path,
+        capture_match_facts=True,
+    )
+
+    assert isinstance(
+        result,
+        DemoAnalysisResult,
+    )
+
+    return result
 
 def _analysis_subprocess(
     demo_path: str,
@@ -145,16 +252,32 @@ def _analysis_subprocess(
     )
 
     try:
-        analysis = analyze_demo_file(
+        result = analyze_demo_file_with_facts(
             Path(demo_path)
         )
 
         connection.send(
             (
                 "ok",
-                analysis,
+                result,
             )
         )
+
+    except MatchFactsBuildError as exc:
+        logger.exception(
+            "Match Facts build failed"
+        )
+
+        try:
+            connection.send(
+                (
+                    "facts_error",
+                    str(exc),
+                )
+            )
+
+        except Exception:
+            pass
 
     except BaseException as exc:
         logger.exception(
@@ -206,7 +329,7 @@ def analyze_demo_file_with_timeout(
     timeout_seconds: float = (
         DEFAULT_ANALYSIS_TIMEOUT_SECONDS
     ),
-) -> MatchAnalysis:
+) -> DemoAnalysisResult:
     """
     Execute one demo analysis in a disposable child process.
 
@@ -304,6 +427,17 @@ def analyze_demo_file_with_timeout(
         if status == "ok":
             return message[1]
 
+        if status == "facts_error":
+            error_message = (
+                message[1]
+                if len(message) > 1
+                else "Match Facts build failed"
+            )
+
+            raise MatchFactsBuildError(
+                error_message
+            )
+
         if status == "error":
             error_type = (
                 message[1]
@@ -346,8 +480,8 @@ class AnalysisWorker:
         analysis_repository: AnalysisRepository,
         analyzer: Callable[
             [Path],
-            MatchAnalysis,
-        ] = analyze_demo_file,
+            MatchAnalysis | DemoAnalysisResult,
+        ] = analyze_demo_file_with_facts,
     ):
         self.storage = storage
         self.job_repository = (
@@ -390,6 +524,8 @@ class AnalysisWorker:
         self,
         job: AnalysisJob,
     ) -> AnalysisJob:
+        preserve_demo_on_failure = False
+
         try:
             demo_path = (
                 self.storage.path_for(
@@ -402,9 +538,36 @@ class AnalysisWorker:
                     "Stored demo file not found"
                 )
 
-            analysis = self.analyzer(
+            analyzer_result = self.analyzer(
                 demo_path
             )
+
+            if isinstance(
+                analyzer_result,
+                DemoAnalysisResult,
+            ):
+                analysis = (
+                    analyzer_result.analysis
+                )
+
+                match_facts_kwargs = {
+                    "match_facts_payload": (
+                        analyzer_result
+                        .match_facts_payload
+                    ),
+                    "match_facts_version": (
+                        analyzer_result
+                        .match_facts_version
+                    ),
+                    "match_facts_capabilities": list(
+                        analyzer_result
+                        .match_facts_capabilities
+                    ),
+                }
+
+            else:
+                analysis = analyzer_result
+                match_facts_kwargs = {}
 
             owner_player_position = None
 
@@ -435,9 +598,14 @@ class AnalysisWorker:
                 match_id=job.file_sha256,
             )
 
+            preserve_demo_on_failure = True
+
             self.analysis_repository.save_analysis(
-                analysis
+                analysis,
+                **match_facts_kwargs,
             )
+
+            preserve_demo_on_failure = False
 
             if (
                 job.owner_steam_id is not None
@@ -532,6 +700,15 @@ class AnalysisWorker:
                     else "analysis_failed"
                 ),
             )
+
+            if (
+                preserve_demo_on_failure
+                or isinstance(
+                    exc,
+                    MatchFactsBuildError,
+                )
+            ):
+                raise
 
             try:
                 self.storage.delete(
